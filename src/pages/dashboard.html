@@ -213,7 +213,7 @@
                 </div>
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                     <!-- Available Assets -->
                     <div class="stat-card bg-gradient-to-br from-blue-600 to-blue-700">
                         <div class="flex items-center justify-between">
@@ -280,6 +280,22 @@
                         </div>
                         <p class="text-red-200 text-xs mt-2">Lost or damaged</p>
                     </div>
+
+                    <!-- Decommissioned -->
+                    <div class="stat-card bg-gradient-to-br from-gray-600 to-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-200 text-sm font-medium">Decommissioned</p>
+                                <p class="text-3xl font-bold text-white mt-1" id="stat-decommissioned">--</p>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-gray-200 text-xs mt-2">Retired from service</p>
+                    </div>
                 </div>
 
                 <!-- Charts Row -->
@@ -330,11 +346,26 @@
                             <h3 class="card-title">Alerts & Reminders</h3>
                         </div>
                         <div class="card-body p-0">
-                            <div id="alerts-list" class="divide-y divide-slate-700">
+                            <div id="alerts-list" class="divide-y divide-slate-700 max-h-64 overflow-y-auto">
                                 <!-- Alerts will be loaded here -->
                                 <div class="p-4 text-center text-slate-400">
                                     Loading alerts...
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Asset Health Heatmap -->
+                <div class="card mt-6">
+                    <div class="card-header">
+                        <h3 class="card-title">Asset Health & Status Matrix</h3>
+                        <p class="text-xs text-slate-400 mt-1">Real-time inventory levels and health indicators by category</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="heatmap-container" class="overflow-x-auto">
+                            <div class="text-center text-slate-400 py-8">
+                                Loading heatmap...
                             </div>
                         </div>
                     </div>
@@ -480,6 +511,7 @@
                     loadStats(),
                     loadCharts(),
                     loadAcquisitionTrends(),
+                    loadHeatmap(),
                     loadAlerts()
                 ]);
             } catch (error) {
@@ -508,13 +540,15 @@
                 assigned: assetList.filter(a => a.status === 'assigned').length,
                 under_repair: assetList.filter(a => a.status === 'under_repair').length,
                 lost: assetList.filter(a => a.status === 'lost').length,
-                damaged: assetList.filter(a => a.status === 'damaged').length
+                damaged: assetList.filter(a => a.status === 'damaged').length,
+                decommissioned: assetList.filter(a => a.status === 'decommissioned').length
             };
 
             document.getElementById('stat-available-assets').textContent = statusCounts.available;
             document.getElementById('stat-assigned-assets').textContent = statusCounts.assigned;
             document.getElementById('stat-under-repair').textContent = statusCounts.under_repair;
             document.getElementById('stat-issues').textContent = statusCounts.lost + statusCounts.damaged;
+            document.getElementById('stat-decommissioned').textContent = statusCounts.decommissioned;
         }
 
         /**
@@ -522,10 +556,10 @@
          */
         async function loadCharts() {
             try {
-                // Status Chart
+                // Status Chart - fetch with category information
                 const { data: statusData, error: statusError } = await supabase
                     .from('assets')
-                    .select('status');
+                    .select('status, category:asset_categories(name)');
 
                 if (statusError) {
                     console.error('Error loading status data:', statusError);
@@ -550,10 +584,23 @@
                     'decommissioned': 'Decommissioned'
                 };
 
-                // Count statuses
+                // Count statuses and build category breakdown
                 const statusCounts = {};
+                const statusCategoryBreakdown = {};
+                
                 (statusData || []).forEach(asset => {
-                    statusCounts[asset.status] = (statusCounts[asset.status] || 0) + 1;
+                    const status = asset.status;
+                    const categoryName = asset.category?.name || 'Uncategorized';
+                    
+                    // Count status totals
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                    
+                    // Build category breakdown per status
+                    if (!statusCategoryBreakdown[status]) {
+                        statusCategoryBreakdown[status] = {};
+                    }
+                    statusCategoryBreakdown[status][categoryName] = 
+                        (statusCategoryBreakdown[status][categoryName] || 0) + 1;
                 });
 
                 // Sort by defined order and filter out zero counts
@@ -621,15 +668,28 @@
                                 },
                                 callbacks: {
                                     title: function(context) {
-                                        return context[0].label || '';
+                                        return context[0].label.toUpperCase() || '';
                                     },
                                     label: function(context) {
+                                        const status = sortedStatuses[context.dataIndex];
                                         const value = context.parsed;
                                         const percentage = ((value / totalAssets) * 100).toFixed(1);
-                                        return [
-                                            `Count: ${value} assets`,
-                                            `Percentage: ${percentage}%`
-                                        ];
+                                        
+                                        // Get categories for this status
+                                        const categories = statusCategoryBreakdown[status] || {};
+                                        
+                                        // Sort categories by count (highest first)
+                                        const sortedCategories = Object.entries(categories)
+                                            .sort((a, b) => b[1] - a[1]);
+                                        
+                                        // Build the tooltip lines
+                                        const lines = ['  Asset Categories:'];
+                                        sortedCategories.forEach(([categoryName, count]) => {
+                                            lines.push(`    ${categoryName}: ${count}`);
+                                        });
+                                        lines.push(`  Percentage: ${percentage}%`);
+                                        
+                                        return lines;
                                     }
                                 }
                             }
@@ -865,6 +925,231 @@
             } catch (error) {
                 console.error('Error loading acquisition trends:', error);
             }
+        }
+
+        /**
+         * Load Asset Health Heatmap
+         * Shows category vs status matrix with health indicators
+         */
+        async function loadHeatmap() {
+            try {
+                // Fetch assets with category information
+                const { data: assets, error } = await supabase
+                    .from('assets')
+                    .select('status, category:asset_categories(name)');
+
+                if (error) {
+                    console.error('Error loading heatmap data:', error);
+                    return;
+                }
+
+                // Build category matrix
+                const categoryMatrix = {};
+                const statusTypes = ['available', 'assigned', 'under_repair', 'lost', 'damaged', 'decommissioned'];
+
+                assets?.forEach(asset => {
+                    const categoryName = asset.category?.name || 'Uncategorized';
+                    const status = asset.status;
+
+                    if (!categoryMatrix[categoryName]) {
+                        categoryMatrix[categoryName] = {
+                            available: 0,
+                            assigned: 0,
+                            under_repair: 0,
+                            lost: 0,
+                            damaged: 0,
+                            decommissioned: 0,
+                            total: 0
+                        };
+                    }
+
+                    if (statusTypes.includes(status)) {
+                        categoryMatrix[categoryName][status]++;
+                    }
+                    categoryMatrix[categoryName].total++;
+                });
+
+                // Calculate health metrics for each category
+                const categoryHealth = Object.entries(categoryMatrix).map(([category, stats]) => {
+                    const assignmentRate = (stats.assigned / stats.total * 100).toFixed(1);
+                    const repairRate = ((stats.under_repair + stats.damaged) / stats.total * 100).toFixed(1);
+                    const lossRate = (stats.lost / stats.total * 100).toFixed(1);
+
+                    // Determine health status
+                    let healthStatus = 'healthy';
+                    let healthColor = 'bg-green-500/20 text-green-400';
+                    let healthIcon = '✓';
+                    let warnings = [];
+
+                    // Check critical conditions
+                    if (stats.available < 10) {
+                        warnings.push('Low stock');
+                        healthStatus = 'critical';
+                    }
+                    if (parseFloat(assignmentRate) > 80) {
+                        warnings.push('High assignment rate');
+                        if (healthStatus !== 'critical') healthStatus = 'warning';
+                    }
+                    if (parseFloat(repairRate) > 15) {
+                        warnings.push('High repair rate');
+                        if (healthStatus !== 'critical') healthStatus = 'warning';
+                    }
+                    if (stats.lost > 2) {
+                        warnings.push('Asset loss detected');
+                        healthStatus = 'critical';
+                    }
+
+                    // Set health indicators
+                    if (healthStatus === 'critical') {
+                        healthColor = 'bg-red-500/20 text-red-400';
+                        healthIcon = '⚠';
+                    } else if (healthStatus === 'warning') {
+                        healthColor = 'bg-yellow-500/20 text-yellow-400';
+                        healthIcon = '!';
+                    }
+
+                    return {
+                        category,
+                        ...stats,
+                        assignmentRate,
+                        repairRate,
+                        lossRate,
+                        healthStatus,
+                        healthColor,
+                        healthIcon,
+                        warnings: warnings.join(', ') || 'All assets normal'
+                    };
+                });
+
+                // Sort by health status (critical first) then by category name
+                categoryHealth.sort((a, b) => {
+                    if (a.healthStatus === b.healthStatus) {
+                        return a.category.localeCompare(b.category);
+                    }
+                    const statusOrder = { critical: 0, warning: 1, healthy: 2 };
+                    return statusOrder[a.healthStatus] - statusOrder[b.healthStatus];
+                });
+
+                // Generate heatmap HTML
+                renderHeatmap(categoryHealth);
+
+            } catch (error) {
+                console.error('Error loading heatmap:', error);
+            }
+        }
+
+        /**
+         * Render the heatmap table
+         */
+        function renderHeatmap(data) {
+            const container = document.getElementById('heatmap-container');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-8">No data available</div>';
+                return;
+            }
+
+            // Helper function to get color intensity based on value
+            const getCellColor = (value, max) => {
+                if (value === 0) return 'bg-slate-800 text-slate-500';
+                const intensity = (value / max);
+                if (intensity > 0.7) return 'bg-blue-500/40 text-blue-200';
+                if (intensity > 0.4) return 'bg-blue-500/25 text-blue-300';
+                return 'bg-blue-500/10 text-blue-400';
+            };
+
+            // Find max values for color scaling
+            const maxAvailable = Math.max(...data.map(d => d.available));
+            const maxAssigned = Math.max(...data.map(d => d.assigned));
+            const maxRepair = Math.max(...data.map(d => d.under_repair));
+            const maxLost = Math.max(...data.map(d => d.lost));
+            const maxDamaged = Math.max(...data.map(d => d.damaged));
+            const maxDecommissioned = Math.max(...data.map(d => d.decommissioned));
+
+            const html = `
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-700">
+                            <th class="text-left py-3 px-4 text-slate-400 font-medium">Category</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Available</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Assigned</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Under Repair</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Lost</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Damaged</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Decommissioned</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Total</th>
+                            <th class="text-center py-3 px-4 text-slate-400 font-medium">Health</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr class="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-3 px-4 font-medium text-slate-200">${row.category}</td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.available, maxAvailable)} min-w-[60px]" 
+                                         title="Available: ${row.available}">
+                                        ${row.available}
+                                    </div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.assigned, maxAssigned)} min-w-[60px]"
+                                         title="Assigned: ${row.assigned} (${row.assignmentRate}%)">
+                                        ${row.assigned}
+                                    </div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.under_repair, maxRepair)} min-w-[60px]"
+                                         title="Under Repair: ${row.under_repair}">
+                                        ${row.under_repair}
+                                    </div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.lost, maxLost)} min-w-[60px]"
+                                         title="Lost: ${row.lost}">
+                                        ${row.lost}
+                                    </div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.damaged, maxDamaged)} min-w-[60px]"
+                                         title="Damaged: ${row.damaged}">
+                                        ${row.damaged}
+                                    </div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-block px-3 py-2 rounded ${getCellColor(row.decommissioned, maxDecommissioned)} min-w-[60px]"
+                                         title="Decommissioned: ${row.decommissioned}">
+                                        ${row.decommissioned}
+                                    </div>
+                                </td>
+                                <td class="text-center py-3 px-4 font-semibold text-slate-300">${row.total}</td>
+                                <td class="text-center py-2 px-2">
+                                    <div class="inline-flex items-center gap-2 px-3 py-2 rounded ${row.healthColor} min-w-[100px] justify-center"
+                                         title="${row.warnings}">
+                                        <span class="text-lg">${row.healthIcon}</span>
+                                        <span class="text-xs uppercase font-semibold">${row.healthStatus}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="mt-4 flex gap-6 text-xs text-slate-400 border-t border-slate-700 pt-4">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-4 h-4 rounded bg-green-500/20"></span>
+                        <span>Healthy - All assets normal</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-4 h-4 rounded bg-yellow-500/20"></span>
+                        <span>Warning - Attention needed</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-4 h-4 rounded bg-red-500/20"></span>
+                        <span>Critical - Immediate action required (Available &lt; 10)</span>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
         }
 
         /**

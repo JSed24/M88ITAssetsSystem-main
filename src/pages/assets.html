@@ -368,8 +368,9 @@
                         <!-- Serial Number -->
                         <div class="form-group">
                             <label class="form-label" for="asset-serial">Serial Number *</label>
-                            <input type="text" id="asset-serial" class="form-input" maxlength="25" placeholder="Serial number" required>
-                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                            <input type="text" id="asset-serial" class="form-input" maxlength="25" placeholder="Serial number" style="text-transform: uppercase" required>
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters (uppercase only)</p>
+                            <p id="serial-error" class="text-xs text-red-400 mt-1 hidden"></p>
                         </div>
                         
                         <!-- Status -->
@@ -568,6 +569,56 @@
 
                 // Enable keyboard search for all filter dropdowns
                 Utils.enableAllSelectsKeyboardSearch('select.form-select');
+
+                // Add real-time serial number validation
+                const serialInput = document.getElementById('asset-serial');
+                const serialError = document.getElementById('serial-error');
+                
+                // Convert serial number to uppercase on input and clear errors
+                serialInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                    if (this.value.trim() !== '') {
+                        serialError.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    }
+                });
+                
+                serialInput.addEventListener('blur', async function() {
+                    const serialNumber = this.value.trim();
+                    
+                    if (!serialNumber) {
+                        serialError.classList.add('hidden');
+                        serialInput.classList.remove('border-red-500');
+                        return;
+                    }
+                    
+                    try {
+                        let query = supabase
+                            .from('assets')
+                            .select('id, name, asset_tag')
+                            .eq('serial_number', serialNumber);
+                        
+                        // If editing, exclude current asset
+                        const assetId = document.getElementById('asset-id').value;
+                        if (assetId) {
+                            query = query.neq('id', assetId);
+                        }
+                        
+                        const { data: existingAssets, error } = await query;
+                        
+                        if (!error && existingAssets && existingAssets.length > 0) {
+                            const existing = existingAssets[0];
+                            serialError.textContent = `⚠ This serial number is already used by: ${existing.name} (${existing.asset_tag || 'ID: ' + existing.id})`;
+                            serialError.classList.remove('hidden');
+                            serialInput.classList.add('border-red-500');
+                        } else {
+                            serialError.classList.add('hidden');
+                            serialInput.classList.remove('border-red-500');
+                        }
+                    } catch (error) {
+                        console.error('Error checking serial number:', error);
+                    }
+                });
 
                 // Show app
                 loadingScreen.classList.add('hidden');
@@ -869,6 +920,12 @@
             originalAssetStatus = null; // Reset for new asset
             window.currentAssetCategory = '';
             
+            // Clear serial number error
+            const serialError = document.getElementById('serial-error');
+            const serialInput = document.getElementById('asset-serial');
+            serialError.classList.add('hidden');
+            serialInput.classList.remove('border-red-500');
+            
             // For new assets, restrict status to "Available" only
             const statusSelect = document.getElementById('asset-status');
             const statusHelpText = document.getElementById('status-help-text');
@@ -911,6 +968,12 @@
 
                 // Store original status for validation
                 originalAssetStatus = asset.status;
+                
+                // Clear serial number error
+                const serialError = document.getElementById('serial-error');
+                const serialInput = document.getElementById('asset-serial');
+                serialError.classList.add('hidden');
+                serialInput.classList.remove('border-red-500');
                 
                 // Get category name from already-loaded categories array
                 window.currentAssetCategory = '';
@@ -1272,6 +1335,38 @@
                 specifications: document.getElementById('asset-specs').value || null,
                 notes: document.getElementById('asset-notes').value || null
             };
+
+            // Check for duplicate serial number
+            if (assetData.serial_number) {
+                try {
+                    let query = supabase
+                        .from('assets')
+                        .select('id, name, asset_tag')
+                        .eq('serial_number', assetData.serial_number);
+                    
+                    // If editing, exclude current asset from check
+                    if (assetId) {
+                        query = query.neq('id', assetId);
+                    }
+                    
+                    const { data: existingAssets, error: checkError } = await query;
+                    
+                    if (checkError) {
+                        console.error('Error checking serial number:', checkError);
+                    } else if (existingAssets && existingAssets.length > 0) {
+                        const existing = existingAssets[0];
+                        showToast(
+                            `An asset with this serial number already exists: ${existing.name} (${existing.asset_tag || 'ID: ' + existing.id})`,
+                            'error'
+                        );
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error validating serial number:', error);
+                    showToast('Failed to validate serial number', 'error');
+                    return;
+                }
+            }
 
             // Debug: log the data being sent
             console.log('Asset Data being submitted:', assetData);

@@ -156,12 +156,32 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">System Users</h3>
+                            <div class="flex items-center gap-4 mb-4">
+                                <select id="user-role-filter" class="form-select" style="width: 200px;" onchange="handleUserRoleFilter()">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="it_staff">IT Staff</option>
+                                    <option value="viewer">Viewer</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="data-table">
                                 <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th style="text-align: right;">Actions</th></tr></thead>
                                 <tbody id="users-table"></tbody>
                             </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                         <div class="card-footer">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm text-slate-400" id="users-pagination-info">
+                                    Showing 0 of 0 users
+                                </p>
+                                <div class="flex gap-2" id="users-pagination-buttons">
+                                    <!-- Pagination buttons will be inserted here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,6 +285,10 @@
 
         let currentUser = null;
         let currentTab = 'users';
+        let usersCurrentPage = 1;
+        let usersTotalPages = 1;
+        const usersPageSize = 10;
+        let selectedUserRole = '';
 
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
@@ -352,7 +376,25 @@
         }
 
         async function loadUsers() {
-            const { data } = await supabase.from('user_profiles').select('*').order('full_name');
+            const from = (usersCurrentPage - 1) * usersPageSize;
+            const to = from + usersPageSize - 1;
+            
+            let query = supabase.from('user_profiles').select('*', { count: 'exact' }).order('full_name');
+            
+            // Apply role filter if selected
+            if (selectedUserRole) {
+                query = query.eq('role', selectedUserRole);
+            }
+            
+            const { data, count } = await query.range(from, to);
+            
+            // Update pagination info
+            usersTotalPages = Math.ceil(count / usersPageSize);
+            const startRecord = count > 0 ? from + 1 : 0;
+            const endRecord = Math.min(from + usersPageSize, count || 0);
+            document.getElementById('users-pagination-info').textContent = 
+                `Showing ${startRecord}-${endRecord} of ${count || 0} users`;
+            
             document.getElementById('users-table').innerHTML = (data || []).map(u => `
                 <tr>
                     <td class="font-medium text-white">${u.full_name || '-'}</td>
@@ -364,7 +406,53 @@
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="5" class="text-center py-8 text-slate-400">No users</td></tr>';
+            
+            updateUsersPagination();
         }
+        
+        function updateUsersPagination() {
+            const container = document.getElementById('users-pagination-buttons');
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changeUsersPage(${usersCurrentPage - 1})" ${usersCurrentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= usersTotalPages; i++) {
+                if (i === usersCurrentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === usersTotalPages || Math.abs(i - usersCurrentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changeUsersPage(${i})">${i}</button>`;
+                } else if (Math.abs(i - usersCurrentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changeUsersPage(${usersCurrentPage + 1})" ${usersCurrentPage >= usersTotalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+        
+        window.changeUsersPage = function(page) {
+            if (page < 1 || page > usersTotalPages) return;
+            usersCurrentPage = page;
+            loadUsers();
+        };
+        
+        window.handleUserRoleFilter = function() {
+            selectedUserRole = document.getElementById('user-role-filter').value;
+            usersCurrentPage = 1; // Reset to first page when filtering
+            loadUsers();
+        };
 
         async function loadAssignmentRules() {
             const { data } = await supabase.from('asset_categories').select('*').order('name');

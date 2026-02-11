@@ -182,6 +182,18 @@
                             <div class="text-center py-8 text-slate-400">Loading...</div>
                         </div>
                     </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-slate-400" id="pagination-info">
+                                Showing 0 of 0 assignments
+                            </p>
+                            <div class="flex gap-2" id="pagination-buttons">
+                                <!-- Pagination buttons will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -260,6 +272,9 @@
         import { showToast } from '../scripts/components.js';
 
         let currentUser = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 10;
         
         // Use Assignments module (available globally)
         const Assignments = window.Assignments;
@@ -330,7 +345,11 @@
             if (filter === 'active') query = query.is('returned_date', null);
             else if (filter === 'returned') query = query.not('returned_date', 'is', null);
 
-            const { data: assignments, count, error } = await query.limit(50);
+            // Pagination
+            const from = (currentPage - 1) * pageSize;
+            const to = from + pageSize - 1;
+            
+            const { data: assignments, count, error } = await query.range(from, to);
             if (error) { 
                 console.error('Error loading assignments:', error);
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>'; 
@@ -346,9 +365,17 @@
             }
 
             document.getElementById('assignments-count').textContent = `(${count || 0})`;
+            
+            // Update pagination info
+            totalPages = Math.ceil(count / pageSize);
+            const startRecord = count > 0 ? from + 1 : 0;
+            const endRecord = Math.min(from + pageSize, count || 0);
+            document.getElementById('pagination-info').textContent = 
+                `Showing ${startRecord}-${endRecord} of ${count || 0} assignments`;
 
             if (!assignments?.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No assignments found</td></tr>';
+                updatePagination();
                 return;
             }
 
@@ -368,6 +395,46 @@
                     </td>
                 </tr>
             `).join('');
+            
+            updatePagination();
+        }
+        
+        function updatePagination() {
+            const container = document.getElementById('pagination-buttons');
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changePage(${i})">${i}</button>`;
+                } else if (Math.abs(i - currentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+        
+        window.changePage = function(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadAssignments();
         }
 
         async function loadAssetOptions() {

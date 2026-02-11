@@ -224,8 +224,9 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Employee ID *</label>
-                            <input type="text" id="employee-emp-id" class="form-input" maxlength="25" required>
-                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                            <input type="text" id="employee-emp-id" class="form-input" maxlength="25" style="text-transform: uppercase" required>
+                            <p id="emp-id-error" class="text-xs text-red-400 mt-1 hidden">⚠️ An employee with this employee number already exists</p>
+                            <p id="emp-id-helper" class="text-xs text-slate-400 mt-1">Maximum 25 characters (uppercase only)</p>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email</label>
@@ -359,12 +360,52 @@
 
                 // Enable keyboard search for all dropdowns
                 Utils.enableAllSelectsKeyboardSearch('select');
+                
+                // Setup employee ID validation
+                setupEmployeeIdValidation();
 
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
             } catch (error) {
                 console.error('Init error:', error);
                 showToast('Failed to load', 'error');
+            }
+        }
+        
+        // Setup real-time validation for employee ID
+        function setupEmployeeIdValidation() {
+            const empIdInput = document.getElementById('employee-emp-id');
+            if (empIdInput) {
+                // Convert employee ID to uppercase on input and clear errors
+                empIdInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                    if (this.value.trim() !== '') {
+                        document.getElementById('emp-id-error').classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    }
+                });
+                
+                empIdInput.addEventListener('blur', async function() {
+                    const employeeId = this.value.trim();
+                    const currentEmployeeId = document.getElementById('employee-id').value;
+                    const errorElement = document.getElementById('emp-id-error');
+                    
+                    if (!employeeId) {
+                        errorElement.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                        return;
+                    }
+                    
+                    const isDuplicate = await checkDuplicateEmployeeId(employeeId, currentEmployeeId);
+                    
+                    if (isDuplicate) {
+                        errorElement.classList.remove('hidden');
+                        this.classList.add('border-red-500');
+                    } else {
+                        errorElement.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    }
+                });
             }
         }
 
@@ -497,10 +538,39 @@
         };
         window.changePage = (p) => { if (p >= 1 && p <= totalPages) { currentPage = p; loadEmployees(); } };
 
+        // Check for duplicate employee ID
+        async function checkDuplicateEmployeeId(employeeId, currentEmployeeId = null) {
+            if (!employeeId || employeeId.trim() === '') return false;
+            
+            let query = supabase
+                .from('employees')
+                .select('id')
+                .eq('employee_id', employeeId.trim());
+            
+            // If editing, exclude current employee
+            if (currentEmployeeId) {
+                query = query.neq('id', currentEmployeeId);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) {
+                console.error('Error checking duplicate employee ID:', error);
+                return false;
+            }
+            
+            return data && data.length > 0;
+        }
+
         window.openEmployeeModal = () => {
             document.getElementById('employee-form').reset();
             document.getElementById('employee-id').value = '';
             document.getElementById('modal-title').textContent = 'Add Employee';
+            
+            // Reset validation states
+            document.getElementById('emp-id-error').classList.add('hidden');
+            document.getElementById('employee-emp-id').classList.remove('border-red-500');
+            
             document.getElementById('employee-modal').classList.remove('hidden');
         };
         window.closeEmployeeModal = () => document.getElementById('employee-modal').classList.add('hidden');
@@ -517,15 +587,31 @@
             document.getElementById('employee-location').value = emp.location_id || '';
             document.getElementById('employee-status').value = emp.is_active ? 'active' : 'inactive';
             document.getElementById('modal-title').textContent = 'Edit Employee';
+            
+            // Reset validation states
+            document.getElementById('emp-id-error').classList.add('hidden');
+            document.getElementById('employee-emp-id').classList.remove('border-red-500');
+            
             document.getElementById('employee-modal').classList.remove('hidden');
         };
 
         window.handleEmployeeSubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('employee-id').value;
+            const employeeIdInput = document.getElementById('employee-emp-id').value;
+            
+            // Check for duplicate employee ID
+            const isDuplicate = await checkDuplicateEmployeeId(employeeIdInput, id);
+            if (isDuplicate) {
+                showToast('An employee with this employee number already exists', 'error');
+                document.getElementById('emp-id-error').classList.remove('hidden');
+                document.getElementById('employee-emp-id').classList.add('border-red-500');
+                return;
+            }
+            
             const data = {
                 full_name: document.getElementById('employee-name').value,
-                employee_id: document.getElementById('employee-emp-id').value,
+                employee_id: employeeIdInput,
                 email: document.getElementById('employee-email').value || null,
                 department_id: document.getElementById('employee-department').value || null,
                 position: document.getElementById('employee-position').value || null,

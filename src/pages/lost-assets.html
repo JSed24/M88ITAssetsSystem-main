@@ -291,6 +291,18 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-slate-400" id="pagination-info">
+                                Showing 0 of 0 records
+                            </p>
+                            <div class="flex gap-2" id="pagination-buttons">
+                                <!-- Pagination buttons will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -455,6 +467,9 @@
         let currentUser = null;
         let assets = [];
         let employees = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 10;
         
         async function init() {
             try {
@@ -513,7 +528,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>';
             
             try {
-                let query = supabase.from('v_lost_assets_full').select('*');
+                let query = supabase.from('v_lost_assets_full').select('*', { count: 'exact' });
                 
                 const status = document.getElementById('status-filter').value;
                 const dateFrom = document.getElementById('date-from').value;
@@ -523,12 +538,24 @@
                 if (dateFrom) query = query.gte('date_reported', dateFrom);
                 if (dateTo) query = query.lte('date_reported', dateTo);
                 
-                const { data: records, error } = await query.order('date_reported', { ascending: false });
+                // Pagination
+                const from = (currentPage - 1) * pageSize;
+                const to = from + pageSize - 1;
+                
+                const { data: records, count, error } = await query.order('date_reported', { ascending: false }).range(from, to);
                 
                 if (error) throw error;
                 
+                // Update pagination info
+                totalPages = Math.ceil(count / pageSize);
+                const startRecord = count > 0 ? from + 1 : 0;
+                const endRecord = Math.min(from + pageSize, count || 0);
+                document.getElementById('pagination-info').textContent = 
+                    `Showing ${startRecord}-${endRecord} of ${count || 0} records`;
+                
                 if (!records?.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No records found</td></tr>';
+                    updatePagination();
                     return;
                 }
                 
@@ -586,13 +613,52 @@
                                 </div>
                             </td>
                         </tr>
-                    `;
-                }).join('');
+                    `;                }).join('');
+                
+                updatePagination();
             } catch (error) {
                 console.error('Load error:', error);
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load records</td></tr>';
             }
         }
+        
+        function updatePagination() {
+            const container = document.getElementById('pagination-buttons');
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changePage(${i})">${i}</button>`;
+                } else if (Math.abs(i - currentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+        
+        window.changePage = function(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadRecords();
+        };
 
         async function loadAssets() {
             const { data } = await supabase.from('assets').select('id, asset_tag, name').order('asset_tag');

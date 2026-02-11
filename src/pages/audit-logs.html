@@ -185,8 +185,7 @@
                             Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-logs">0</span> logs
                         </div>
                         <div class="flex gap-2" id="pagination-controls">
-                            <button class="btn btn-sm btn-secondary" onclick="previousPage()" id="prev-btn" disabled>Previous</button>
-                            <button class="btn btn-sm btn-secondary" onclick="nextPage()" id="next-btn" disabled>Next</button>
+                            <!-- Pagination buttons will be inserted here -->
                         </div>
                     </div>
                 </div>
@@ -388,9 +387,48 @@
             document.getElementById('total-logs').textContent = filteredLogs.length;
 
             // Update pagination buttons
-            document.getElementById('prev-btn').disabled = currentPage === 1;
-            document.getElementById('next-btn').disabled = end >= filteredLogs.length;
+            updatePaginationButtons();
         }
+        
+        function updatePaginationButtons() {
+            const container = document.getElementById('pagination-controls');
+            const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changePage(${i})">${i}</button>`;
+                } else if (Math.abs(i - currentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+        
+        window.changePage = function(page) {
+            const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderLogs();
+        };
 
         window.applyFilters = async () => {
             await loadLogs();

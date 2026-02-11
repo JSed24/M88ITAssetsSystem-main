@@ -89,6 +89,10 @@
                     <h2 class="text-lg font-semibold text-white">Maintenance & Repairs</h2>
                 </div>
                 <div class="topbar-right" id="admin-actions-topbar">
+                    <button class="btn btn-secondary" onclick="toggleDamagedAssetsPanel()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        Damaged Assets <span id="damaged-count" class="ml-1 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold">0</span>
+                    </button>
                     <button class="btn btn-primary" onclick="openMaintenanceModal()">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Log Maintenance
@@ -108,6 +112,19 @@
                     <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-green-400" id="stat-completed">--</p><p class="text-slate-400 text-sm">Completed</p></div></div>
                     <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-red-400" id="stat-unfixable">--</p><p class="text-slate-400 text-sm">Cannot Repair</p></div></div>
                     <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-blue-400" id="stat-total-cost">₱0</p><p class="text-slate-400 text-sm">Total Repair Cost</p></div></div>
+                </div>
+
+                <!-- Damaged Assets Panel -->
+                <div id="damaged-assets-panel" class="card mb-6 hidden">
+                    <div class="card-header">
+                        <h3 class="card-title">Assets Marked as Damaged</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-sm text-slate-400 mb-4">These assets are currently marked with "damaged" status. Click "Log Repair" to quickly create a maintenance record.</p>
+                        <div id="damaged-assets-list" class="space-y-2">
+                            <div class="text-center py-4 text-slate-400">Loading...</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filters -->
@@ -157,6 +174,18 @@
                                 <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-slate-400" id="pagination-info">
+                                Showing 0 of 0 records
+                            </p>
+                            <div class="flex gap-2" id="pagination-buttons">
+                                <!-- Pagination buttons will be inserted here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -276,6 +305,9 @@
 
         let currentUser = null;
         let searchTerm = '';
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 10;
         
         // Use Maintenance module (available globally)
         const Maintenance = window.Maintenance;
@@ -312,6 +344,7 @@
             await loadStats();
             await loadRecords();
             await loadAssetOptions();
+            await loadDamagedAssets();
 
             // Enable keyboard search for all dropdowns
             Utils.enableAllSelectsKeyboardSearch('select');
@@ -345,7 +378,11 @@
             if (typeFilter) query = query.eq('maintenance_type', typeFilter);
             if (searchTerm) query = query.or(`issue_description.ilike.%${searchTerm}%`);
 
-            const { data: records, count, error } = await query.order('created_at', { ascending: false }).limit(50);
+            // Pagination
+            const from = (currentPage - 1) * pageSize;
+            const to = from + pageSize - 1;
+
+            const { data: records, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
             if (error) { 
                 console.error('Error loading maintenance records:', error);
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load</td></tr>'; 
@@ -359,9 +396,17 @@
             }
 
             document.getElementById('records-count').textContent = `(${count || 0})`;
+            
+            // Update pagination info
+            totalPages = Math.ceil(count / pageSize);
+            const startRecord = count > 0 ? from + 1 : 0;
+            const endRecord = Math.min(from + pageSize, count || 0);
+            document.getElementById('pagination-info').textContent = 
+                `Showing ${startRecord}-${endRecord} of ${count || 0} records`;
 
             if (!records?.length) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No records found</td></tr>';
+                updatePagination();
                 return;
             }
 
@@ -398,6 +443,40 @@
                 </tr>
             `;
             }).join('');
+            
+            updatePagination();
+        }
+        
+        function updatePagination() {
+            const container = document.getElementById('pagination-buttons');
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changePage(${i})">${i}</button>`;
+                } else if (Math.abs(i - currentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
         }
 
         async function loadAssetOptions() {
@@ -410,6 +489,90 @@
             const select = document.getElementById('maint-asset');
             select.innerHTML = '<option value="">Select an asset</option>' + (assets || []).map(a => `<option value="${a.id}">${a.name} (${a.asset_tag})</option>`).join('');        }
 
+        async function loadDamagedAssets() {
+            const { data: damagedAssets, error } = await supabase
+                .from('assets')
+                .select('id, asset_tag, name, category:asset_categories(name)')
+                .eq('status', 'damaged')
+                .order('asset_tag');
+            
+            if (error) {
+                console.error('Error loading damaged assets:', error);
+                showToast('Failed to load damaged assets', 'error');
+                return;
+            }
+            
+            const count = damagedAssets?.length || 0;
+            document.getElementById('damaged-count').textContent = count;
+            
+            const listContainer = document.getElementById('damaged-assets-list');
+            
+            if (!damagedAssets || damagedAssets.length === 0) {
+                listContainer.innerHTML = '<div class="text-center py-4 text-slate-400">No damaged assets found</div>';
+                return;
+            }
+            
+            listContainer.innerHTML = damagedAssets.map(asset => `
+                <div class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700 hover:border-red-500 transition-colors">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-medium">${asset.name}</span>
+                            <span class="badge badge-danger">Damaged</span>
+                        </div>
+                        <div class="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                            <span>Asset Tag: <span class="text-blue-400 font-mono">${asset.asset_tag}</span></span>
+                            <span>Category: ${asset.category?.name || '-'}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="openMaintenanceDamagedModal('${asset.id}', '${asset.name.replace(/'/g, "\\'")}', '${asset.asset_tag}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Log Repair
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.toggleDamagedAssetsPanel = function() {
+            const panel = document.getElementById('damaged-assets-panel');
+            panel.classList.toggle('hidden');
+            
+            // Reload damaged assets when opening the panel
+            if (!panel.classList.contains('hidden')) {
+                loadDamagedAssets();
+            }
+        };
+
+        window.openMaintenanceDamagedModal = function(assetId, assetName, assetTag) {
+            // Reset form first
+            document.getElementById('maintenance-form').reset();
+            document.getElementById('record-id').value = '';
+            
+            // Pre-populate the form
+            document.getElementById('maint-asset').value = assetId;
+            document.getElementById('maint-type').value = 'repair';
+            document.getElementById('maint-status').value = 'in_progress';
+            document.getElementById('maint-issue').value = `Asset marked as damaged - requires repair and inspection.`;
+            document.getElementById('maint-start').value = new Date().toISOString().split('T')[0];
+            
+            // Update modal title
+            document.getElementById('modal-title').textContent = `Log Repair for ${assetName} (${assetTag})`;
+            
+            // Enable all fields
+            document.querySelectorAll('#maintenance-form input, #maintenance-form select, #maintenance-form textarea').forEach(el => {
+                el.disabled = false;
+            });
+            
+            // Show save button
+            document.getElementById('save-btn').style.display = 'block';
+            
+            // Open modal
+            document.getElementById('maintenance-modal').classList.remove('hidden');
+            
+            // Show toast to guide user
+            showToast('Form pre-populated with damaged asset details. Update as needed and save.', 'info');
+        };
+
+
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
         window.handleLogout = async () => { 
             try {
@@ -419,8 +582,14 @@
             await supabase.auth.signOut(); 
             window.location.href = '/index.html'; 
         };
-        window.handleSearch = (v) => { searchTerm = v; loadRecords(); };
+        window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadRecords(); };
         window.loadRecords = loadRecords;
+        
+        window.changePage = function(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadRecords();
+        };
 
         window.openMaintenanceModal = () => {
             document.getElementById('maintenance-form').reset();

@@ -133,6 +133,18 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-slate-400" id="pagination-info">
+                                Showing 0 of 0 licenses
+                            </p>
+                            <div class="flex gap-2" id="pagination-buttons">
+                                <!-- Pagination buttons will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -213,6 +225,9 @@
 
         let currentUser = null;
         let searchTerm = '';
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 10;
 
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
@@ -271,13 +286,25 @@
             let query = supabase.from('software_licenses').select('*', { count: 'exact' });
             if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);
 
-            const { data: licenses, count, error } = await query.order('expiry_date', { ascending: true }).limit(50);
+            // Pagination
+            const from = (currentPage - 1) * pageSize;
+            const to = from + pageSize - 1;
+
+            const { data: licenses, count, error } = await query.order('expiry_date', { ascending: true }).range(from, to);
             if (error) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>'; return; }
 
             document.getElementById('licenses-count').textContent = `(${count || 0})`;
+            
+            // Update pagination info
+            totalPages = Math.ceil(count / pageSize);
+            const startRecord = count > 0 ? from + 1 : 0;
+            const endRecord = Math.min(from + pageSize, count || 0);
+            document.getElementById('pagination-info').textContent = 
+                `Showing ${startRecord}-${endRecord} of ${count || 0} licenses`;
 
             if (!licenses?.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+                updatePagination();
                 return;
             }
 
@@ -314,6 +341,40 @@
                     </tr>
                 `;
             }).join('');
+            
+            updatePagination();
+        }
+        
+        function updatePagination() {
+            const container = document.getElementById('pagination-buttons');
+            let html = '';
+
+            // Previous button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    Previous
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+                    html += `<button class="btn btn-sm btn-secondary" onclick="changePage(${i})">${i}</button>`;
+                } else if (Math.abs(i - currentPage) === 2) {
+                    html += `<span class="text-slate-400 px-2">...</span>`;
+                }
+            }
+
+            // Next button
+            html += `
+                <button class="btn btn-sm btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Next
+                </button>
+            `;
+
+            container.innerHTML = html;
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
@@ -325,7 +386,13 @@
             await supabase.auth.signOut(); 
             window.location.href = '/index.html'; 
         };
-        window.handleSearch = (v) => { searchTerm = v; loadLicenses(); };
+        window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadLicenses(); };
+        
+        window.changePage = function(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadLicenses();
+        };
 
         window.openLicenseModal = () => {
             document.getElementById('license-form').reset();
