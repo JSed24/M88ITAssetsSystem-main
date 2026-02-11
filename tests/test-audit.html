@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log Test - M88</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script src="js/audit.js"></script>
+</head>
+<body class="bg-slate-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Audit Log Test Page</h1>
+        
+        <div class="bg-slate-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Audit Logging</h2>
+            <p class="text-slate-400 mb-4">Click the button below to create a test audit log entry.</p>
+            
+            <button onclick="testAuditLog()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium">
+                Create Test Audit Log
+            </button>
+            
+            <div id="test-result" class="mt-4 p-4 rounded-lg hidden"></div>
+        </div>
+        
+        <div class="bg-slate-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Recent Audit Logs</h2>
+            <button onclick="loadAuditLogs()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium mb-4">
+                Load Recent Logs
+            </button>
+            
+            <div id="logs-container" class="space-y-2"></div>
+        </div>
+        
+        <div class="bg-slate-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Console Output</h2>
+            <div id="console-output" class="bg-slate-900 p-4 rounded font-mono text-sm max-h-96 overflow-auto"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '../src/scripts/config.js';
+        window.supabase = supabase;
+        
+        let consoleLog = [];
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        function addToConsole(type, ...args) {
+            const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+            consoleLog.push(`[${type}] ${new Date().toLocaleTimeString()}: ${msg}`);
+            document.getElementById('console-output').innerHTML = consoleLog.slice(-20).join('<br>');
+            if (type === 'log') originalConsoleLog(...args);
+            if (type === 'error') originalConsoleError(...args);
+        }
+        
+        console.log = (...args) => addToConsole('log', ...args);
+        console.error = (...args) => addToConsole('error', ...args);
+        
+        window.testAuditLog = async function() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.className = 'mt-4 p-4 rounded-lg bg-blue-900/50 text-blue-200';
+            resultDiv.textContent = 'Testing...';
+            
+            console.log('Starting audit log test...');
+            
+            try {
+                // Check if Audit object exists
+                if (typeof Audit === 'undefined') {
+                    throw new Error('Audit object is not defined! audit.js may not be loaded.');
+                }
+                console.log('✓ Audit object is available');
+                
+                // Check Supabase connection
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('Not authenticated. Please log in first at index.html');
+                }
+                console.log('✓ User is authenticated:', session.user.email);
+                
+                // Create test audit log
+                console.log('Creating test audit log entry...');
+                const result = await Audit.log(
+                    'TEST',
+                    'test_table',
+                    null,
+                    null,
+                    { 
+                        test: true, 
+                        timestamp: new Date().toISOString(),
+                        message: 'This is a test audit log entry' 
+                    }
+                );
+                
+                if (result.success) {
+                    console.log('✓ Audit log created successfully!');
+                    resultDiv.className = 'mt-4 p-4 rounded-lg bg-green-900/50 text-green-200';
+                    resultDiv.innerHTML = `
+                        <strong>✓ Success!</strong><br>
+                        Test audit log entry was created successfully.<br>
+                        <button onclick="loadAuditLogs()" class="mt-2 bg-green-700 hover:bg-green-600 px-3 py-1 rounded text-sm">
+                            View Logs
+                        </button>
+                    `;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('✗ Test failed:', error.message);
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-red-900/50 text-red-200';
+                resultDiv.innerHTML = `<strong>✗ Failed:</strong><br>${error.message}`;
+            }
+        };
+        
+        window.loadAuditLogs = async function() {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '<p class="text-slate-400">Loading...</p>';
+            
+            console.log('Loading audit logs...');
+            
+            try {
+                const { data: logs, error } = await supabase
+                    .from('audit_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                console.log(`✓ Loaded ${logs.length} audit log entries`);
+                
+                if (logs.length === 0) {
+                    container.innerHTML = '<p class="text-yellow-400">No audit logs found. Try creating a test entry first.</p>';
+                    return;
+                }
+                
+                container.innerHTML = logs.map(log => `
+                    <div class="bg-slate-900 p-4 rounded">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-semibold text-blue-400">${log.action}</span>
+                                <span class="text-slate-400 ml-2">on ${log.table_name}</span>
+                            </div>
+                            <span class="text-xs text-slate-500">${new Date(log.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="text-sm text-slate-400">
+                            User: ${log.user_email || 'system'}<br>
+                            ${log.record_id ? `Record ID: ${log.record_id}` : ''}
+                            ${log.new_values ? `<br>Data: ${JSON.stringify(log.new_values)}` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('✗ Failed to load logs:', error.message);
+                container.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            }
+        };
+        
+        // Auto-check on load
+        (async function() {
+            console.log('=== Audit Log Test Page Loaded ===');
+            console.log('Checking system status...');
+            
+            // Check if audit.js is loaded
+            if (typeof Audit !== 'undefined') {
+                console.log('✓ audit.js is loaded');
+            } else {
+                console.error('✗ audit.js is NOT loaded!');
+            }
+            
+            // Check authentication
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                console.log('✓ User authenticated:', session.user.email);
+            } else {
+                console.error('✗ User NOT authenticated. Please log in at index.html first.');
+            }
+            
+            // Check audit_logs table access
+            try {
+                const { count, error } = await supabase
+                    .from('audit_logs')
+                    .select('*', { count: 'exact', head: true });
+                
+                if (error) throw error;
+                console.log(`✓ Can access audit_logs table. Total records: ${count}`);
+            } catch (error) {
+                console.error('✗ Cannot access audit_logs table:', error.message);
+            }
+            
+            console.log('=== Status check complete ===');
+        })();
+    </script>
+</body>
+</html>

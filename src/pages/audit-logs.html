@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - Madison 88 IT Asset Management</title>
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script type="module" src="../scripts/utils.js"></script>
+    <script src="../scripts/audit.js"></script>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Audit Logs...</p>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app">
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+                </div>
+                <div class="nav-section" id="asset-management-nav">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Assets</a>
+                    <a href="employees.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Employees</a>
+                    <a href="assignments.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>Assignments</a>
+                </div>
+                <div class="nav-section" id="tracking-nav">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Maintenance</a>
+                    <a href="lost-assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Software Licenses</a>
+                </div>
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Reports</a>
+                    <a href="audit-logs.html" class="nav-link active" id="audit-logs-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Audit Logs</a>
+                </div>
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600"><span id="user-initials">--</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h2 class="text-lg font-semibold text-white">Audit Logs</h2>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">Audit Trail</h1>
+                    <p class="page-subtitle">Track all system activities and user actions</p>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-6">
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Date Range -->
+                            <div class="form-group">
+                                <label class="form-label">Date From</label>
+                                <input type="date" id="filter-date-from" class="form-input" onchange="applyFilters()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date To</label>
+                                <input type="date" id="filter-date-to" class="form-input" onchange="applyFilters()">
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <select id="filter-category" class="form-select" onchange="applyFilters()">
+                                    <option value="">All Categories</option>
+                                    <option value="authentication">Authentication</option>
+                                    <option value="asset_management">Asset Management</option>
+                                    <option value="user_management">User Management</option>
+                                    <option value="settings">Settings</option>
+                                    <option value="import_export">Import/Export</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="assignment">Assignment</option>
+                                    <option value="lost_assets">Lost Assets</option>
+                                    <option value="software_licenses">Software Licenses</option>
+                                </select>
+                            </div>
+
+                            <!-- User Filter (Admin only) -->
+                            <div class="form-group" id="user-filter-group">
+                                <label class="form-label">User</label>
+                                <select id="filter-user" class="form-select" onchange="applyFilters()">
+                                    <option value="">All Users</option>
+                                </select>
+                            </div>
+
+                            <!-- Search -->
+                            <div class="form-group lg:col-span-2">
+                                <label class="form-label">Search</label>
+                                <input type="text" id="filter-search" class="form-input" placeholder="Search descriptions, actions..." onkeyup="debounceSearch()">
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-group lg:col-span-2 flex items-end gap-2">
+                                <button class="btn btn-secondary flex-1" onclick="clearFilters()">Clear Filters</button>
+                                <button class="btn btn-primary flex-1" onclick="exportLogs()">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Logs Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Activity Log</h3>
+                        <span id="log-count" class="text-sm text-slate-400">Loading...</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Category</th>
+                                    <th>Action</th>
+                                    <th>Description</th>
+                                    <th class="text-right">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table">
+                                <tr>
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="spinner mx-auto mb-2"></div>
+                                        <p class="text-slate-400">Loading audit logs...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer flex items-center justify-between">
+                        <div class="text-sm text-slate-400">
+                            Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-logs">0</span> logs
+                        </div>
+                        <div class="flex gap-2" id="pagination-controls">
+                            <button class="btn btn-sm btn-secondary" onclick="previousPage()" id="prev-btn" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" onclick="nextPage()" id="next-btn" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal-overlay hidden">
+        <div class="modal max-w-2xl">
+            <div class="modal-header">
+                <h3 class="modal-title">Log Details</h3>
+                <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="modal-body space-y-4" id="details-content">
+                <!-- Content populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+        import { Utils } from '../scripts/utils.js';
+        
+        const formatDate = (date) => Utils.formatDate(date, 'datetime');
+
+        let currentUser = null;
+        let allLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        let logsPerPage = 5;
+        let searchTimeout;
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../public/index.html'; return; }
+
+            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            currentUser = { ...session.user, ...profile };
+            
+            // Redirect viewers to dashboard
+            if (currentUser.role === 'viewer') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Hide navigation sections for viewers (shouldn't reach here, but safety check)
+            if (currentUser.role === 'viewer') {
+                document.getElementById('asset-management-nav')?.classList.add('hidden');
+                document.getElementById('tracking-nav')?.classList.add('hidden');
+                document.getElementById('reports-nav')?.classList.add('hidden');
+            }
+
+            // Hide admin section for non-admins
+            if (currentUser.role !== 'admin') {
+                document.getElementById('admin-nav')?.classList.add('hidden');
+            }
+
+            // Hide user filter for non-admins
+            if (currentUser.role !== 'admin') {
+                document.getElementById('user-filter-group')?.classList.add('hidden');
+            }
+            
+            document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+            document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+            document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+
+            // Handle reports navigation visibility based on permission
+            await Utils.handleReportsNavVisibility(currentUser, supabase);
+
+            // Don't set default dates - show all logs by default
+            // User can set date filters if needed
+
+            // Load user list for admin filter
+            if (currentUser.role === 'admin') {
+                await loadUserList();
+            }
+
+            await loadLogs();
+
+            // Enable keyboard search for all dropdowns
+            Utils.enableAllSelectsKeyboardSearch('select');
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        async function loadUserList() {
+            const { data } = await supabase.from('user_profiles').select('id, full_name, email').order('full_name');
+            const select = document.getElementById('filter-user');
+            if (data) {
+                data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.full_name || user.email;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                // Build filter options
+                const options = {};
+                
+                const dateFrom = document.getElementById('filter-date-from').value;
+                const dateTo = document.getElementById('filter-date-to').value;
+                const category = document.getElementById('filter-category').value;
+                const userId = document.getElementById('filter-user')?.value;
+                const search = document.getElementById('filter-search').value;
+
+                if (dateFrom) {
+                    // Date input returns yyyy-mm-dd format
+                    const startDate = new Date(dateFrom + 'T00:00:00');
+                    if (!isNaN(startDate.getTime())) {
+                        options.startDate = startDate.toISOString();
+                    }
+                }
+                if (dateTo) {
+                    // Date input returns yyyy-mm-dd format
+                    const endDate = new Date(dateTo + 'T23:59:59');
+                    if (!isNaN(endDate.getTime())) {
+                        options.endDate = endDate.toISOString();
+                    }
+                }
+                if (category) options.actionCategory = category;
+                if (userId) options.userId = userId;
+                if (search) options.searchTerm = search;
+
+                // Fetch logs using role-based filtering from Audit.js
+                const response = await Audit.getLogs(options, currentUser);
+                
+                allLogs = response.data || [];
+                filteredLogs = allLogs;
+                currentPage = 1;
+
+                renderLogs();
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                showToast('Failed to load audit logs', 'error');
+                document.getElementById('logs-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">Failed to load logs</td></tr>';
+            }
+        }
+
+        function renderLogs() {
+            const start = (currentPage - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const pageData = filteredLogs.slice(start, end);
+
+            if (pageData.length === 0) {
+                document.getElementById('logs-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">No audit logs found</td></tr>';
+                document.getElementById('log-count').textContent = '0 logs';
+                document.getElementById('showing-start').textContent = '0';
+                document.getElementById('showing-end').textContent = '0';
+                document.getElementById('total-logs').textContent = '0';
+                return;
+            }
+
+            document.getElementById('logs-table').innerHTML = pageData.map(log => {
+                const categoryColors = {
+                    authentication: 'badge-info',
+                    asset_management: 'badge-success',
+                    user_management: 'badge-warning',
+                    settings: 'badge-gray',
+                    import_export: 'badge-purple',
+                    maintenance: 'badge-yellow',
+                    assignment: 'badge-blue',
+                    lost_assets: 'badge-red',
+                    software_licenses: 'badge-pink'
+                };
+
+                const badgeClass = categoryColors[log.action_category] || 'badge-gray';
+                const timestamp = formatDate(log.created_at);
+
+                return `
+                    <tr>
+                        <td class="text-sm text-slate-400">${timestamp}</td>
+                        <td class="font-medium text-white">${log.user_email || '-'}</td>
+                        <td><span class="badge ${badgeClass}">${(log.action_category || 'other').replace('_', ' ')}</span></td>
+                        <td class="text-sm">${log.action || '-'}</td>
+                        <td class="text-sm text-slate-300">${log.description || '-'}</td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-secondary" onclick="showDetails('${log.id}')">View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update pagination info
+            document.getElementById('log-count').textContent = `${filteredLogs.length} logs`;
+            document.getElementById('showing-start').textContent = start + 1;
+            document.getElementById('showing-end').textContent = Math.min(end, filteredLogs.length);
+            document.getElementById('total-logs').textContent = filteredLogs.length;
+
+            // Update pagination buttons
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = end >= filteredLogs.length;
+        }
+
+        window.applyFilters = async () => {
+            await loadLogs();
+        };
+
+        window.clearFilters = () => {
+            // Clear all filters including dates
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            document.getElementById('filter-category').value = '';
+            if (document.getElementById('filter-user')) {
+                document.getElementById('filter-user').value = '';
+            }
+            document.getElementById('filter-search').value = '';
+            loadLogs();
+        };
+
+        window.debounceSearch = () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        };
+
+        window.showDetails = (logId) => {
+            const log = allLogs.find(l => l.id === logId);
+            if (!log) return;
+
+            const content = document.getElementById('details-content');
+            content.innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">Timestamp</p>
+                        <p class="text-white font-medium">${formatDate(log.created_at)}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">User</p>
+                        <p class="text-white font-medium">${log.user_email || '-'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">Action</p>
+                        <p class="text-white font-medium">${log.action || '-'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">Category</p>
+                        <p class="text-white font-medium">${(log.action_category || 'other').replace('_', ' ')}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-sm text-slate-400 mb-1">Description</p>
+                        <p class="text-white">${log.description || '-'}</p>
+                    </div>
+                    ${log.table_name ? `
+                        <div>
+                            <p class="text-sm text-slate-400 mb-1">Table</p>
+                            <p class="text-white">${log.table_name}</p>
+                        </div>
+                    ` : ''}
+                    ${log.record_id ? `
+                        <div>
+                            <p class="text-sm text-slate-400 mb-1">Record ID</p>
+                            <p class="text-white font-mono text-xs">${log.record_id}</p>
+                        </div>
+                    ` : ''}
+                    ${log.ip_address ? `
+                        <div class="col-span-2">
+                            <p class="text-sm text-slate-400 mb-1">IP Address</p>
+                            <p class="text-white">${log.ip_address}</p>
+                        </div>
+                    ` : ''}
+                    ${log.old_values ? `
+                        <div class="col-span-2">
+                            <p class="text-sm text-slate-400 mb-1">Previous Values</p>
+                            <pre class="bg-slate-800 p-3 rounded text-xs overflow-auto max-h-48">${JSON.stringify(log.old_values, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                    ${log.new_values ? `
+                        <div class="col-span-2">
+                            <p class="text-sm text-slate-400 mb-1">New Values</p>
+                            <pre class="bg-slate-800 p-3 rounded text-xs overflow-auto max-h-48">${JSON.stringify(log.new_values, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('details-modal').classList.remove('hidden');
+        };
+
+        window.closeDetailsModal = () => {
+            document.getElementById('details-modal').classList.add('hidden');
+        };
+
+        window.nextPage = () => {
+            currentPage++;
+            renderLogs();
+        };
+
+        window.previousPage = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderLogs();
+            }
+        };
+
+        window.exportLogs = async () => {
+            try {
+                const csvContent = [
+                    ['Date', 'Time', 'User', 'Category', 'Action', 'Description', 'Table affected'].join(','),
+                    ...filteredLogs.map(log => {
+                        const date = new Date(log.created_at);
+                        const dateStr = date.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'});
+                        const timeStr = date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true});
+                        return [
+                            dateStr,
+                            timeStr,
+                            log.user_email || '',
+                            (log.action_category || '').replace('_', ' '),
+                            log.action || '',
+                            `"${(log.description || '').replace(/"/g, '""')}"`,
+                            log.table_name || ''
+                        ].join(',');
+                    })
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                showToast('Audit logs exported successfully', 'success');
+            } catch (error) {
+                showToast('Failed to export logs', 'error');
+            }
+        };
+
+        window.toggleSidebar = () => { 
+            document.getElementById('sidebar').classList.toggle('open'); 
+            document.getElementById('sidebar-overlay').classList.toggle('hidden'); 
+        };
+
+        window.handleLogout = async () => { 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { 
+                console.error(e); 
+            }
+            await supabase.auth.signOut(); 
+            window.location.href = '../../public/index.html'; 
+        };
+
+        init();
+    </script>
+</body>
+</html>

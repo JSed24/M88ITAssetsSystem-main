@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance - Madison 88 IT Asset Management</title>
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script type="module" src="../scripts/utils.js"></script>
+    <script src="../scripts/audit.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script type="module" src="../scripts/assets.js"></script>
+    <script src="../scripts/maintenance.js"></script>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Maintenance...</p>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app">
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Assets</a>
+                    <a href="employees.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Employees</a>
+                    <a href="assignments.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>Assignments</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Maintenance</a>
+                    <a href="lost-assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Software Licenses</a>
+                </div>
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Reports</a>
+                    <a href="audit-logs.html" class="nav-link" id="audit-logs-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Audit Logs</a>
+                </div>
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600"><span id="user-initials">--</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h2 class="text-lg font-semibold text-white">Maintenance & Repairs</h2>
+                </div>
+                <div class="topbar-right" id="admin-actions-topbar">
+                    <button class="btn btn-primary" onclick="openMaintenanceModal()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Log Maintenance
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">Maintenance Records</h1>
+                    <p class="page-subtitle">Track repairs and maintenance for IT assets</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-yellow-400" id="stat-in-progress">--</p><p class="text-slate-400 text-sm">In Progress</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-green-400" id="stat-completed">--</p><p class="text-slate-400 text-sm">Completed</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-red-400" id="stat-unfixable">--</p><p class="text-slate-400 text-sm">Cannot Repair</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-blue-400" id="stat-total-cost">₱0</p><p class="text-slate-400 text-sm">Total Repair Cost</p></div></div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-6">
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="search-input">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input type="text" id="search-input" class="form-input pl-10" placeholder="Search asset..." oninput="handleSearch(this.value)">
+                            </div>
+                            <select id="status-filter" class="form-select" onchange="loadRecords()">
+                                <option value="">All Status</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="cannot_repair">Cannot Repair</option>
+                            </select>
+                            <select id="type-filter" class="form-select" onchange="loadRecords()">
+                                <option value="">All Types</option>
+                                <option value="repair">Repair</option>
+                                <option value="preventive">Preventive</option>
+                                <option value="upgrade">Upgrade</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Maintenance Records <span class="text-slate-400 font-normal ml-2" id="records-count">(0)</span></h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Type</th>
+                                    <th>Issue</th>
+                                    <th>Start Date</th>
+                                    <th>Completed</th>
+                                    <th>Cost</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-table-body">
+                                <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Maintenance Modal -->
+    <div id="maintenance-modal" class="modal-overlay hidden">
+        <div class="modal max-w-lg">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Log Maintenance</h3>
+                <button onclick="closeMaintenanceModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="maintenance-form" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="record-id">
+                <div class="modal-body space-y-4">
+                    <div class="form-group">
+                        <label class="form-label">Asset *</label>
+                        <select id="maint-asset" class="form-select" required></select>
+                        <p class="text-xs text-slate-400 mt-1">Only non-decommissioned assets are shown</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label">Type *</label>
+                            <select id="maint-type" class="form-select" required>
+                                <option value="repair">Repair</option>
+                                <option value="preventive">Preventive</option>
+                                <option value="upgrade">Upgrade</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status *</label>
+                            <select id="maint-status" class="form-select" required>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="cannot_repair">Cannot Repair</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Issue Description *</label>
+                        <textarea id="maint-issue" class="form-textarea" rows="2" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Resolution</label>
+                        <textarea id="maint-resolution" class="form-textarea" rows="2"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" id="maint-start" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Completed Date</label>
+                            <input type="date" id="maint-completed" class="form-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label">Cost (PHP)</label>
+                            <input type="number" id="maint-cost" class="form-input" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Performed By</label>
+                            <input type="text" id="maint-performed" class="form-input" maxlength="25" placeholder="Technician name">
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeMaintenanceModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal max-w-md">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Maintenance Completion</h3>
+            </div>
+            <div class="modal-body">
+                <p class="text-slate-300 mb-4">Please confirm that all maintenance details are correct before finalizing this record. Once saved, the record cannot be edited.</p>
+                <div class="bg-slate-800 rounded-lg p-4 space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Status:</span>
+                        <span class="text-white font-medium" id="confirm-status"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Completed Date:</span>
+                        <span class="text-white" id="confirm-date"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Cost:</span>
+                        <span class="text-white" id="confirm-cost"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Performed By:</span>
+                        <span class="text-white" id="confirm-performed"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Go Back</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSave()">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+
+        let currentUser = null;
+        let searchTerm = '';
+        
+        // Use Maintenance module (available globally)
+        const Maintenance = window.Maintenance;
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../public/index.html'; return; }
+
+            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            currentUser = { ...session.user, ...profile };
+            
+            // Set Auth.user for Maintenance module to use
+            Auth.user = session.user;
+            Auth.profile = profile;
+            
+            document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+            document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+            document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+                        // Handle reports navigation visibility based on permission
+            await Utils.handleReportsNavVisibility(currentUser, supabase);
+                        // Hide admin-only navigation for non-admin users
+            if (currentUser.role !== 'admin') {
+                document.getElementById('admin-nav').classList.add('hidden');
+            }
+            
+            // Redirect viewers to dashboard - they should only see dashboard
+            if (currentUser.role === 'viewer') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            document.getElementById('maint-start').value = new Date().toISOString().split('T')[0];
+            
+            await loadStats();
+            await loadRecords();
+            await loadAssetOptions();
+
+            // Enable keyboard search for all dropdowns
+            Utils.enableAllSelectsKeyboardSearch('select');
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        async function loadStats() {
+            const { count: inProgress } = await supabase.from('maintenance_records').select('*', { count: 'exact', head: true }).eq('status', 'in_progress');
+            const { count: completed } = await supabase.from('maintenance_records').select('*', { count: 'exact', head: true }).eq('status', 'completed');
+            const { count: unfixable } = await supabase.from('maintenance_records').select('*', { count: 'exact', head: true }).eq('status', 'cannot_repair');
+            const { data: costs } = await supabase.from('maintenance_records').select('cost');
+            const totalCost = (costs || []).reduce((sum, r) => sum + (r.cost || 0), 0);
+
+            document.getElementById('stat-in-progress').textContent = inProgress || 0;
+            document.getElementById('stat-completed').textContent = completed || 0;
+            document.getElementById('stat-unfixable').textContent = unfixable || 0;
+            document.getElementById('stat-total-cost').textContent = `₱${totalCost.toLocaleString()}`;
+        }
+
+        async function loadRecords() {
+            const tbody = document.getElementById('records-table-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+
+            let query = supabase.from('v_maintenance_records_full').select('*', { count: 'exact' });
+            
+            const statusFilter = document.getElementById('status-filter').value;
+            const typeFilter = document.getElementById('type-filter').value;
+            if (statusFilter) query = query.eq('status', statusFilter);
+            if (typeFilter) query = query.eq('maintenance_type', typeFilter);
+            if (searchTerm) query = query.or(`issue_description.ilike.%${searchTerm}%`);
+
+            const { data: records, count, error } = await query.order('created_at', { ascending: false }).limit(50);
+            if (error) { 
+                console.error('Error loading maintenance records:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load</td></tr>'; 
+                return; 
+            }
+
+            // Debug logging
+            if (records && records.length > 0) {
+                console.log('First maintenance record:', records[0]);
+                console.log('Has maintenance_type?', records[0].maintenance_type);
+            }
+
+            document.getElementById('records-count').textContent = `(${count || 0})`;
+
+            if (!records?.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No records found</td></tr>';
+                return;
+            }
+
+            const statusClasses = { in_progress: 'badge-warning', completed: 'badge-success', cannot_repair: 'badge-danger' };
+            const typeLabels = { repair: 'Repair', preventive: 'Preventive', upgrade: 'Upgrade' };
+            const statusLabels = { in_progress: 'In Progress', completed: 'Completed', cannot_repair: 'Cannot Repair' };
+
+            tbody.innerHTML = records.map(r => {
+                // Determine if record should be read-only
+                // IT staff cannot edit completed/cannot_repair records, but admin can
+                const isCompleted = r.status === 'completed' || r.status === 'cannot_repair';
+                const isReadOnly = isCompleted && currentUser.role === 'it_staff';
+                
+                return `
+                <tr>
+                    <td>
+                        <p class="font-medium text-white">${r.asset_name || '-'}</p>
+                        <p class="text-xs text-blue-400 font-mono">${r.asset_tag || '-'}</p>
+                    </td>
+                    <td><span class="badge badge-info">${typeLabels[r.maintenance_type] || r.maintenance_type}</span></td>
+                    <td class="max-w-xs truncate">${r.issue_description || '-'}</td>
+                    <td>${r.start_date ? new Date(r.start_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</td>
+                    <td>${r.completed_date ? new Date(r.completed_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</td>
+                    <td>${r.cost ? `₱${r.cost.toLocaleString()}` : '-'}</td>
+                    <td><span class="badge ${statusClasses[r.status] || 'badge-gray'}">${statusLabels[r.status] || r.status}</span></td>
+                    <td class="text-right">
+                        ${currentUser.role !== 'viewer' ? `
+                        <button class="btn btn-sm ${isReadOnly ? 'btn-info' : 'btn-secondary'}" onclick="${isReadOnly ? 'viewRecord' : 'editRecord'}('${r.id}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isReadOnly ? 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' : 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'}"/></svg>
+                            <p>${isReadOnly ? 'View' : 'Edit'}</p>
+                        </button>
+                        ` : '<span class="text-slate-500 text-sm">View Only</span>'}
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        }
+
+        async function loadAssetOptions() {
+            // Query assets directly, excluding decommissioned status
+            const { data: assets } = await supabase
+                .from('assets')
+                .select('id, asset_tag, name')
+                .neq('status', 'decommissioned')
+                .order('asset_tag');
+            const select = document.getElementById('maint-asset');
+            select.innerHTML = '<option value="">Select an asset</option>' + (assets || []).map(a => `<option value="${a.id}">${a.name} (${a.asset_tag})</option>`).join('');        }
+
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
+        window.handleLogout = async () => { 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+            await supabase.auth.signOut(); 
+            window.location.href = '../../public/index.html'; 
+        };
+        window.handleSearch = (v) => { searchTerm = v; loadRecords(); };
+        window.loadRecords = loadRecords;
+
+        window.openMaintenanceModal = () => {
+            document.getElementById('maintenance-form').reset();
+            document.getElementById('record-id').value = '';
+            document.getElementById('maint-start').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-title').textContent = 'Log Maintenance';
+            document.getElementById('maintenance-modal').classList.remove('hidden');
+        };
+        window.closeMaintenanceModal = () => document.getElementById('maintenance-modal').classList.add('hidden');
+
+        window.editRecord = async (id) => {
+            const { data: record } = await supabase.from('maintenance_records').select('*').eq('id', id).single();
+            if (!record) return;
+            
+            document.getElementById('record-id').value = record.id;
+            document.getElementById('maint-asset').value = record.asset_id || '';
+            document.getElementById('maint-type').value = record.maintenance_type || 'repair';
+            document.getElementById('maint-status').value = record.status || 'in_progress';
+            document.getElementById('maint-issue').value = record.issue_description || '';
+            document.getElementById('maint-resolution').value = record.resolution || '';
+            document.getElementById('maint-start').value = record.start_date || '';
+            document.getElementById('maint-completed').value = record.completed_date || '';
+            document.getElementById('maint-cost').value = record.cost || '';
+            document.getElementById('maint-performed').value = record.performed_by || '';
+            document.getElementById('modal-title').textContent = 'Edit Maintenance Record';
+            document.getElementById('save-btn').style.display = 'block';
+            
+            // Enable all fields
+            document.querySelectorAll('#maintenance-form input, #maintenance-form select, #maintenance-form textarea').forEach(el => {
+                el.disabled = false;
+            });
+            
+            document.getElementById('maintenance-modal').classList.remove('hidden');
+        };
+
+        window.viewRecord = async (id) => {
+            const { data: record } = await supabase.from('maintenance_records').select('*').eq('id', id).single();
+            if (!record) return;
+            
+            document.getElementById('record-id').value = record.id;
+            document.getElementById('maint-asset').value = record.asset_id || '';
+            document.getElementById('maint-type').value = record.maintenance_type || 'repair';
+            document.getElementById('maint-status').value = record.status || 'in_progress';
+            document.getElementById('maint-issue').value = record.issue_description || '';
+            document.getElementById('maint-resolution').value = record.resolution || '';
+            document.getElementById('maint-start').value = record.start_date || '';
+            document.getElementById('maint-completed').value = record.completed_date || '';
+            document.getElementById('maint-cost').value = record.cost || '';
+            document.getElementById('maint-performed').value = record.performed_by || '';
+            document.getElementById('modal-title').textContent = 'View Maintenance Record (Read Only)';
+            document.getElementById('save-btn').style.display = 'none';
+            
+            // Disable all fields
+            document.querySelectorAll('#maintenance-form input, #maintenance-form select, #maintenance-form textarea').forEach(el => {
+                el.disabled = true;
+            });
+            
+            document.getElementById('maintenance-modal').classList.remove('hidden');
+        };
+
+        let pendingSaveData = null;
+
+        window.handleSubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('record-id').value;
+            const assetId = document.getElementById('maint-asset').value;
+            const status = document.getElementById('maint-status').value;
+            
+            const data = {
+                asset_id: assetId,
+                maintenance_type: document.getElementById('maint-type').value,
+                status,
+                issue_description: document.getElementById('maint-issue').value,
+                resolution: document.getElementById('maint-resolution').value || null,
+                start_date: document.getElementById('maint-start').value || null,
+                completed_date: document.getElementById('maint-completed').value || null,
+                cost: document.getElementById('maint-cost').value || null,
+                performed_by: document.getElementById('maint-performed').value || null
+            };
+
+            // Get submit button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            // If status is completed or cannot_repair and user is IT staff, show confirmation
+            // Admin can save directly without confirmation
+            if ((status === 'completed' || status === 'cannot_repair') && id && currentUser.role === 'it_staff') {
+                pendingSaveData = { id, data, status, assetId, submitBtn };
+                
+                // Populate confirmation modal
+                const statusLabels = { completed: 'Completed', cannot_repair: 'Cannot Repair' };
+                document.getElementById('confirm-status').textContent = statusLabels[status];
+                document.getElementById('confirm-date').textContent = data.completed_date ? new Date(data.completed_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-';
+                document.getElementById('confirm-cost').textContent = data.cost ? `₱${parseFloat(data.cost).toLocaleString()}` : '-';
+                document.getElementById('confirm-performed').textContent = data.performed_by || '-';
+                
+                document.getElementById('confirm-modal').classList.remove('hidden');
+                return;
+            }
+
+            // Otherwise save directly (for admin or in-progress status)
+            await performSave(id, data, status, assetId, submitBtn);
+        };
+
+        window.closeConfirmModal = () => {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            pendingSaveData = null;
+        };
+
+        window.confirmSave = async () => {
+            if (!pendingSaveData) return;
+            document.getElementById('confirm-modal').classList.add('hidden');
+            await performSave(pendingSaveData.id, pendingSaveData.data, pendingSaveData.status, pendingSaveData.assetId, pendingSaveData.submitBtn);
+            pendingSaveData = null;
+        };
+
+        async function performSave(id, data, status, assetId, submitBtn) {
+            // Handle form submission with loading state
+            await Utils.handleFormSubmit(submitBtn, async () => {
+                if (id) {
+                    // If changing status to completed, use complete method
+                    if (status === 'completed') {
+                        const result = await Maintenance.complete(id, {
+                            endDate: data.completed_date,
+                            cost: data.cost,
+                            notes: data.resolution
+                        });
+                        if (!result.success) throw new Error(result.error);
+                        showToast('Maintenance completed', 'success');
+                    } else {
+                        // Update using Maintenance module (includes audit logging)
+                        const result = await Maintenance.update(id, data);
+                        if (!result.success) throw new Error(result.error);
+                        showToast('Record updated', 'success');
+                    }
+                    
+                    // If status changed to cannot_repair, update asset status to damaged
+                    if (status === 'cannot_repair' && assetId) {
+                        const { error: assetError } = await supabase
+                            .from('assets')
+                            .update({ status: 'damaged' })
+                            .eq('id', assetId);
+                        
+                        if (assetError) {
+                            console.error('Failed to update asset status:', assetError);
+                            showToast('Warning: Asset status not updated to damaged', 'warning');
+                        }
+                    }
+                } else {
+                    // Create using Maintenance module (includes audit logging)
+                    const result = await Maintenance.create(data);
+                    if (!result.success) throw new Error(result.error);
+                    showToast('Record created', 'success');
+                }
+
+                closeMaintenanceModal();
+                loadStats();
+                loadRecords();
+            }, id ? (status === 'completed' ? 'Completing...' : 'Updating...') : 'Saving...');
+        }
+
+        init();
+    </script>
+</body>
+</html>

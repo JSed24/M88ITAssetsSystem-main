@@ -1,0 +1,28 @@
+{
+  "name": "m88-it-assets-system",
+  "version": "1.0.0",
+  "description": "Madison 88 IT Equipment Inventory Management System",
+  "main": "public/index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve .",
+    "preview": "npx serve ."
+  },
+  "keywords": [
+    "asset-management",
+    "inventory",
+    "it-equipment",
+    "supabase"
+  ],
+  "author": "Madison 88",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/m88-it-assets-system.git"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

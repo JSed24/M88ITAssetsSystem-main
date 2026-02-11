@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Licenses - Madison 88 IT Asset Management</title>
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script type="module" src="../scripts/utils.js"></script>
+    <script src="../scripts/audit.js"></script>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Licenses...</p>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app">
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Assets</a>
+                    <a href="employees.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Employees</a>
+                    <a href="assignments.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>Assignments</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Maintenance</a>
+                    <a href="lost-assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Software Licenses</a>
+                </div>
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Reports</a>
+                    <a href="audit-logs.html" class="nav-link" id="audit-logs-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Audit Logs</a>
+                </div>
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600"><span id="user-initials">--</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h2 class="text-lg font-semibold text-white">Software Licenses</h2>
+                </div>
+                <div class="topbar-right" id="admin-actions-topbar">
+                    <button class="btn btn-primary" onclick="openLicenseModal()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Add License
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">Software Licenses</h1>
+                    <p class="page-subtitle">Manage software licenses and track usage</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-blue-400" id="stat-total">--</p><p class="text-slate-400 text-sm">Total Licenses</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-green-400" id="stat-active">--</p><p class="text-slate-400 text-sm">Active</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-yellow-400" id="stat-expiring">--</p><p class="text-slate-400 text-sm">Expiring Soon</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-red-400" id="stat-expired">--</p><p class="text-slate-400 text-sm">Expired</p></div></div>
+                </div>
+
+                <!-- Licenses Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">All Licenses <span class="text-slate-400 font-normal ml-2" id="licenses-count">(0)</span></h3>
+                        <div class="flex gap-2">
+                            <input type="text" class="form-input text-sm" placeholder="Search..." oninput="handleSearch(this.value)">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Software</th>
+                                    <th>License Key</th>
+                                    <th>Type</th>
+                                    <th>Seats</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="licenses-table-body">
+                                <tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- License Modal -->
+    <div id="license-modal" class="modal-overlay hidden">
+        <div class="modal max-w-lg">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Add License</h3>
+                <button onclick="closeLicenseModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="license-form" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="license-id">
+                <div class="modal-body space-y-4">
+                    <div class="form-group">
+                        <label class="form-label">Software Name *</label>
+                        <input type="text" id="license-name" class="form-input" maxlength="25" required placeholder="e.g., Microsoft Office 365">
+                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vendor</label>
+                        <input type="text" id="license-vendor" class="form-input" maxlength="25" placeholder="e.g., Microsoft">
+                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">License Key</label>
+                        <input type="text" id="license-key" class="form-input" maxlength="25" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
+                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label">License Type</label>
+                            <select id="license-type" class="form-select">
+                                <option value="perpetual">Perpetual</option>
+                                <option value="subscription">Subscription</option>
+                                <option value="volume">Volume</option>
+                                <option value="oem">OEM</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Seats</label>
+                            <input type="number" id="license-seats" class="form-input" min="1" value="1">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label">Purchase Date</label>
+                            <input type="date" id="license-purchase" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" id="license-expiry" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cost (PHP)</label>
+                        <input type="number" id="license-cost" class="form-input" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea id="license-notes" class="form-textarea" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+
+        let currentUser = null;
+        let searchTerm = '';
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../public/index.html'; return; }
+
+            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            currentUser = { ...session.user, ...profile };
+            
+            document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+            document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+            document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+            
+            // Hide admin-only navigation for non-admin users
+            if (currentUser.role !== 'admin') {
+                document.getElementById('admin-nav').classList.add('hidden');
+            }
+            
+            // Handle reports navigation visibility based on permission
+            await Utils.handleReportsNavVisibility(currentUser, supabase);
+            
+            // Redirect viewers to dashboard - they should only see dashboard
+            if (currentUser.role === 'viewer') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            await loadStats();
+            await loadLicenses();
+
+            // Enable keyboard search for all dropdowns
+            Utils.enableAllSelectsKeyboardSearch('select');
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        async function loadStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            const { count: total } = await supabase.from('software_licenses').select('*', { count: 'exact', head: true });
+            const { count: active } = await supabase.from('software_licenses').select('*', { count: 'exact', head: true }).or(`expiry_date.is.null,expiry_date.gt.${today}`);
+            const { count: expiring } = await supabase.from('software_licenses').select('*', { count: 'exact', head: true }).gte('expiry_date', today).lte('expiry_date', thirtyDays);
+            const { count: expired } = await supabase.from('software_licenses').select('*', { count: 'exact', head: true }).lt('expiry_date', today);
+
+            document.getElementById('stat-total').textContent = total || 0;
+            document.getElementById('stat-active').textContent = active || 0;
+            document.getElementById('stat-expiring').textContent = expiring || 0;
+            document.getElementById('stat-expired').textContent = expired || 0;
+        }
+
+        async function loadLicenses() {
+            const tbody = document.getElementById('licenses-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+
+            let query = supabase.from('software_licenses').select('*', { count: 'exact' });
+            if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);
+
+            const { data: licenses, count, error } = await query.order('expiry_date', { ascending: true }).limit(50);
+            if (error) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>'; return; }
+
+            document.getElementById('licenses-count').textContent = `(${count || 0})`;
+
+            if (!licenses?.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+                return;
+            }
+
+            const today = new Date();
+            const getStatus = (expiry) => {
+                if (!expiry) return { label: 'Perpetual', class: 'badge-info' };
+                const exp = new Date(expiry);
+                if (exp < today) return { label: 'Expired', class: 'badge-danger' };
+                if (exp < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) return { label: 'Expiring', class: 'badge-warning' };
+                return { label: 'Active', class: 'badge-success' };
+            };
+
+            tbody.innerHTML = licenses.map(l => {
+                const status = getStatus(l.expiry_date);
+                return `
+                    <tr>
+                        <td>
+                            <p class="font-medium text-white">${l.name}</p>
+                            <p class="text-xs text-slate-400">${l.vendor || ''}</p>
+                        </td>
+                        <td class="font-mono text-sm">${l.license_key ? '••••' + l.license_key.slice(-8) : '-'}</td>
+                        <td class="capitalize">${l.license_type || '-'}</td>
+                        <td>${l.seats || 1}</td>
+                        <td>${l.expiry_date ? new Date(l.expiry_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : 'Never'}</td>
+                        <td><span class="badge ${status.class}">${status.label}</span></td>
+                        <td class="text-right">
+                            ${currentUser.role !== 'viewer' ? `
+                            <button class="btn btn-sm btn-secondary" onclick="editLicense('${l.id}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <p>Edit</p>
+                            </button>
+                            ` : '<span class="text-slate-500 text-sm">View Only</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
+        window.handleLogout = async () => { 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+            await supabase.auth.signOut(); 
+            window.location.href = '../../public/index.html'; 
+        };
+        window.handleSearch = (v) => { searchTerm = v; loadLicenses(); };
+
+        window.openLicenseModal = () => {
+            document.getElementById('license-form').reset();
+            document.getElementById('license-id').value = '';
+            document.getElementById('modal-title').textContent = 'Add License';
+            document.getElementById('license-modal').classList.remove('hidden');
+        };
+        window.closeLicenseModal = () => document.getElementById('license-modal').classList.add('hidden');
+
+        window.editLicense = async (id) => {
+            const { data: license } = await supabase.from('software_licenses').select('*').eq('id', id).single();
+            if (!license) return;
+            
+            document.getElementById('license-id').value = license.id;
+            document.getElementById('license-name').value = license.name || '';
+            document.getElementById('license-vendor').value = license.vendor || '';
+            document.getElementById('license-key').value = license.license_key || '';
+            document.getElementById('license-type').value = license.license_type || 'perpetual';
+            document.getElementById('license-seats').value = license.seats || 1;
+            document.getElementById('license-purchase').value = license.purchase_date || '';
+            document.getElementById('license-expiry').value = license.expiry_date || '';
+            document.getElementById('license-cost').value = license.cost || '';
+            document.getElementById('license-notes').value = license.notes || '';
+            document.getElementById('modal-title').textContent = 'Edit License';
+            document.getElementById('license-modal').classList.remove('hidden');
+        };
+
+        window.handleSubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('license-id').value;
+            const data = {
+                name: document.getElementById('license-name').value,
+                vendor: document.getElementById('license-vendor').value || null,
+                license_key: document.getElementById('license-key').value || null,
+                license_type: document.getElementById('license-type').value,
+                seats: parseInt(document.getElementById('license-seats').value) || 1,
+                purchase_date: document.getElementById('license-purchase').value || null,
+                expiry_date: document.getElementById('license-expiry').value || null,
+                cost: parseFloat(document.getElementById('license-cost').value) || null,
+                notes: document.getElementById('license-notes').value || null
+            };
+
+            // Get submit button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            // Handle form submission with loading state
+            await Utils.handleFormSubmit(submitBtn, async () => {
+                let result;
+                if (id) {
+                    // Get old data for audit log
+                    const { data: oldData } = await supabase.from('software_licenses').select('*').eq('id', id).single();
+                    
+                    result = await supabase.from('software_licenses').update(data).eq('id', id).select();
+                    
+                    if (!result.error && result.data && result.data[0]) {
+                        await Audit.logLicenseUpdated(id, oldData, result.data[0]);
+                    }
+                } else {
+                    result = await supabase.from('software_licenses').insert([data]).select();
+                    
+                    if (!result.error && result.data && result.data[0]) {
+                        await Audit.logLicenseCreated(result.data[0]);
+                    }
+                }
+                
+                if (result.error) throw result.error;
+                
+                showToast(id ? 'License updated' : 'License added', 'success');
+                closeLicenseModal();
+                loadStats();
+                loadLicenses();
+            }, id ? 'Updating...' : 'Saving...');
+        };
+
+        init();
+    </script>
+</body>
+</html>

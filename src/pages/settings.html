@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Madison 88 IT Asset Management</title>
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script type="module" src="../scripts/utils.js"></script>
+    <script src="../scripts/audit.js"></script>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Settings...</p>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app">
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Assets</a>
+                    <a href="employees.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Employees</a>
+                    <a href="assignments.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>Assignments</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Maintenance</a>
+                    <a href="lost-assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Software Licenses</a>
+                </div>
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Reports</a>
+                    <a href="audit-logs.html" class="nav-link" id="audit-logs-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Audit Logs</a>
+                </div>
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600"><span id="user-initials">--</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h2 class="text-lg font-semibold text-white">Settings</h2>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">System Settings</h1>
+                    <p class="page-subtitle">Manage users, role permissions, assignment rules, and asset categories</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6 border-b border-slate-700 pb-4">
+                    <button onclick="switchTab('users')" id="tab-users" class="btn btn-primary">Users</button>
+                    <button onclick="switchTab('permissions')" id="tab-permissions" class="btn btn-secondary">Permissions</button>
+                    <button onclick="switchTab('assignment-rules')" id="tab-assignment-rules" class="btn btn-secondary">Assignment Rules</button>
+                    <button onclick="switchTab('categories')" id="tab-categories" class="btn btn-secondary">Categories</button>
+                    <!-- <button onclick="switchTab('locations')" id="tab-locations" class="btn btn-secondary">Locations</button>
+                    <button onclick="switchTab('departments')" id="tab-departments" class="btn btn-secondary">Departments</button> -->
+                </div>
+
+                <!-- Categories Section -->
+                <div id="section-categories" class="settings-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Asset Categories</h3>
+                            <button class="btn btn-sm btn-primary" onclick="openModal('category')">Add Category</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Description</th><th>Status</th><th style="text-align: right;">Actions</th></tr></thead>
+                                <tbody id="categories-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Locations Section -->
+                <div id="section-locations" class="settings-section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Locations</h3>
+                            <button class="btn btn-sm btn-primary" onclick="openModal('location')">Add Location</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Address</th><th style="text-align: right;">Actions</th></tr></thead>
+                                <tbody id="locations-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Departments Section -->
+                <div id="section-departments" class="settings-section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Departments</h3>
+                            <button class="btn btn-sm btn-primary" onclick="openModal('department')">Add Department</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Description</th><th style="text-align: right;">Actions</th></tr></thead>
+                                <tbody id="departments-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Section -->
+                <div id="section-users" class="settings-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">System Users</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th style="text-align: right;">Actions</th></tr></thead>
+                                <tbody id="users-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions Section -->
+                <div id="section-permissions" class="settings-section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Role Permissions</h3>
+                            <p class="text-sm text-slate-400 mt-1">Configure access permissions for different user roles</p>
+                        </div>
+                        <div class="card-body space-y-6">
+                            <!-- IT Staff Reports Access -->
+                            <div class="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium mb-1">IT Staff Reports Access</h4>
+                                    <p class="text-sm text-slate-400">Allow IT Staff to view and export reports (PDF/Excel)</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="it-staff-reports-toggle" class="sr-only peer" onchange="toggleReportsPermission(this.checked)">
+                                    <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <!-- IT Staff Import Access -->
+                            <div class="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium mb-1">IT Staff Import Access</h4>
+                                    <p class="text-sm text-slate-400">Allow IT Staff to import assets and employees from CSV/Excel files</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="it-staff-import-toggle" class="sr-only peer" onchange="toggleImportPermission(this.checked)">
+                                    <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="text-xs text-slate-500 p-4 bg-slate-900 rounded-lg">
+                                <p class="font-medium text-slate-400 mb-2">Permission Effects:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li><strong>Reports Access Enabled:</strong> IT Staff can access Reports page, view all reports, and export data</li>
+                                    <li><strong>Reports Access Disabled:</strong> Reports navigation hidden for IT Staff, access redirected to dashboard</li>
+                                    <li><strong>Import Access Enabled:</strong> IT Staff can see and use Import buttons in Assets and Employees pages</li>
+                                    <li><strong>Import Access Disabled:</strong> Import buttons hidden for IT Staff</li>
+                                    <li><strong>Note:</strong> Admins always have full access regardless of these settings</li>
+                                    <li><strong>Note:</strong> Viewers never have access regardless of these settings</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Rules Section -->
+                <div id="section-assignment-rules" class="settings-section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Asset Category Assignment Rules</h3>
+                            <p class="text-sm text-slate-400 mt-1">Configure whether each asset category allows single or multiple assignments to employees</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Assignment Type</th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assignment-rules-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>            
+        </main>
+    </div>
+
+    <!-- Generic Modal -->
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal max-w-md">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Add Item</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="edit-form" onsubmit="handleSave(event)">
+                <input type="hidden" id="item-id">
+                <input type="hidden" id="item-type">
+                <div class="modal-body space-y-4" id="modal-fields"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+
+        let currentUser = null;
+        let currentTab = 'users';
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../public/index.html'; return; }
+
+            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            currentUser = { ...session.user, ...profile };
+            
+            if (currentUser.role !== 'admin') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+            document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+            document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+
+            // Handle reports navigation visibility based on permission
+            await Utils.handleReportsNavVisibility(currentUser, supabase);
+
+            await loadAllData();
+            switchTab('users'); // Load users tab by default
+
+            // Enable keyboard search for all dropdowns
+            Utils.enableAllSelectsKeyboardSearch('select');
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        async function loadAllData() {
+            await Promise.all([loadCategories(), loadLocations(), loadDepartments(), loadUsers(), loadAssignmentRules(), loadPermissions()]);
+        }
+
+        async function loadCategories() {
+            const { data } = await supabase.from('asset_categories').select('*').order('name');
+            document.getElementById('categories-table').innerHTML = (data || []).map(c => {
+                const isActive = c.is_active !== false;
+                const statusBadge = isActive 
+                    ? '<span class="badge badge-success">Active</span>' 
+                    : '<span class="badge badge-gray">Inactive</span>';
+                const toggleBtn = isActive
+                    ? `<button class="btn btn-sm btn-warning" onclick="toggleCategoryStatus('${c.id}', false)">Deactivate</button>`
+                    : `<button class="btn btn-sm btn-success" onclick="toggleCategoryStatus('${c.id}', true)">Activate</button>`;
+                return `
+                    <tr class="${!isActive ? 'opacity-60' : ''}">
+                        <td class="font-medium text-white">${c.name}</td>
+                        <td>${c.description || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-secondary" onclick="editItem('category', '${c.id}')">Edit</button>
+                            ${toggleBtn}
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" class="text-center py-8 text-slate-400">No categories</td></tr>';
+        }
+
+        async function loadLocations() {
+            const { data } = await supabase.from('locations').select('*').order('name');
+            document.getElementById('locations-table').innerHTML = (data || []).map(l => `
+                <tr>
+                    <td class="font-medium text-white">${l.name}</td>
+                    <td>${l.address || '-'}</td>
+                    <td class="text-right">
+                        <button class="btn btn-sm btn-secondary" onclick="editItem('location', '${l.id}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem('locations', '${l.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="text-center py-8 text-slate-400">No locations</td></tr>';
+        }
+
+        async function loadDepartments() {
+            const { data } = await supabase.from('departments').select('*').order('name');
+            document.getElementById('departments-table').innerHTML = (data || []).map(d => `
+                <tr>
+                    <td class="font-medium text-white">${d.name}</td>
+                    <td>${d.description || '-'}</td>
+                    <td class="text-right">
+                        <button class="btn btn-sm btn-secondary" onclick="editItem('department', '${d.id}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem('departments', '${d.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="text-center py-8 text-slate-400">No departments</td></tr>';
+        }
+
+        async function loadUsers() {
+            const { data } = await supabase.from('user_profiles').select('*').order('full_name');
+            document.getElementById('users-table').innerHTML = (data || []).map(u => `
+                <tr>
+                    <td class="font-medium text-white">${u.full_name || '-'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td><span class="badge ${u.role === 'admin' ? 'badge-info' : u.role === 'viewer' ? 'badge-warning' : 'badge-gray'}">${u.role || 'user'}</span></td>
+                    <td><span class="badge ${u.is_active !== false ? 'badge-success' : 'badge-danger'}">${u.is_active !== false ? 'Active' : 'Inactive'}</span></td>
+                    <td class="text-right">
+                        <button class="btn btn-sm btn-secondary" onclick="editUser('${u.id}')">Edit Role</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="text-center py-8 text-slate-400">No users</td></tr>';
+        }
+
+        async function loadAssignmentRules() {
+            const { data } = await supabase.from('asset_categories').select('*').order('name');
+            document.getElementById('assignment-rules-table').innerHTML = (data || []).map(c => `
+                <tr>
+                    <td class="font-medium text-white">${c.name}</td>
+                    <td class="text-slate-400">${c.description || '-'}</td>
+                    <td>
+                        <span class="badge ${c.allow_multiple_assignment ? 'badge-success' : 'badge-info'}">
+                            ${c.allow_multiple_assignment ? 'Multiple Assignment Allowed' : 'Single Assignment Only'}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <button class="btn btn-sm ${c.allow_multiple_assignment ? 'btn-warning' : 'btn-success'}" 
+                                onclick="toggleAssignmentRule('${c.id}', ${!c.allow_multiple_assignment})">
+                            ${c.allow_multiple_assignment ? 'Set to Single' : 'Allow Multiple'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="text-center py-8 text-slate-400">No categories</td></tr>';
+        }
+
+        async function loadPermissions() {
+            try {
+                const { data } = await supabase
+                    .from('system_settings')
+                    .select('*')
+                    .in('setting_key', ['it_staff_can_access_reports', 'it_staff_can_import_data']);
+                
+                if (data) {
+                    data.forEach(setting => {
+                        const isEnabled = setting.setting_value === 'true';
+                        if (setting.setting_key === 'it_staff_can_access_reports') {
+                            document.getElementById('it-staff-reports-toggle').checked = isEnabled;
+                        } else if (setting.setting_key === 'it_staff_can_import_data') {
+                            document.getElementById('it-staff-import-toggle').checked = isEnabled;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading permissions:', error);
+            }
+        }
+
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
+        window.handleLogout = async () => { 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+            await supabase.auth.signOut(); 
+            window.location.href = '../../public/index.html'; 
+        };
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.settings-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.className = 'btn btn-secondary');
+            document.getElementById(`tab-${tab}`).className = 'btn btn-primary';
+        };
+
+        window.openModal = (type) => {
+            document.getElementById('item-id').value = '';
+            document.getElementById('item-type').value = type;
+            
+            let fields = '';
+            switch (type) {
+                case 'category':
+                    fields = `
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" id="field-name" class="form-input" maxlength="25" required>
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                        <div class="form-group"><label class="form-label">Description</label><textarea id="field-description" class="form-textarea" rows="2"></textarea></div>
+                    `;
+                    break;
+                case 'location':
+                    fields = `
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" id="field-name" class="form-input" maxlength="25" required>
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                        <div class="form-group"><label class="form-label">Address</label><textarea id="field-address" class="form-textarea" rows="2"></textarea></div>
+                    `;
+                    break;
+                case 'department':
+                    fields = `
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" id="field-name" class="form-input" maxlength="25" required>
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                        <div class="form-group"><label class="form-label">Description</label><textarea id="field-description" class="form-textarea" rows="2"></textarea></div>
+                    `;
+                    break;
+            }
+            document.getElementById('modal-fields').innerHTML = fields;
+            document.getElementById('modal-title').textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => document.getElementById('edit-modal').classList.add('hidden');
+
+        window.editItem = async (type, id) => {
+            const tables = { category: 'asset_categories', location: 'locations', department: 'departments' };
+            const { data } = await supabase.from(tables[type]).select('*').eq('id', id).single();
+            if (!data) return;
+
+            openModal(type);
+            document.getElementById('item-id').value = id;
+            document.getElementById('field-name').value = data.name || '';
+            if (type === 'location') {
+                document.getElementById('field-address').value = data.address || '';
+            } else {
+                document.getElementById('field-description').value = data.description || '';
+            }
+            document.getElementById('modal-title').textContent = `Edit ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        };
+
+        window.editUser = async (id) => {
+            const { data: user } = await supabase.from('user_profiles').select('*').eq('id', id).single();
+            if (!user) return;
+
+            document.getElementById('modal-fields').innerHTML = `
+                <p class="text-white font-medium">${user.full_name || user.email}</p>
+                <div class="form-group"><label class="form-label">Role</label><select id="field-role" class="form-select">
+                    <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer (Dashboard Only)</option>
+                    <option value="it_staff" ${user.role === 'it_staff' ? 'selected' : ''}>IT Staff</option>
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select></div>
+                <div class="form-group">
+                    <label class="form-label">Active</label>
+                    <select id="field-active" class="form-select">
+                        <option value="true" ${user.is_active !== false ? 'selected' : ''}>Yes</option>
+                        <option value="false" ${user.is_active === false ? 'selected' : ''}>No</option>
+                    </select>
+                </div>
+            `;
+            document.getElementById('item-id').value = id;
+            document.getElementById('item-type').value = 'user';
+            document.getElementById('modal-title').textContent = 'Edit User';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        window.handleSave = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('item-id').value;
+            const type = document.getElementById('item-type').value;
+            const tables = { category: 'asset_categories', location: 'locations', department: 'departments', user: 'user_profiles' };
+
+            // Get submit button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            // Handle form submission with loading state
+            await Utils.handleFormSubmit(submitBtn, async () => {
+                if (type === 'user') {
+                    // Get old data for audit
+                    const { data: oldUser } = await supabase.from('user_profiles').select('*').eq('id', id).single();
+                    const newRole = document.getElementById('field-role').value;
+                    const newActive = document.getElementById('field-active').value === 'true';
+                    
+                    await supabase.from('user_profiles').update({
+                        role: newRole,
+                        is_active: newActive
+                    }).eq('id', id);
+                    
+                    // Log role change if changed
+                    if (oldUser.role !== newRole) {
+                        await Audit.logUserRoleChanged(id, oldUser.email, oldUser.role, newRole);
+                    }
+                    
+                    // Log status change if changed
+                    if (oldUser.is_active !== newActive) {
+                        await Audit.logUserStatusChanged(id, oldUser.email, newActive);
+                    }
+                } else {
+                    // Handle category, location, and department
+                    const table = tables[type];
+                    const name = document.getElementById('field-name').value.trim();
+                    
+                    if (!name) {
+                        showToast('Name is required', 'error');
+                        throw new Error('Name is required');
+                    }
+
+                    const data = { name };
+                    
+                    if (type === 'location') {
+                        data.address = document.getElementById('field-address').value.trim();
+                    } else {
+                        data.description = document.getElementById('field-description').value.trim();
+                    }
+
+                    if (id) {
+                        // Update existing
+                        const { data: oldData } = await supabase.from(table).select('*').eq('id', id).single();
+                        const { error } = await supabase.from(table).update(data).eq('id', id);
+                        if (error) throw error;
+                        
+                        // Log update
+                        if (type === 'category') {
+                            await Audit.logCategoryUpdated(id, oldData, { ...oldData, ...data });
+                        }
+                    } else {
+                        // Create new
+                        // For categories, set is_active to true by default
+                        if (type === 'category') {
+                            data.is_active = true;
+                        }
+                        
+                        const { data: newRecord, error } = await supabase.from(table).insert([data]).select().single();
+                        if (error) throw error;
+                        
+                        // Log creation
+                        if (type === 'category') {
+                            await Audit.logCategoryCreated(newRecord);
+                        }
+                    }
+                }
+                showToast('Saved successfully', 'success');
+                closeModal();
+                loadAllData();
+            }, id ? 'Updating...' : 'Saving...');
+        };
+
+        window.deleteItem = async (table, id) => {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            try {
+                await supabase.from(table).delete().eq('id', id);
+                showToast('Deleted successfully', 'success');
+                loadAllData();
+            } catch (error) {
+                showToast(error.message || 'Failed to delete', 'error');
+            }
+        };
+
+        window.toggleAssignmentRule = async (categoryId, allowMultiple) => {
+            try {
+                // Get category name for audit log
+                const { data: category } = await supabase.from('asset_categories').select('name').eq('id', categoryId).single();
+                
+                const { error } = await supabase
+                    .from('asset_categories')
+                    .update({ allow_multiple_assignment: allowMultiple })
+                    .eq('id', categoryId);
+                
+                if (error) throw error;
+                
+                // Log the change
+                await Audit.logAssignmentRuleChanged(categoryId, category.name, allowMultiple);
+                
+                showToast(`Assignment rule updated to ${allowMultiple ? 'Multiple Assignment' : 'Single Assignment'}`, 'success');
+                await loadAssignmentRules();
+            } catch (error) {
+                showToast(error.message || 'Failed to update assignment rule', 'error');
+            }
+        };
+
+        window.toggleReportsPermission = async (enabled) => {
+            try {
+                const { error } = await supabase
+                    .from('system_settings')
+                    .update({ 
+                        setting_value: enabled ? 'true' : 'false',
+                        updated_by: currentUser.id,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('setting_key', 'it_staff_can_access_reports');
+                
+                if (error) throw error;
+                
+                // Log the permission change
+                await Audit.log({
+                    action: 'UPDATE',
+                    actionCategory: Audit.CATEGORIES.SETTINGS,
+                    description: `${enabled ? 'Enabled' : 'Disabled'} IT Staff access to reports`,
+                    tableName: 'system_settings',
+                    recordId: null,
+                    oldValues: { setting_key: 'it_staff_can_access_reports', enabled: !enabled },
+                    newValues: { setting_key: 'it_staff_can_access_reports', enabled: enabled }
+                });
+                
+                showToast(`IT Staff reports access ${enabled ? 'enabled' : 'disabled'}`, 'success');
+            } catch (error) {
+                console.error('Toggle reports permission error:', error);
+                showToast(error.message || 'Failed to update permission', 'error');
+                // Revert toggle on error
+                document.getElementById('it-staff-reports-toggle').checked = !enabled;
+            }
+        };
+
+        window.toggleImportPermission = async (enabled) => {
+            try {
+                const { error } = await supabase
+                    .from('system_settings')
+                    .update({ 
+                        setting_value: enabled ? 'true' : 'false',
+                        updated_by: currentUser.id,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('setting_key', 'it_staff_can_import_data');
+                
+                if (error) throw error;
+                
+                // Log the permission change
+                await Audit.log({
+                    action: 'UPDATE',
+                    actionCategory: Audit.CATEGORIES.SETTINGS,
+                    description: `${enabled ? 'Enabled' : 'Disabled'} IT Staff ability to import data`,
+                    tableName: 'system_settings',
+                    recordId: null,
+                    oldValues: { setting_key: 'it_staff_can_import_data', enabled: !enabled },
+                    newValues: { setting_key: 'it_staff_can_import_data', enabled: enabled }
+                });
+                
+                showToast(`IT Staff import access ${enabled ? 'enabled' : 'disabled'}`, 'success');
+            } catch (error) {
+                console.error('Toggle import permission error:', error);
+                showToast(error.message || 'Failed to update permission', 'error');
+                // Revert toggle on error
+                document.getElementById('it-staff-import-toggle').checked = !enabled;
+            }
+        };
+
+        window.toggleCategoryStatus = async (id, activate) => {
+            try {
+                // Get category info for audit log
+                const { data: category } = await supabase.from('asset_categories').select('*').eq('id', id).single();
+                if (!category) throw new Error('Category not found');
+
+                const { error } = await supabase
+                    .from('asset_categories')
+                    .update({ is_active: activate })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                // Log the status change
+                await Audit.log({
+                    action: 'UPDATE',
+                    actionCategory: Audit.CATEGORIES.SETTINGS,
+                    description: `${activate ? 'Activated' : 'Deactivated'} category: ${category.name}`,
+                    tableName: 'asset_categories',
+                    recordId: id,
+                    oldValues: { ...category, is_active: !activate },
+                    newValues: { ...category, is_active: activate }
+                });
+                
+                showToast(`Category ${activate ? 'activated' : 'deactivated'} successfully`, 'success');
+                await loadCategories();
+            } catch (error) {
+                console.error('Toggle category status error:', error);
+                showToast(error.message || 'Failed to update category status', 'error');
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>

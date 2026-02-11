@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost Assets - Madison 88 IT Asset Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script src="../scripts/audit.js"></script>
+    <script src="../scripts/auth.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Lost Assets...</p>
+        </div>
+    </div>
+
+    <!-- App Layout -->
+    <div class="app-layout hidden" id="app">
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Logo -->
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Main -->
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                </div>
+                
+                <!-- Asset Management -->
+                <div class="nav-section">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Assets
+                    </a>
+                    <a href="employees.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Employees
+                    </a>
+                    <a href="assignments.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        Assignments
+                    </a>
+                </div>
+                
+                <!-- Tracking -->
+                <div class="nav-section">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Maintenance
+                    </a>
+                    <a href="lost-assets.html" class="nav-link active">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        Software Licenses
+                    </a>
+                </div>
+                
+                <!-- Reports -->
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Reports
+                    </a>
+                    <a href="audit-logs.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Audit Logs
+                    </a>
+                </div>
+                
+                <!-- Admin -->
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- User Info -->
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600">
+                        <span id="user-initials">--</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white" title="Logout">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="menu-toggle" class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h2 class="text-lg font-semibold text-white">Lost Assets</h2>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn btn-primary" onclick="openLostAssetModal()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Report Lost Asset
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1 class="page-title">Lost Assets Tracking</h1>
+                    <p class="page-subtitle">Track and manage lost and found assets</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <!-- Under Investigation -->
+                    <div class="stat-card bg-gradient-to-br from-yellow-600 to-yellow-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-yellow-200 text-sm font-medium">Under Investigation</p>
+                                <p class="text-3xl font-bold text-white mt-1" id="stat-investigating">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-yellow-200 text-xs mt-2">
+                            Currently being investigated
+                        </p>
+                    </div>
+                    
+                    <!-- Found -->
+                    <div class="stat-card bg-gradient-to-br from-green-600 to-green-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-200 text-sm font-medium">Found</p>
+                                <p class="text-3xl font-bold text-white mt-1" id="stat-found">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-green-200 text-xs mt-2">
+                            Successfully recovered assets
+                        </p>
+                    </div>
+                    
+                    <!-- Permanently Lost -->
+                    <div class="stat-card bg-gradient-to-br from-red-600 to-red-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-red-200 text-sm font-medium">Permanently Lost</p>
+                                <p class="text-3xl font-bold text-white mt-1" id="stat-permanently-lost">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-red-200 text-xs mt-2">
+                            Cannot be recovered
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-6">
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <select id="status-filter" class="form-select" onchange="loadRecords()">
+                                    <option value="">All Status</option>
+                                    <option value="under_investigation">Under Investigation</option>
+                                    <option value="found">Found</option>
+                                    <option value="permanently_lost">Permanently Lost</option>
+                                </select>
+                            </div>
+                            <div>
+                                <input type="date" id="date-from" class="form-input" placeholder="Date From" onchange="loadRecords()">
+                            </div>
+                            <div>
+                                <input type="date" id="date-to" class="form-input" placeholder="Date To" onchange="loadRecords()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lost Assets Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lost Assets Records</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date Reported</th>
+                                    <th>Asset</th>
+                                    <th>Employee</th>
+                                    <th>Last Location</th>
+                                    <th>Status</th>
+                                    <th>Est. Value</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center py-8 text-slate-400">
+                                        Loading records...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Lost Asset Modal -->
+    <div id="lost-asset-modal" class="modal-overlay hidden">
+        <div class="modal max-w-3xl">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Report Lost Asset</h3>
+                <button onclick="closeLostAssetModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="lost-asset-form" onsubmit="handleSubmit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="record-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Asset Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Asset *</label>
+                            <select id="asset-select" class="form-select" required onchange="handleAssetChange()">
+                                <option value="">Select Asset</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Employee (Auto-detected) -->
+                        <div class="form-group">
+                            <label class="form-label">Employee Responsible *</label>
+                            <select id="employee-select" class="form-select" required>
+                                <option value="">Select Employee</option>
+                            </select>
+                            <p class="text-xs text-slate-400 mt-1">Auto-detected from last assignment</p>
+                        </div>
+                        
+                        <!-- Date Reported -->
+                        <div class="form-group">
+                            <label class="form-label">Date Reported *</label>
+                            <input type="date" id="date-reported" class="form-input" required>
+                        </div>
+                        
+                        <!-- Last Known Location -->
+                        <div class="form-group">
+                            <label class="form-label">Last Known Location</label>
+                            <input type="text" id="last-location" class="form-input" maxlength="25" placeholder="e.g., T1 (Table 1)">
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="form-group">
+                            <label class="form-label">Status *</label>
+                            <select id="status-select" class="form-select" required onchange="handleStatusChange()">
+                                <option value="under_investigation">Under Investigation</option>
+                                <option value="found">Found</option>
+                                <option value="permanently_lost">Permanently Lost</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Date Found (conditional) -->
+                        <div class="form-group" id="date-found-group" style="display: none;">
+                            <label class="form-label">Date Found</label>
+                            <input type="date" id="date-found" class="form-input">
+                        </div>
+                        
+                        <!-- Estimated Value -->
+                        <div class="form-group">
+                            <label class="form-label">Estimated Value (PHP)</label>
+                            <input type="number" id="estimated-value" class="form-input" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        
+                        <!-- Liability Amount -->
+                        <div class="form-group">
+                            <label class="form-label">Liability Amount (PHP)</label>
+                            <input type="number" id="liability-amount" class="form-input" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        
+                        <!-- Liability Action -->
+                        <div class="form-group md:col-span-2">
+                            <label class="form-label">Liability Action</label>
+                            <select id="liability-action" class="form-select">
+                                <option value="">None</option>
+                                <option value="warning">Warning</option>
+                                <option value="cost_recovery">Cost Recovery</option>
+                                <!-- <option value="insurance">Insurance Claim</option> -->
+                                <option value="write_off">Write-off</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Payment Status -->
+                        <div class="form-group md:col-span-2">
+                            <label class="form-label">Payment Status</label>
+                            <select id="payment-status" class="form-select">
+                                <option value="">N/A</option>
+                                <option value="pending">Pending</option>
+                                <option value="partial">Partial Payment</option>
+                                <option value="paid">Paid in Full</option>
+                                <option value="waived">Waived</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Circumstances -->
+                        <div class="form-group md:col-span-2">
+                            <label class="form-label">Circumstances *</label>
+                            <textarea id="circumstances" class="form-textarea" rows="3" required placeholder="Describe how and when the asset was lost..."></textarea>
+                        </div>
+                        
+                        <!-- Recovery Notes (conditional) -->
+                        <div class="form-group md:col-span-2" id="recovery-notes-group" style="display: none;">
+                            <label class="form-label">Recovery Notes</label>
+                            <textarea id="recovery-notes" class="form-textarea" rows="2" placeholder="Details about how/where the asset was recovered..."></textarea>
+                        </div>
+                        
+                        <!-- Resolution Notes -->
+                        <div class="form-group md:col-span-2">
+                            <label class="form-label">Resolution Notes</label>
+                            <textarea id="resolution-notes" class="form-textarea" rows="2" placeholder="Final outcome and actions taken..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeLostAssetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="view-modal" class="modal-overlay hidden">
+        <div class="modal max-w-3xl">
+            <div class="modal-header">
+                <h3 class="modal-title">Lost Asset Details</h3>
+                <button onclick="closeViewModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="view-content" class="space-y-4">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+        import Utils from '../scripts/utils.js';
+        
+        let currentUser = null;
+        let assets = [];
+        let employees = [];
+        
+        async function init() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = '../../public/index.html';
+                    return;
+                }
+
+                const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+                currentUser = { ...session.user, ...profile };
+                
+                document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+                document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+                document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+                
+                if (currentUser.role !== 'admin') {
+                    document.getElementById('admin-nav').classList.add('hidden');
+                }
+                
+                await Utils.handleReportsNavVisibility(currentUser, supabase);
+                
+                if (currentUser.role === 'viewer') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                // Set default date to today
+                document.getElementById('date-reported').valueAsDate = new Date();
+                
+                await Promise.all([loadStats(), loadRecords(), loadAssets(), loadEmployees()]);
+                
+                // Enable keyboard search for all dropdowns
+                Utils.enableAllSelectsKeyboardSearch('select');
+
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+            } catch (error) {
+                console.error('Init error:', error);
+                showToast('Failed to load page: ' + error.message, 'error');
+            }
+        }
+
+        async function loadStats() {
+            const { count: investigating } = await supabase.from('lost_assets').select('*', { count: 'exact', head: true }).eq('status', 'under_investigation');
+            const { count: found } = await supabase.from('lost_assets').select('*', { count: 'exact', head: true }).eq('status', 'found');
+            const { count: permanentlyLost } = await supabase.from('lost_assets').select('*', { count: 'exact', head: true }).eq('status', 'permanently_lost');
+            
+            document.getElementById('stat-investigating').textContent = investigating || 0;
+            document.getElementById('stat-found').textContent = found || 0;
+            document.getElementById('stat-permanently-lost').textContent = permanentlyLost || 0;
+        }
+
+        window.loadRecords = async function() {
+            const tbody = document.getElementById('records-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+            
+            try {
+                let query = supabase.from('v_lost_assets_full').select('*');
+                
+                const status = document.getElementById('status-filter').value;
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                
+                if (status) query = query.eq('status', status);
+                if (dateFrom) query = query.gte('date_reported', dateFrom);
+                if (dateTo) query = query.lte('date_reported', dateTo);
+                
+                const { data: records, error } = await query.order('date_reported', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (!records?.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No records found</td></tr>';
+                    return;
+                }
+                
+                const statusClasses = {
+                    under_investigation: 'badge-warning',
+                    found: 'badge-success',
+                    permanently_lost: 'badge-danger'
+                };
+                
+                const statusLabels = {
+                    under_investigation: 'Under Investigation',
+                    found: 'Found',
+                    permanently_lost: 'Permanently Lost'
+                };
+                
+                tbody.innerHTML = records.map(r => {
+                    const isReadOnly = (r.status === 'found' || r.status === 'permanently_lost') && currentUser.role === 'it_staff';
+                    
+                    return `
+                        <tr>
+                            <td>${new Date(r.date_reported).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}</td>
+                            <td>
+                                <div>
+                                    <p class="font-medium text-white">${r.asset_name || '-'}</p>
+                                    <p class="text-xs text-slate-400">${r.asset_tag || ''}</p>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <p class="text-white">${r.employee_name || '-'}</p>
+                                    <p class="text-xs text-slate-400">${r.department || ''}</p>
+                                </div>
+                            </td>
+                            <td>${r.last_known_location || '-'}</td>
+                            <td><span class="badge ${statusClasses[r.status]}">${statusLabels[r.status]}</span></td>
+                            <td>${r.estimated_value ? '₱' + parseFloat(r.estimated_value).toLocaleString() : '-'}</td>
+                            <td class="text-right">
+                                <div class="flex justify-end gap-2">
+                                    ${isReadOnly ? `
+                                        <button class="btn btn-sm btn-secondary" onclick="viewRecord('${r.id}')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                            View
+                                        </button>
+                                    ` : `
+                                        <button class="btn btn-sm btn-secondary" onclick="editRecord('${r.id}')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            Edit
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Load error:', error);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load records</td></tr>';
+            }
+        }
+
+        async function loadAssets() {
+            const { data } = await supabase.from('assets').select('id, asset_tag, name').order('asset_tag');
+            assets = data || [];
+            const select = document.getElementById('asset-select');
+            select.innerHTML = '<option value="">Select Asset</option>' + 
+                assets.map(a => `<option value="${a.id}">${a.asset_tag} - ${a.name}</option>`).join('');
+        }
+
+        async function loadEmployees() {
+            const { data } = await supabase.from('employees').select('id, full_name, departments(name)').order('full_name');
+            employees = data || [];
+            const select = document.getElementById('employee-select');
+            select.innerHTML = '<option value="">Select Employee</option>' + 
+                employees.map(e => `<option value="${e.id}">${e.full_name} (${e.departments?.name || 'N/A'})</option>`).join('');
+        }
+
+        window.handleAssetChange = async function() {
+            const assetId = document.getElementById('asset-select').value;
+            if (!assetId) return;
+            
+            // Get last assignment for this asset
+            const { data: assignments } = await supabase
+                .from('asset_assignments')
+                .select('employee_id')
+                .eq('asset_id', assetId)
+                .is('returned_date', null)
+                .order('assigned_date', { ascending: false })
+                .limit(1);
+            
+            if (assignments && assignments.length > 0 && assignments[0].employee_id) {
+                document.getElementById('employee-select').value = assignments[0].employee_id;
+            }
+        };
+
+        window.handleStatusChange = function() {
+            const status = document.getElementById('status-select').value;
+            const dateFoundGroup = document.getElementById('date-found-group');
+            const recoveryNotesGroup = document.getElementById('recovery-notes-group');
+            
+            if (status === 'found') {
+                dateFoundGroup.style.display = 'block';
+                recoveryNotesGroup.style.display = 'block';
+                document.getElementById('date-found').required = true;
+            } else {
+                dateFoundGroup.style.display = 'none';
+                recoveryNotesGroup.style.display = 'none';
+                document.getElementById('date-found').required = false;
+            }
+        };
+
+        window.openLostAssetModal = function() {
+            document.getElementById('lost-asset-form').reset();
+            document.getElementById('record-id').value = '';
+            document.getElementById('modal-title').textContent = 'Report Lost Asset';
+            document.getElementById('date-reported').valueAsDate = new Date();
+            document.getElementById('status-select').value = 'under_investigation';
+            handleStatusChange();
+            document.getElementById('lost-asset-modal').classList.remove('hidden');
+        };
+
+        window.closeLostAssetModal = function() {
+            document.getElementById('lost-asset-modal').classList.add('hidden');
+        };
+
+        window.editRecord = async function(id) {
+            try {
+                const { data: record, error } = await supabase.from('lost_assets').select('*').eq('id', id).single();
+                if (error) throw error;
+                
+                document.getElementById('record-id').value = record.id;
+                document.getElementById('asset-select').value = record.asset_id || '';
+                document.getElementById('employee-select').value = record.employee_id || '';
+                document.getElementById('date-reported').value = record.date_reported || '';
+                document.getElementById('last-location').value = record.last_known_location || '';
+                document.getElementById('status-select').value = record.status || '';
+                document.getElementById('date-found').value = record.date_found || '';
+                document.getElementById('estimated-value').value = record.estimated_value || '';
+                document.getElementById('liability-amount').value = record.liability_amount || '';
+                document.getElementById('liability-action').value = record.liability_action || '';
+                document.getElementById('payment-status').value = record.payment_status || '';
+                document.getElementById('circumstances').value = record.circumstances || '';
+                document.getElementById('recovery-notes').value = record.recovery_notes || '';
+                document.getElementById('resolution-notes').value = record.resolution_notes || '';
+                
+                handleStatusChange();
+                
+                document.getElementById('modal-title').textContent = 'Edit Lost Asset Record';
+                document.getElementById('lost-asset-modal').classList.remove('hidden');
+            } catch (error) {
+                showToast('Failed to load record', 'error');
+            }
+        };
+
+        window.viewRecord = async function(id) {
+            try {
+                const { data: record, error } = await supabase.from('v_lost_assets_full').select('*').eq('id', id).single();
+                if (error) throw error;
+                
+                const statusLabels = {
+                    under_investigation: 'Under Investigation',
+                    found: 'Found',
+                    permanently_lost: 'Permanently Lost'
+                };
+                
+                document.getElementById('view-content').innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><span class="text-slate-400">Asset:</span><br><span class="text-white font-medium">${record.asset_name} (${record.asset_tag})</span></div>
+                        <div><span class="text-slate-400">Employee:</span><br><span class="text-white font-medium">${record.employee_name}</span></div>
+                        <div><span class="text-slate-400">Department:</span><br><span class="text-white">${record.department || '-'}</span></div>
+                        <div><span class="text-slate-400">Date Reported:</span><br><span class="text-white">${new Date(record.date_reported).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}</span></div>
+                        <div><span class="text-slate-400">Last Location:</span><br><span class="text-white">${record.last_known_location || '-'}</span></div>
+                        <div><span class="text-slate-400">Status:</span><br><span class="text-white">${statusLabels[record.status]}</span></div>
+                        ${record.date_found ? `<div><span class="text-slate-400">Date Found:</span><br><span class="text-white">${new Date(record.date_found).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}</span></div>` : ''}
+                        <div><span class="text-slate-400">Estimated Value:</span><br><span class="text-white">${record.estimated_value ? '₱' + parseFloat(record.estimated_value).toLocaleString() : '-'}</span></div>
+                        ${record.liability_amount ? `<div><span class="text-slate-400">Liability Amount:</span><br><span class="text-white">₱${parseFloat(record.liability_amount).toLocaleString()}</span></div>` : ''}
+                        ${record.liability_action ? `<div><span class="text-slate-400">Liability Action:</span><br><span class="text-white">${record.liability_action.replace('_', ' ').toUpperCase()}</span></div>` : ''}
+                        ${record.payment_status ? `<div><span class="text-slate-400">Payment Status:</span><br><span class="text-white">${record.payment_status}</span></div>` : ''}
+                        <div class="col-span-2"><span class="text-slate-400">Circumstances:</span><br><span class="text-white">${record.circumstances || '-'}</span></div>
+                        ${record.recovery_notes ? `<div class="col-span-2"><span class="text-slate-400">Recovery Notes:</span><br><span class="text-white">${record.recovery_notes}</span></div>` : ''}
+                        ${record.resolution_notes ? `<div class="col-span-2"><span class="text-slate-400">Resolution Notes:</span><br><span class="text-white">${record.resolution_notes}</span></div>` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('view-modal').classList.remove('hidden');
+            } catch (error) {
+                showToast('Failed to load record', 'error');
+            }
+        };
+
+        window.closeViewModal = function() {
+            document.getElementById('view-modal').classList.add('hidden');
+        };
+
+        window.handleSubmit = async function(event) {
+            event.preventDefault();
+            
+            const recordId = document.getElementById('record-id').value;
+            const assetId = document.getElementById('asset-select').value;
+            const newStatus = document.getElementById('status-select').value;
+            
+            const data = {
+                asset_id: assetId,
+                employee_id: document.getElementById('employee-select').value,
+                date_reported: document.getElementById('date-reported').value,
+                last_known_location: document.getElementById('last-location').value || null,
+                circumstances: document.getElementById('circumstances').value,
+                status: newStatus,
+                date_found: document.getElementById('date-found').value || null,
+                recovery_notes: document.getElementById('recovery-notes').value || null,
+                estimated_value: document.getElementById('estimated-value').value || null,
+                liability_action: document.getElementById('liability-action').value || null,
+                liability_amount: document.getElementById('liability-amount').value || null,
+                payment_status: document.getElementById('payment-status').value || null,
+                resolution_notes: document.getElementById('resolution-notes').value || null,
+                reported_by: currentUser.id
+            };
+            
+            // Get submit button
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            
+            // Handle form submission with loading state
+            await Utils.handleFormSubmit(submitBtn, async () => {
+                if (recordId) {
+                    // Get old data for comparison
+                    const { data: oldRecord } = await supabase.from('lost_assets').select('*').eq('id', recordId).single();
+                    
+                    // Update record
+                    const { error } = await supabase.from('lost_assets').update(data).eq('id', recordId);
+                    if (error) throw error;
+                    
+                    // Log audit
+                    await Audit.logLostAssetUpdated(oldRecord, data, currentUser.email);
+                    
+                    // Handle asset status changes
+                    if (newStatus === 'found' && oldRecord.status !== 'found') {
+                        // Restore original asset status
+                        if (oldRecord.original_asset_status) {
+                            await supabase.from('assets').update({ status: oldRecord.original_asset_status }).eq('id', assetId);
+                        }
+                    } else if (newStatus === 'permanently_lost' && oldRecord.status !== 'permanently_lost') {
+                        // Set asset as lost
+                        await supabase.from('assets').update({ status: 'lost' }).eq('id', assetId);
+                    }
+                    
+                    showToast('Record updated successfully', 'success');
+                } else {
+                    // Get current asset status to store as original
+                    const { data: asset } = await supabase.from('assets').select('status').eq('id', assetId).single();
+                    data.original_asset_status = asset?.status || null;
+                    
+                    // Create record
+                    const { error } = await supabase.from('lost_assets').insert(data);
+                    if (error) throw error;
+                    
+                    // Log audit
+                    await Audit.logLostAssetCreated(data, currentUser.email);
+                    
+                    // Update asset status to lost
+                    await supabase.from('assets').update({ status: 'lost' }).eq('id', assetId);
+                    
+                    showToast('Lost asset reported successfully', 'success');
+                }
+                
+                closeLostAssetModal();
+                await Promise.all([loadStats(), loadRecords()]);
+            }, recordId ? 'Updating...' : 'Saving...');
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
+        };
+
+        window.handleLogout = async function() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+            await supabase.auth.signOut();
+            window.location.href = '../../public/index.html';
+        };
+
+        init();
+    </script>
+</body>
+</html>

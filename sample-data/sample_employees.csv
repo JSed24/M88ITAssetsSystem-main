@@ -1,0 +1,4 @@
+Full_Name,Employee_ID,Email,Department,Position,Status
+John Doe,EMP001,john@example.com,Costing,Manager,active
+Jane Smith,EMP002,jane@example.com,HR,Associate,active
+Bob Johnson,EMP003,bob@example.com,IT,Analyst,active

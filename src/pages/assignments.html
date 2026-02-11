@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignments - Madison 88 IT Asset Management</title>
+    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/styles.css">
+    
+    <!-- Application Modules -->
+    <script type="module" src="../scripts/utils.js"></script>
+    <script src="../scripts/audit.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script type="module" src="../scripts/assets.js"></script>
+    <script src="../scripts/employees.js"></script>
+    <script src="../scripts/assignments.js"></script>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading Assignments...</p>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app">
+        <div id="sidebar-overlay" class="hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar (same structure as other pages) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <h1>IT Equipment Inventory Management System</h1>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <p class="nav-section-title">Main</p>
+                    <a href="dashboard.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Asset Management</p>
+                    <a href="assets.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Assets</a>
+                    <a href="employees.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Employees</a>
+                    <a href="assignments.html" class="nav-link active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>Assignments</a>
+                </div>
+                <div class="nav-section">
+                    <p class="nav-section-title">Tracking</p>
+                    <a href="maintenance.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Maintenance</a>
+                    <a href="lost-assets.html" class="nav-link">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Lost Assets
+                    </a>
+                    <a href="software-licenses.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Software Licenses</a>
+                </div>
+                <div class="nav-section" id="reports-nav">
+                    <p class="nav-section-title">Reports</p>
+                    <a href="reports.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Reports</a>
+                    <a href="audit-logs.html" class="nav-link" id="audit-logs-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Audit Logs</a>
+                </div>
+                <div class="nav-section" id="admin-nav">
+                    <p class="nav-section-title">Administration</p>
+                    <a href="settings.html" class="nav-link"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="flex items-center gap-3">
+                    <div class="avatar avatar-md bg-blue-600"><span id="user-initials">--</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" id="user-name">Loading...</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-role">--</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h2 class="text-lg font-semibold text-white">Asset Assignments</h2>
+                </div>
+                <div class="topbar-right" id="admin-actions-topbar">
+                    <button class="btn btn-primary" onclick="openAssignModal()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Assign Asset
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">Asset Assignments</h1>
+                    <p class="page-subtitle">Assign and track IT assets to employees</p>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p class="text-3xl font-bold text-blue-400" id="stat-active">--</p>
+                            <p class="text-slate-400 text-sm">Active Assignments</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p class="text-3xl font-bold text-green-400" id="stat-available">--</p>
+                            <p class="text-slate-400 text-sm">Available Assets</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p class="text-3xl font-bold text-yellow-400" id="stat-returned">--</p>
+                            <p class="text-slate-400 text-sm">Returned This Month</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignments Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Current Assignments <span class="text-slate-400 font-normal ml-2" id="assignments-count">(0)</span></h3>
+                        <div class="flex gap-2">
+                            <!-- View Toggle -->
+                            <div class="flex gap-1 bg-slate-800 rounded-lg p-1">
+                                <button id="table-view-btn" class="px-4 py-2 text-sm rounded bg-blue-600 text-white flex items-center gap-2 min-w-[140px] justify-center" onclick="switchView('table')">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span>Table View</span>
+                                </button>
+                                <button id="grouped-view-btn" class="px-4 py-2 text-sm rounded text-slate-400 hover:text-white flex items-center gap-2 min-w-[140px] justify-center" onclick="switchView('grouped')">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    <span>By Employee</span>
+                                </button>
+                            </div>
+                            <select id="status-filter" class="form-select text-sm" onchange="handleFilterChange()">
+                                <option value="active">Active Only</option>
+                                <option value="all">All Assignments</option>
+                                <option value="returned">Returned</option>
+                            </select>
+                            <select id="department-filter" class="form-select text-sm hidden" onchange="handleFilterChange()">
+                                <option value="all">All Departments</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Table View -->
+                    <div id="table-view" class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Assigned To</th>
+                                    <th>Department</th>
+                                    <th>Assigned Date</th>
+                                    <th>Returned</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignments-table-body">
+                                <tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Grouped View -->
+                    <div id="grouped-view" class="hidden p-4">
+                        <div id="grouped-view-body" class="space-y-3">
+                            <div class="text-center py-8 text-slate-400">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Assign Modal -->
+    <div id="assign-modal" class="modal-overlay hidden">
+        <div class="modal max-w-lg">
+            <div class="modal-header">
+                <h3 class="modal-title">Assign Asset to Employee</h3>
+                <button onclick="closeAssignModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="assign-form" onsubmit="handleAssign(event)">
+                <div class="modal-body space-y-4">
+                    <div class="form-group">
+                        <label class="form-label">Asset *</label>
+                        <select id="assign-asset" class="form-select" required></select>
+                        <p class="text-xs text-slate-400 mt-1">Only available assets are shown</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Employee *</label>
+                        <select id="assign-employee" class="form-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assignment Date</label>
+                        <input type="date" id="assign-date" class="form-input" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea id="assign-notes" class="form-textarea" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Return Modal -->
+    <div id="return-modal" class="modal-overlay hidden">
+        <div class="modal max-w-md">
+            <div class="modal-header"><h3 class="modal-title">Return Asset</h3></div>
+            <form id="return-form" onsubmit="handleReturn(event)">
+                <input type="hidden" id="return-assignment-id">
+                <input type="hidden" id="return-asset-id">
+                <div class="modal-body space-y-4">
+                    <p class="text-slate-300">Return this asset to inventory?</p>
+                    <p class="text-sm text-slate-400" id="return-info"></p>
+                    <div class="form-group">
+                        <label class="form-label">Return Condition</label>
+                        <select id="return-condition" class="form-select">
+                            <option value="available">Good - Available for reassignment</option>
+                            <option value="under_repair">Needs Repair</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea id="return-notes" class="form-textarea" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeReturnModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { supabase } from '../scripts/config.js';
+        import { showToast } from '../scripts/components.js';
+
+        let currentUser = null;
+        
+        // Use Assignments module (available globally)
+        const Assignments = window.Assignments;
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../public/index.html'; return; }
+
+            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            currentUser = { ...session.user, ...profile };
+            
+            document.getElementById('user-name').textContent = currentUser.full_name || 'User';
+            document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
+            document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
+            
+            // Handle reports navigation visibility based on permission
+            await Utils.handleReportsNavVisibility(currentUser, supabase);
+            
+            // Hide admin-only navigation for non-admin users
+            if (currentUser.role !== 'admin') {
+                document.getElementById('admin-nav').classList.add('hidden');
+            }
+            
+            // Redirect viewers to dashboard - they should only see dashboard
+            if (currentUser.role === 'viewer') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Set today's date as default
+            document.getElementById('assign-date').value = new Date().toISOString().split('T')[0];
+
+            await loadStats();
+            await loadAssignments();
+            await loadAssetOptions();
+            await loadEmployeeOptions();
+            await loadDepartments();
+
+            // Enable keyboard search for all dropdowns
+            Utils.enableAllSelectsKeyboardSearch('select');
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        async function loadStats() {
+            // Active assignments
+            const { count: active } = await supabase.from('asset_assignments').select('*', { count: 'exact', head: true }).is('returned_date', null);
+            document.getElementById('stat-active').textContent = active || 0;
+
+            // Available assets
+            const { count: available } = await supabase.from('assets').select('*', { count: 'exact', head: true }).eq('status', 'available');
+            document.getElementById('stat-available').textContent = available || 0;
+
+            // Returned this month
+            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            const { count: returned } = await supabase.from('asset_assignments').select('*', { count: 'exact', head: true }).not('returned_date', 'is', null).gte('returned_date', startOfMonth);
+            document.getElementById('stat-returned').textContent = returned || 0;
+        }
+
+        async function loadAssignments() {
+            const tbody = document.getElementById('assignments-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+
+            const filter = document.getElementById('status-filter').value;
+            let query = supabase.from('v_asset_assignments_full').select('*', { count: 'exact' }).order('assigned_date', { ascending: false });
+
+            if (filter === 'active') query = query.is('returned_date', null);
+            else if (filter === 'returned') query = query.not('returned_date', 'is', null);
+
+            const { data: assignments, count, error } = await query.limit(50);
+            if (error) { 
+                console.error('Error loading assignments:', error);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>'; 
+                return; 
+            }
+
+            console.log('Assignments loaded:', assignments);
+            if (assignments && assignments.length > 0) {
+                console.log('First assignment:', assignments[0]);
+                console.log('Has asset_name?', assignments[0].asset_name);
+                console.log('Has employee_name?', assignments[0].employee_name);
+                console.log('Has department_name?', assignments[0].department_name);
+            }
+
+            document.getElementById('assignments-count').textContent = `(${count || 0})`;
+
+            if (!assignments?.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No assignments found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = assignments.map(a => `
+                <tr>
+                    <td>
+                        <p class="font-medium text-white">${a.asset_name || '-'}</p>
+                        <p class="text-xs text-blue-400 font-mono">${a.asset_tag || '-'}</p>
+                    </td>
+                    <td class="font-medium">${a.employee_name || '-'}</td>
+                    <td>${a.department_name || '-'}</td>
+                    <td>${a.assigned_date ? new Date(a.assigned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</td>
+                    <td>${a.returned_date ? new Date(a.returned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</td>
+                    <td><span class="badge ${a.returned_date ? 'badge-gray' : 'badge-success'}">${a.returned_date ? 'Returned' : 'Active'}</span></td>
+                    <td class="text-right">
+                        ${!a.returned_date && currentUser.role !== 'viewer' ? `<button class="btn btn-sm btn-secondary" onclick="openReturnModal('${a.id}', '${a.asset_id}', '${a.asset_tag} - ${a.asset_name}')">Return</button>` : !a.returned_date ? '<span class="text-slate-500 text-sm">View Only</span>' : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadAssetOptions() {
+            const { data: assets } = await supabase.from('assets').select('id, asset_tag, name').eq('status', 'available').order('name');
+            const select = document.getElementById('assign-asset');
+            select.innerHTML = '<option value="">Select an asset</option>' + (assets || []).map(a => `<option value="${a.id}">${a.name} (${a.asset_tag})</option>`).join('');
+        }
+
+        async function loadEmployeeOptions() {
+            const { data: employees } = await supabase.from('employees').select('id, full_name, employee_id').eq('is_active', true).order('full_name');
+            const select = document.getElementById('assign-employee');
+            select.innerHTML = '<option value="">Select an employee</option>' + (employees || []).map(e => `<option value="${e.id}">${e.full_name} (${e.employee_id})</option>`).join('');
+        }
+
+        async function loadDepartments() {
+            const { data: departments } = await supabase.from('departments').select('id, name').order('name');
+            const select = document.getElementById('department-filter');
+            select.innerHTML = '<option value="all">All Departments</option>' + (departments || []).map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+        }
+
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
+        window.handleLogout = async () => { 
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+            await supabase.auth.signOut(); 
+            window.location.href = '../../public/index.html'; 
+        };
+
+        window.openAssignModal = () => { document.getElementById('assign-form').reset(); document.getElementById('assign-date').value = new Date().toISOString().split('T')[0]; loadAssetOptions(); document.getElementById('assign-modal').classList.remove('hidden'); };
+        window.closeAssignModal = () => document.getElementById('assign-modal').classList.add('hidden');
+
+        window.handleAssign = async (e) => {
+            e.preventDefault();
+            const assetId = document.getElementById('assign-asset').value;
+            const employeeId = document.getElementById('assign-employee').value;
+            const assignedDate = document.getElementById('assign-date').value || new Date().toISOString().split('T')[0];
+            const notes = document.getElementById('assign-notes').value;
+
+            // Get submit button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            // Handle form submission with loading state
+            await Utils.handleFormSubmit(submitBtn, async () => {
+                // Use Assignments module (includes audit logging)
+                const result = await Assignments.assign({
+                    assetId,
+                    employeeId,
+                    notes,
+                    assignedBy: currentUser.id
+                });
+                
+                if (!result.success) throw new Error(result.error);
+
+                showToast('Asset assigned successfully', 'success');
+                closeAssignModal();
+                loadStats();
+                loadAssignments();
+                loadAssetOptions();
+            }, 'Assigning...');
+        };
+
+        window.openReturnModal = (assignmentId, assetId, assetInfo) => {
+            document.getElementById('return-assignment-id').value = assignmentId;
+            document.getElementById('return-asset-id').value = assetId;
+            document.getElementById('return-info').textContent = assetInfo;
+            document.getElementById('return-form').reset();
+            document.getElementById('return-assignment-id').value = assignmentId;
+            document.getElementById('return-asset-id').value = assetId;
+            document.getElementById('return-modal').classList.remove('hidden');
+        };
+        window.closeReturnModal = () => document.getElementById('return-modal').classList.add('hidden');
+
+        window.handleReturn = async (e) => {
+            e.preventDefault();
+            const assignmentId = document.getElementById('return-assignment-id').value;
+            const assetId = document.getElementById('return-asset-id').value;
+            const condition = document.getElementById('return-condition').value;
+            const notes = document.getElementById('return-notes').value;
+
+            try {
+                // Use Assignments module unassign (includes audit logging)
+                const result = await Assignments.unassign(assignmentId, notes);
+                
+                if (!result.success) throw new Error(result.error);
+
+                // Update asset status based on condition
+                await supabase.from('assets').update({ status: condition }).eq('id', assetId);
+
+                showToast('Asset returned successfully', 'success');
+                closeReturnModal();
+                loadStats();
+                loadAssignments();
+                
+                // Refresh grouped view if it's currently visible
+                const groupedView = document.getElementById('grouped-view');
+                if (!groupedView.classList.contains('hidden')) {
+                    await loadGroupedView();
+                }
+            } catch (error) {
+                showToast(error.message || 'Failed to return', 'error');
+            }
+        };
+
+        // Handle filter change - refresh the active view
+        window.handleFilterChange = async () => {
+            const groupedView = document.getElementById('grouped-view');
+            if (groupedView.classList.contains('hidden')) {
+                // Table view is active
+                await loadAssignments();
+            } else {
+                // Grouped view is active
+                await loadGroupedView();
+            }
+        };
+
+        // View switching functions
+        window.switchView = async (viewType) => {
+            const tableView = document.getElementById('table-view');
+            const groupedView = document.getElementById('grouped-view');
+            const tableBtn = document.getElementById('table-view-btn');
+            const groupedBtn = document.getElementById('grouped-view-btn');
+            const deptFilter = document.getElementById('department-filter');
+
+            if (viewType === 'table') {
+                tableView.classList.remove('hidden');
+                groupedView.classList.add('hidden');
+                tableBtn.classList.add('bg-blue-600', 'text-white');
+                tableBtn.classList.remove('text-slate-400');
+                groupedBtn.classList.remove('bg-blue-600', 'text-white');
+                groupedBtn.classList.add('text-slate-400');
+                deptFilter.classList.add('hidden');
+            } else {
+                tableView.classList.add('hidden');
+                groupedView.classList.remove('hidden');
+                groupedBtn.classList.add('bg-blue-600', 'text-white');
+                groupedBtn.classList.remove('text-slate-400');
+                tableBtn.classList.remove('bg-blue-600', 'text-white');
+                tableBtn.classList.add('text-slate-400');
+                deptFilter.classList.remove('hidden');
+                await loadGroupedView();
+            }
+        };
+
+        async function loadGroupedView() {
+            const container = document.getElementById('grouped-view-body');
+            container.innerHTML = '<div class="text-center py-8 text-slate-400">Loading...</div>';
+
+            try {
+                const filter = document.getElementById('status-filter').value;
+                const deptFilter = document.getElementById('department-filter').value;
+
+                // Get all employees (filtered by department if selected)
+                let empQuery = supabase
+                    .from('employees')
+                    .select('id, full_name, email, department_id')
+                    .eq('is_active', true)
+                    .order('full_name');
+                
+                if (deptFilter !== 'all') {
+                    empQuery = empQuery.eq('department_id', deptFilter);
+                }
+                
+                const { data: employees, error: empError } = await empQuery;
+
+                if (empError) throw empError;
+
+                // Get all assignments with details
+                let query = supabase
+                    .from('v_asset_assignments_full')
+                    .select('*')
+                    .order('assigned_date', { ascending: false });
+
+                if (filter === 'active') query = query.is('returned_date', null);
+                else if (filter === 'returned') query = query.not('returned_date', 'is', null);
+
+                const { data: assignments, error: assignError } = await query;
+                if (assignError) throw assignError;
+
+                // Debug: Log first assignment to see available fields
+                if (assignments && assignments.length > 0) {
+                    console.log('First assignment data:', assignments[0]);
+                    console.log('Has assigned_by_email?', assignments[0].assigned_by_email);
+                }
+
+                // Get department names
+                const { data: departments } = await supabase.from('departments').select('id, name');
+                const deptMap = {};
+                departments?.forEach(d => deptMap[d.id] = d.name);
+
+                // Group assignments by employee
+                const employeeMap = {};
+                employees.forEach(emp => {
+                    employeeMap[emp.id] = {
+                        ...emp,
+                        department_name: deptMap[emp.department_id] || '-',
+                        assignments: []
+                    };
+                });
+
+                assignments?.forEach(assignment => {
+                    if (employeeMap[assignment.employee_id]) {
+                        employeeMap[assignment.employee_id].assignments.push(assignment);
+                    }
+                });
+
+                // Build HTML
+                const html = employees.map(emp => {
+                    const empData = employeeMap[emp.id];
+                    const activeAssignments = empData.assignments.filter(a => !a.returned_date);
+                    const returnedAssignments = empData.assignments.filter(a => a.returned_date);
+                    const totalAssignments = empData.assignments.length;
+                    
+                    // Get initials from full name
+                    const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+                    return `
+                        <div class="bg-slate-800 rounded-lg border border-slate-700">
+                            <button class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-750 rounded-lg transition-colors" onclick="toggleEmployee('${emp.id}')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                                        ${initials}
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-medium text-white">${emp.full_name}</p>
+                                        <p class="text-sm text-slate-400">${empData.department_name}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="badge ${totalAssignments > 0 ? 'badge-success' : 'badge-gray'}">${activeAssignments.length} Active</span>
+                                    ${returnedAssignments.length > 0 ? `<span class="badge badge-gray">${returnedAssignments.length} Returned</span>` : ''}
+                                    <svg id="chevron-${emp.id}" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+                            <div id="employee-${emp.id}" class="hidden px-4 pb-4">
+                                ${totalAssignments === 0 ? `
+                                    <p class="text-slate-400 text-center py-4">No active assignments</p>
+                                ` : `
+                                    <div class="space-y-2 mt-2">
+                                        ${activeAssignments.map(a => `
+                                            <div class="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <p class="font-medium text-white">${a.asset_name}</p>
+                                                        <p class="text-xs text-blue-400 font-mono">${a.asset_tag}</p>
+                                                    </div>
+                                                    <span class="badge badge-success">Active</span>
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-2">
+                                                    <div><span class="text-slate-500">Category:</span> ${a.category_name || '-'}</div>
+                                                    <div><span class="text-slate-500">Serial:</span> ${a.serial_number || '-'}</div>
+                                                    <div><span class="text-slate-500">Assigned:</span> ${a.assigned_date ? new Date(a.assigned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</div>
+                                                    <div><span class="text-slate-500">By:</span> ${a.assigned_by_email || '-'}</div>
+                                                </div>
+                                                ${currentUser.role !== 'viewer' ? `
+                                                    <button class="btn btn-sm btn-secondary w-full" onclick="openReturnModal('${a.id}', '${a.asset_id}', '${a.asset_tag} - ${a.asset_name}')">
+                                                        Return Asset
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                        `).join('')}
+                                        ${returnedAssignments.map(a => `
+                                            <div class="bg-slate-900 rounded-lg p-3 border border-slate-700 opacity-60">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <p class="font-medium text-slate-400 line-through">${a.asset_name}</p>
+                                                        <p class="text-xs text-slate-500 font-mono">${a.asset_tag}</p>
+                                                    </div>
+                                                    <span class="badge badge-gray">Returned</span>
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-2 text-sm text-slate-500 mb-2">
+                                                    <div><span class="text-slate-600">Category:</span> ${a.category_name || '-'}</div>
+                                                    <div><span class="text-slate-600">Serial:</span> ${a.serial_number || '-'}</div>
+                                                    <div><span class="text-slate-600">Assigned:</span> ${a.assigned_date ? new Date(a.assigned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</div>
+                                                    <div><span class="text-slate-600">Returned:</span> ${a.returned_date ? new Date(a.returned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '-'}</div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html || '<div class="text-center py-8 text-slate-400">No employees found</div>';
+            } catch (error) {
+                console.error('Error loading grouped view:', error);
+                container.innerHTML = '<div class="text-center py-8 text-red-400">Failed to load employees</div>';
+            }
+        }
+
+        window.toggleEmployee = (employeeId) => {
+            const content = document.getElementById(`employee-${employeeId}`);
+            const chevron = document.getElementById(`chevron-${employeeId}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        };
+
+        window.loadAssignments = loadAssignments;
+        init();
+    </script>
+</body>
+</html>
