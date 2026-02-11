@@ -6,7 +6,7 @@
     <title>Login - Madison 88 IT Asset Management</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="./images/favicon.png">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,11 +17,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="../src/styles/styles.css">
+    <link rel="stylesheet" href="/src/styles/styles.css">
     
     <!-- Application Modules -->
-    <script type="module" src="../src/scripts/utils.js"></script>
-    <script src="../src/scripts/audit.js"></script>
+    <script type="module" src="/src/scripts/utils.js"></script>
+    <script src="/src/scripts/audit.js"></script>
 </head>
 <body>
     <!-- =============================================
@@ -41,7 +41,7 @@
         <div class="login-card">
             <!-- Logo -->
             <div class="login-logo">
-                <img src="../../public/images/logo.png" alt="Madison 88 Logo" onerror="this.style.display='none'">
+                <img src="/images/logo.png" alt="Madison 88 Logo" onerror="this.style.display='none'">
                 <p>IT Equipment Inventory Management System</p>
             </div>
 
@@ -128,7 +128,7 @@
          SCRIPTS
          ============================================= -->
     <script type="module">
-        import { supabase, SUPABASE_URL } from '../src/scripts/config.js';
+        import { supabase, SUPABASE_URL } from '/src/scripts/config.js';
         
         // DOM Elements
         const loadingScreen = document.getElementById('loading-screen');
@@ -152,7 +152,7 @@
             
             if (session) {
                 // Already logged in, redirect to dashboard
-                window.location.href = '../src/pages/dashboard.html';
+                window.location.href = '/src/pages/dashboard.html';
                 return;
             }
             
@@ -224,7 +224,7 @@
                 }
 
                 // Successful login - redirect to dashboard
-                window.location.href = '../src/pages/dashboard.html';
+                window.location.href = '/src/pages/dashboard.html';
 
             } catch (error) {
                 console.error('Login error:', error);

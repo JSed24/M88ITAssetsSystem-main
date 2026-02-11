@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employees - Madison 88 IT Asset Management</title>
-    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="dashboard.html" class="sidebar-logo">
-                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <img src="/images/logo.png" alt="Logo" onerror="this.style.display='none'">
                     <h1>IT Equipment Inventory Management System</h1>
                 </a>
             </div>
@@ -308,7 +308,7 @@
         async function init() {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (!session) { window.location.href = '../../public/index.html'; return; }
+                if (!session) { window.location.href = '/index.html'; return; }
 
                 const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
                 currentUser = { ...session.user, ...profile };
@@ -486,7 +486,7 @@
                 if (session) await Audit.logLogout(session.user.email);
             } catch (e) { console.error(e); }
             await supabase.auth.signOut(); 
-            window.location.href = '../../public/index.html'; 
+            window.location.href = '/index.html'; 
         };
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadEmployees(); };
         window.handleFilter = () => { 

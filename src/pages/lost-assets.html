@@ -6,7 +6,7 @@
     <title>Lost Assets - Madison 88 IT Asset Management</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="../../public/images/favicon.png">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,7 +42,7 @@
             <!-- Logo -->
             <div class="sidebar-header">
                 <a href="dashboard.html" class="sidebar-logo">
-                    <img src="../../public/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+                    <img src="/images/logo.png" alt="Logo" onerror="this.style.display='none'">
                     <h1>IT Equipment Inventory Management System</h1>
                 </a>
             </div>
@@ -460,7 +460,7 @@
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) {
-                    window.location.href = '../../public/index.html';
+                    window.location.href = '/index.html';
                     return;
                 }
 
@@ -813,7 +813,7 @@
                 if (session) await Audit.logLogout(session.user.email);
             } catch (e) { console.error(e); }
             await supabase.auth.signOut();
-            window.location.href = '../../public/index.html';
+            window.location.href = '/index.html';
         };
 
         init();

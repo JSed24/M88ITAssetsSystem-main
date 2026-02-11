@@ -4,9 +4,9 @@
   "description": "Madison 88 IT Equipment Inventory Management System",
   "main": "public/index.html",
   "scripts": {
-    "dev": "npx serve .",
-    "start": "npx serve .",
-    "preview": "npx serve ."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "asset-management",
@@ -20,8 +20,9 @@
     "type": "git",
     "url": "https://github.com/yourusername/m88-it-assets-system.git"
   },
-  "devDependencies": {},
-  "dependencies": {},
+  "devDependencies": {
+    "vite": "^7.3.1"
+  },
   "engines": {
     "node": ">=14.0.0"
   }

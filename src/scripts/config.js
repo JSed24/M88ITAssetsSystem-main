@@ -14,10 +14,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // ===========================================
 // SUPABASE CONFIGURATION
 // ===========================================
-// Get these from: Supabase Dashboard → Settings → API
+// Credentials are loaded from .env file (VITE_ prefix required)
+// See .env.example for the template
 
-const SUPABASE_URL = 'https://hhnvjkxsuhvtsoxzrahi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhobnZqa3hzdWh2dHNveHpyYWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MTg5MjYsImV4cCI6MjA4NTM5NDkyNn0.9vUE2LvCJLCNSkyjVm3HdHTmphF_1HF4_zKob-QnTnE';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validate that environment variables are set
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error(
+        '❌ Missing Supabase credentials!\n' +
+        'Please create a .env file in the project root with:\n' +
+        '  VITE_SUPABASE_URL=your_supabase_url\n' +
+        '  VITE_SUPABASE_ANON_KEY=your_supabase_anon_key\n' +
+        'See .env.example for reference.'
+    );
+}
 
 // Create and export the Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
