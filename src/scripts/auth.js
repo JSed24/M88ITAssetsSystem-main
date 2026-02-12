@@ -23,7 +23,7 @@ const Auth = {
     async init() {
         // Listen for auth state changes
         window.supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state changed:', event);
+            // console.log('Auth state changed:', event);
             
             if (event === 'SIGNED_IN' && session) {
                 this.user = session.user;

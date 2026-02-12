@@ -161,23 +161,24 @@
                 <input type="hidden" id="license-id">
                 <div class="modal-body space-y-4">
                     <div class="form-group">
-                        <label class="form-label">Software Name *</label>
+                        <label class="form-label" for="license-name">Software Name *</label>
                         <input type="text" id="license-name" class="form-input" maxlength="25" required placeholder="e.g., Microsoft Office 365">
                         <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Vendor</label>
+                        <label class="form-label" for="license-vendor">Vendor</label>
                         <input type="text" id="license-vendor" class="form-input" maxlength="25" placeholder="e.g., Microsoft">
                         <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">License Key</label>
-                        <input type="text" id="license-key" class="form-input" maxlength="25" placeholder="XXXXX-XXXXX-XXXXX-XXXXX">
-                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        <label class="form-label" for="license-key">License Key</label>
+                        <input type="text" id="license-key" class="form-input" maxlength="25" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" style="text-transform: uppercase" oninput="onLicenseKeyChange()">
+                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters (uppercase letters only)</p>
+                        <p id="license-key-error" class="text-xs text-red-400 mt-1 hidden">⚠️ This license key already exists</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
-                            <label class="form-label">License Type</label>
+                            <label class="form-label" for="license-type">License Type</label>
                             <select id="license-type" class="form-select">
                                 <option value="perpetual">Perpetual</option>
                                 <option value="subscription">Subscription</option>
@@ -186,26 +187,26 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Total Seats</label>
+                            <label class="form-label" for="license-seats">Total Seats</label>
                             <input type="number" id="license-seats" class="form-input" min="1" value="1">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
-                            <label class="form-label">Purchase Date</label>
+                            <label class="form-label" for="license-purchase">Purchase Date</label>
                             <input type="date" id="license-purchase" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Expiry Date</label>
+                            <label class="form-label" for="license-expiry">Expiry Date</label>
                             <input type="date" id="license-expiry" class="form-input">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Cost (PHP)</label>
+                        <label class="form-label" for="license-cost">Cost (PHP)</label>
                         <input type="number" id="license-cost" class="form-input" step="0.01" min="0">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label" for="license-notes">Notes</label>
                         <textarea id="license-notes" class="form-textarea" rows="2"></textarea>
                     </div>
                 </div>
@@ -398,6 +399,7 @@
             document.getElementById('license-form').reset();
             document.getElementById('license-id').value = '';
             document.getElementById('modal-title').textContent = 'Add License';
+            document.getElementById('license-key-error').classList.add('hidden');
             document.getElementById('license-modal').classList.remove('hidden');
         };
         window.closeLicenseModal = () => document.getElementById('license-modal').classList.add('hidden');
@@ -417,16 +419,63 @@
             document.getElementById('license-cost').value = license.cost || '';
             document.getElementById('license-notes').value = license.notes || '';
             document.getElementById('modal-title').textContent = 'Edit License';
+            document.getElementById('license-key-error').classList.add('hidden');
             document.getElementById('license-modal').classList.remove('hidden');
+        };
+
+        window.onLicenseKeyChange = async () => {
+            const keyInput = document.getElementById('license-key');
+            const errorElement = document.getElementById('license-key-error');
+            const licenseKey = keyInput.value.trim();
+            const licenseId = document.getElementById('license-id').value;
+
+            // Convert to uppercase automatically
+            keyInput.value = keyInput.value.toUpperCase();
+
+            // Only check for duplicates if key is not empty
+            if (!licenseKey) {
+                errorElement.classList.add('hidden');
+                return;
+            }
+
+            try {
+                // Check if license key already exists
+                let query = supabase.from('software_licenses').select('id', { count: 'exact', head: true }).eq('license_key', licenseKey);
+                
+                // If editing, exclude current license from check
+                if (licenseId) {
+                    query = query.neq('id', licenseId);
+                }
+                
+                const { count } = await query;
+                
+                if (count > 0) {
+                    errorElement.classList.remove('hidden');
+                } else {
+                    errorElement.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error checking license key:', error);
+                errorElement.classList.add('hidden');
+            }
         };
 
         window.handleSubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('license-id').value;
+            const licenseKey = document.getElementById('license-key').value.trim();
+            const errorElement = document.getElementById('license-key-error');
+            
+            // Check if error is showing (means duplicate exists)
+            if (licenseKey && !errorElement.classList.contains('hidden')) {
+                showToast('License key already exists', 'error');
+                return;
+            }
+            
             const data = {
                 name: document.getElementById('license-name').value,
                 vendor: document.getElementById('license-vendor').value || null,
-                license_key: document.getElementById('license-key').value || null,
+                license_key: licenseKey || null,
                 license_type: document.getElementById('license-type').value,
                 seats: parseInt(document.getElementById('license-seats').value) || 1,
                 purchase_date: document.getElementById('license-purchase').value || null,

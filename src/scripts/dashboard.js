@@ -19,7 +19,7 @@ const Dashboard = {
      * Initialize dashboard
      */
     async init() {
-        console.log('📊 Initializing dashboard...');
+        // console.log('📊 Initializing dashboard...');
         
         try {
             // Load all data in parallel
@@ -40,7 +40,7 @@ const Dashboard = {
             // Load recent activity
             await this.loadRecentActivity();
             
-            console.log('✅ Dashboard initialized');
+            // console.log('✅ Dashboard initialized');
         } catch (error) {
             console.error('Dashboard init error:', error);
             Components.showToast('Failed to load dashboard data', 'error');
@@ -395,7 +395,7 @@ const Dashboard = {
                 
                 return `
                     <div class="flex items-start gap-3 py-3 border-b border-slate-700 last:border-0">
-                        <div class="w-8 h-8 rounded-full bg-${action.color}-600/20 flex items-center justify-center flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-${action.color}-600/20 flex items-center justify-center shrink-0">
                             <span class="text-${action.color}-400 text-xs">${action.label.charAt(0)}</span>
                         </div>
                         <div class="flex-1 min-w-0">

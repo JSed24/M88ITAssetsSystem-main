@@ -129,4 +129,4 @@ window.CONFIG = {
 };
 
 // Log success
-console.log('✅ Config loaded, Supabase client ready');
+// console.log('✅ Config loaded, Supabase client ready');

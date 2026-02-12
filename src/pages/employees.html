@@ -219,35 +219,35 @@
                     <input type="hidden" id="employee-id">
                     <div class="space-y-4">
                         <div class="form-group">
-                            <label class="form-label">Full Name *</label>
+                            <label class="form-label" for="employee-name">Full Name *</label>
                             <input type="text" id="employee-name" class="form-input" maxlength="25" required>
                             <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Employee ID *</label>
+                            <label class="form-label" for="employee-emp-id">Employee ID *</label>
                             <input type="text" id="employee-emp-id" class="form-input" maxlength="25" style="text-transform: uppercase" required>
                             <p id="emp-id-error" class="text-xs text-red-400 mt-1 hidden">⚠️ An employee with this employee number already exists</p>
                             <p id="emp-id-helper" class="text-xs text-slate-400 mt-1">Maximum 25 characters (uppercase only)</p>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="employee-email">Email</label>
                             <input type="email" id="employee-email" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Department *</label>
+                            <label class="form-label" for="employee-department">Department *</label>
                             <select id="employee-department" class="form-select" required></select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Position</label>
+                            <label class="form-label" for="employee-position">Position</label>
                             <input type="text" id="employee-position" class="form-input" maxlength="25">
                             <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Location</label>
+                            <label class="form-label" for="employee-location">Location</label>
                             <select id="employee-location" class="form-select"></select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Status</label>
+                            <label class="form-label" for="employee-status">Status</label>
                             <select id="employee-status" class="form-select">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -731,7 +731,7 @@
                         
                         if (failed > 0) {
                             showToast(`Imported ${imported} employees, ${failed} failed`, 'warning');
-                            console.log('Import errors:', result.data.errors);
+                            // console.log('Import errors:', result.data.errors);
                         } else {
                             showToast(`Successfully imported ${imported} employees`, 'success');
                         }

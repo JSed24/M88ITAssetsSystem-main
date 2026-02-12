@@ -323,7 +323,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Asset Selection -->
                         <div class="form-group">
-                            <label class="form-label">Asset *</label>
+                            <label class="form-label" for="asset-select">Asset *</label>
                             <select id="asset-select" class="form-select" required onchange="handleAssetChange()">
                                 <option value="">Select Asset</option>
                             </select>
@@ -331,7 +331,7 @@
                         
                         <!-- Employee (Auto-detected) -->
                         <div class="form-group">
-                            <label class="form-label">Employee Responsible *</label>
+                            <label class="form-label" for="employee-select">Employee Responsible *</label>
                             <select id="employee-select" class="form-select" required>
                                 <option value="">Select Employee</option>
                             </select>
@@ -340,20 +340,20 @@
                         
                         <!-- Date Reported -->
                         <div class="form-group">
-                            <label class="form-label">Date Reported *</label>
+                            <label class="form-label" for="date-reported">Date Reported *</label>
                             <input type="date" id="date-reported" class="form-input" required>
                         </div>
                         
                         <!-- Last Known Location -->
                         <div class="form-group">
-                            <label class="form-label">Last Known Location</label>
+                            <label class="form-label" for="last-location">Last Known Location</label>
                             <input type="text" id="last-location" class="form-input" maxlength="25" placeholder="e.g., T1 (Table 1)">
                             <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                         </div>
                         
                         <!-- Status -->
                         <div class="form-group">
-                            <label class="form-label">Status *</label>
+                            <label class="form-label" for="status-select">Status *</label>
                             <select id="status-select" class="form-select" required onchange="handleStatusChange()">
                                 <option value="under_investigation">Under Investigation</option>
                                 <option value="found">Found</option>
@@ -363,25 +363,25 @@
                         
                         <!-- Date Found (conditional) -->
                         <div class="form-group" id="date-found-group" style="display: none;">
-                            <label class="form-label">Date Found</label>
+                            <label class="form-label" for="date-found">Date Found</label>
                             <input type="date" id="date-found" class="form-input">
                         </div>
                         
                         <!-- Estimated Value -->
                         <div class="form-group">
-                            <label class="form-label">Estimated Value (PHP)</label>
+                            <label class="form-label" for="estimated-value">Estimated Value (PHP)</label>
                             <input type="number" id="estimated-value" class="form-input" placeholder="0.00" step="0.01" min="0">
                         </div>
                         
                         <!-- Liability Amount -->
                         <div class="form-group">
-                            <label class="form-label">Liability Amount (PHP)</label>
+                            <label class="form-label" for="liability-amount">Liability Amount (PHP)</label>
                             <input type="number" id="liability-amount" class="form-input" placeholder="0.00" step="0.01" min="0">
                         </div>
                         
                         <!-- Liability Action -->
                         <div class="form-group md:col-span-2">
-                            <label class="form-label">Liability Action</label>
+                            <label class="form-label" for="liability-action">Liability Action</label>
                             <select id="liability-action" class="form-select">
                                 <option value="">None</option>
                                 <option value="warning">Warning</option>
@@ -393,7 +393,7 @@
                         
                         <!-- Payment Status -->
                         <div class="form-group md:col-span-2">
-                            <label class="form-label">Payment Status</label>
+                            <label class="form-label" for="payment-status">Payment Status</label>
                             <select id="payment-status" class="form-select">
                                 <option value="">N/A</option>
                                 <option value="pending">Pending</option>
@@ -405,19 +405,19 @@
                         
                         <!-- Circumstances -->
                         <div class="form-group md:col-span-2">
-                            <label class="form-label">Circumstances *</label>
+                            <label class="form-label" for="circumstances">Circumstances *</label>
                             <textarea id="circumstances" class="form-textarea" rows="3" required placeholder="Describe how and when the asset was lost..."></textarea>
                         </div>
                         
                         <!-- Recovery Notes (conditional) -->
                         <div class="form-group md:col-span-2" id="recovery-notes-group" style="display: none;">
-                            <label class="form-label">Recovery Notes</label>
+                            <label class="form-label" for="recovery-notes">Recovery Notes</label>
                             <textarea id="recovery-notes" class="form-textarea" rows="2" placeholder="Details about how/where the asset was recovered..."></textarea>
                         </div>
                         
                         <!-- Resolution Notes -->
                         <div class="form-group md:col-span-2">
-                            <label class="form-label">Resolution Notes</label>
+                            <label class="form-label" for="resolution-notes">Resolution Notes</label>
                             <textarea id="resolution-notes" class="form-textarea" rows="2" placeholder="Final outcome and actions taken..."></textarea>
                         </div>
                     </div>

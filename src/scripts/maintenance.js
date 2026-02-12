@@ -244,13 +244,13 @@ const Maintenance = {
                 .neq('id', id)
                 .in('status', ['pending', 'in_progress']);
             
-            console.log('Other active maintenance count:', count);
-            console.log('Other active maintenance records:', otherMaintenance);
+            // console.log('Other active maintenance count:', count);
+            // console.log('Other active maintenance records:', otherMaintenance);
             
             // If no other active maintenance, restore asset status
             if (count === 0) {
                 const originalStatus = data.original_asset_status;
-                console.log('Original asset status before maintenance:', originalStatus);
+                // console.log('Original asset status before maintenance:', originalStatus);
                 
                 // Determine new status based on original status and current assignment
                 let newStatus = 'available';
@@ -264,7 +264,7 @@ const Maintenance = {
                         .filter('returned_date', 'is', null)
                         .maybeSingle();
                     
-                    console.log('Active assignment:', assignment);
+                    // console.log('Active assignment:', assignment);
                     
                     if (assignment) {
                         // Asset still assigned - restore to assigned status
@@ -287,10 +287,10 @@ const Maintenance = {
                     newStatus = 'available';
                 }
                 
-                console.log('Restoring asset status to:', newStatus);
+                // console.log('Restoring asset status to:', newStatus);
                 await Assets.updateStatus(current.data.asset_id, newStatus);
             } else {
-                console.log('Skipping asset status update - other active maintenance exists');
+                // console.log('Skipping asset status update - other active maintenance exists');
             }
             
             // Get asset info for audit

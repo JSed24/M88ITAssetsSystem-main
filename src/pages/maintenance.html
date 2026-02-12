@@ -203,13 +203,13 @@
                 <input type="hidden" id="record-id">
                 <div class="modal-body space-y-4">
                     <div class="form-group">
-                        <label class="form-label">Asset *</label>
+                        <label class="form-label" for="maint-asset">Asset *</label>
                         <select id="maint-asset" class="form-select" required></select>
                         <p class="text-xs text-slate-400 mt-1">Only non-decommissioned assets are shown</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
-                            <label class="form-label">Type *</label>
+                            <label class="form-label" for="maint-type">Type *</label>
                             <select id="maint-type" class="form-select" required>
                                 <option value="repair">Repair</option>
                                 <option value="preventive">Preventive</option>
@@ -217,7 +217,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Status *</label>
+                            <label class="form-label" for="maint-status">Status *</label>
                             <select id="maint-status" class="form-select" required>
                                 <option value="in_progress">In Progress</option>
                                 <option value="completed">Completed</option>
@@ -226,30 +226,30 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Issue Description *</label>
+                        <label class="form-label" for="maint-issue">Issue Description *</label>
                         <textarea id="maint-issue" class="form-textarea" rows="2" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Resolution</label>
+                        <label class="form-label" for="maint-resolution">Resolution</label>
                         <textarea id="maint-resolution" class="form-textarea" rows="2"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
-                            <label class="form-label">Start Date</label>
+                            <label class="form-label" for="maint-start">Start Date</label>
                             <input type="date" id="maint-start" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Completed Date</label>
+                            <label class="form-label" for="maint-completed">Completed Date</label>
                             <input type="date" id="maint-completed" class="form-input">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-group">
-                            <label class="form-label">Cost (PHP)</label>
+                            <label class="form-label" for="maint-cost">Cost (PHP)</label>
                             <input type="number" id="maint-cost" class="form-input" step="0.01" min="0">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Performed By</label>
+                            <label class="form-label" for="maint-performed">Performed By</label>
                             <input type="text" id="maint-performed" class="form-input" maxlength="25" placeholder="Technician name">
                             <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                         </div>
@@ -391,8 +391,8 @@
 
             // Debug logging
             if (records && records.length > 0) {
-                console.log('First maintenance record:', records[0]);
-                console.log('Has maintenance_type?', records[0].maintenance_type);
+                // console.log('First maintenance record:', records[0]);
+                // console.log('Has maintenance_type?', records[0].maintenance_type);
             }
 
             document.getElementById('records-count').textContent = `(${count || 0})`;

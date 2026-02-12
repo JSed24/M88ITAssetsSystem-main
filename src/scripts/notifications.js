@@ -373,7 +373,7 @@ const Notifications = {
                  data-id="${notification.id}"
                  data-link="${notification.link || ''}">
                 <div class="flex gap-3">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-${typeConfig.color}-600/20 flex items-center justify-center">
+                    <div class="shrink-0 w-8 h-8 rounded-full bg-${typeConfig.color}-600/20 flex items-center justify-center">
                         <span class="text-${typeConfig.color}-400 text-sm">
                             ${isUnread ? '●' : '○'}
                         </span>

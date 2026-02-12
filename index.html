@@ -35,104 +35,118 @@
          LOGIN PAGE
          ============================================= -->
     <div class="login-page" id="login-page">
-        <div class="login-card">
-            <!-- Logo -->
-            <div class="login-logo">
-                <img src="/images/logo.png" alt="Madison 88 Logo" onerror="this.style.display='none'">
-                <p>IT Equipment Inventory Management System</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 h-screen">
+            <!-- Left Side - Image -->
+            <div class="relative overflow-hidden bg-slate-800">
+                <img 
+                    src="/images/Scenic.png" 
+                    alt="Winter Scenic" 
+                    class="w-full h-full object-cover"
+                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full text-slate-500\'>Image Loading...</div>'"
+                >
             </div>
 
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-4">
-                <!-- Error Alert -->
-                <div id="login-error" class="hidden bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                    <span id="login-error-message"></span>
-                </div>
+            <!-- Right Side - Login Form -->
+            <div class="flex items-center justify-center p-8 bg-slate-900 overflow-y-auto">
+                <div class="w-full max-w-md">
+                    <!-- Logo -->
+                    <div class="login-logo mb-8">
+                        <img src="/images/logo.png" alt="Madison 88 Logo" onerror="this.style.display='none'">
+                        <p>IT Equipment Inventory Management System</p>
+                    </div>
 
-                <!-- Email -->
-                <div class="form-group">
-                    <label class="form-label" for="email">Email Address</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        class="form-input" 
-                        placeholder="you@madison88.com"
-                        required
-                        autocomplete="email"
-                    >
-                </div>
+                    <!-- Login Form -->
+                    <form id="login-form" class="space-y-4">
+                        <!-- Error Alert -->
+                        <div id="login-error" class="hidden bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                            <span id="login-error-message"></span>
+                        </div>
 
-                <!-- Password -->
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <div class="relative">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            class="form-input pr-10" 
-                            placeholder="Enter your password"
-                            required
-                            autocomplete="current-password"
-                        >
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-input" 
+                                placeholder="you@madison88.com"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password</label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    class="form-input pr-10" 
+                                    placeholder="Enter your password"
+                                    required
+                                    autocomplete="current-password"
+                                >
+                                <button 
+                                    type="button" 
+                                    id="toggle-password"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                >
+                                    <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Remember Me -->
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember" class="form-checkbox mr-2">
+                            <label for="remember" class="text-sm text-slate-400">Remember me</label>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="space-y-2">
+                            <div class="flex items-start">
+                                <input type="checkbox" id="terms" class="form-checkbox mr-2 mt-0.5" required>
+                                <label for="terms" class="text-sm text-slate-400">
+                                    I accept the 
+                                    <button type="button" onclick="openTermsModal()" class="text-blue-400 hover:text-blue-300 underline">
+                                        Terms and Conditions
+                                    </button>
+                                </label>
+                            </div>
+                            <p id="terms-error" class="hidden text-xs text-red-400 ml-6">
+                                ⚠️ Please accept the Terms and Conditions to continue.
+                            </p>
+                    </div>
+
+                    <!-- Submit Button -->
                         <button 
-                            type="button" 
-                            id="toggle-password"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            type="submit" 
+                            id="login-btn"
+                            class="btn btn-primary w-full py-3"
                         >
-                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                            <span id="login-btn-text">Sign In</span>
+                            <svg id="login-spinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </button>
+                    </form>
+                    <!-- Footer -->
+                    <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                        <p class="text-xs text-slate-500">
+                            © 2026 Madison 88 Business Solutions Asia Inc.
+                        </p>
                     </div>
                 </div>
-
-                <!-- Remember Me -->
-                <div class="flex items-center">
-                    <input type="checkbox" id="remember" class="form-checkbox mr-2">
-                    <label for="remember" class="text-sm text-slate-400">Remember me</label>
-                </div>
-
-                <!-- Terms and Conditions -->
-                <div class="space-y-2">
-                    <div class="flex items-start">
-                        <input type="checkbox" id="terms" class="form-checkbox mr-2 mt-0.5" required>
-                        <label for="terms" class="text-sm text-slate-400">
-                            I accept the 
-                            <button type="button" onclick="openTermsModal()" class="text-blue-400 hover:text-blue-300 underline">
-                                Terms and Conditions
-                            </button>
-                        </label>
-                    </div>
-                    <p id="terms-error" class="hidden text-xs text-red-400 ml-6">
-                        ⚠️ Please accept the Terms and Conditions to continue.
-                    </p>
-                </div>
-
-                <!-- Submit Button -->
-                <button 
-                    type="submit" 
-                    id="login-btn"
-                    class="btn btn-primary w-full py-3"
-                >
-                    <span id="login-btn-text">Sign In</span>
-                    <svg id="login-spinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-            </form>
-
-            <!-- Footer -->
-            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
-                <p class="text-xs text-slate-500">
-                    © 2026 Madison 88 Business Solutions Asia Inc.
-                </p>
             </div>
         </div>
     </div>

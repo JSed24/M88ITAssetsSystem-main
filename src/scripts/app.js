@@ -17,7 +17,7 @@ const App = {
      * Call this on every page load
      */
     async init() {
-        console.log('🚀 Initializing M88 IT Assets System...');
+        // console.log('🚀 Initializing M88 IT Assets System...');
         
         // Show loading screen
         Components.showLoading();
@@ -69,7 +69,7 @@ const App = {
                 this.initTheme();
             }
             
-            console.log('✅ Application initialized successfully');
+            // console.log('✅ Application initialized successfully');
             
         } catch (error) {
             console.error('❌ Application initialization error:', error);
@@ -141,7 +141,7 @@ const App = {
             CONFIG.SUPABASE_ANON_KEY
         );
         
-        console.log('📦 Supabase client initialized');
+        // console.log('📦 Supabase client initialized');
     },
     
     // ===========================================
@@ -169,7 +169,7 @@ const App = {
             this.locations = locResult.data || [];
             this.categories = catResult.data || [];
             
-            console.log('📊 Common data loaded');
+            // console.log('📊 Common data loaded');
             
         } catch (error) {
             console.error('Load common data error:', error);

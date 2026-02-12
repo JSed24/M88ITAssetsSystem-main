@@ -495,7 +495,7 @@
          */
         async function init() {
             try {
-                console.log('🚀 Starting assets page init...');
+                // console.log('🚀 Starting assets page init...');
                 
                 // Check authentication
                 const { data: { session } } = await supabase.auth.getSession();
@@ -562,7 +562,7 @@
                 // Load assets
                 await loadAssets();
 
-                console.log('✅ Assets page loaded!');
+                // console.log('✅ Assets page loaded!');
 
                 // Enable keyboard search for all filter dropdowns
                 Utils.enableAllSelectsKeyboardSearch('select.form-select');
@@ -720,7 +720,7 @@
 
                 // Debug: log the first asset to see what fields are returned
                 if (assets && assets.length > 0) {
-                    console.log('First asset from view:', assets[0]);
+                    // console.log('First asset from view:', assets[0]);
                 }
 
                 totalPages = Math.ceil((count || 0) / pageSize);
@@ -1366,7 +1366,7 @@
             }
 
             // Debug: log the data being sent
-            console.log('Asset Data being submitted:', assetData);
+            // console.log('Asset Data being submitted:', assetData);
 
             // Get submit button
             const submitBtn = event.target.querySelector('button[type="submit"]');
@@ -1543,7 +1543,7 @@
                         
                         if (failed > 0) {
                             showToast(`Imported ${imported} assets, ${failed} failed`, 'warning');
-                            console.log('Import errors:', result.data.errors);
+                            // console.log('Import errors:', result.data.errors);
                         } else {
                             showToast(`Successfully imported ${imported} assets`, 'success');
                         }

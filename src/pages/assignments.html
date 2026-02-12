@@ -209,20 +209,20 @@
             <form id="assign-form" onsubmit="handleAssign(event)">
                 <div class="modal-body space-y-4">
                     <div class="form-group">
-                        <label class="form-label">Asset *</label>
+                        <label class="form-label" for="assign-asset">Asset *</label>
                         <select id="assign-asset" class="form-select" required></select>
                         <p class="text-xs text-slate-400 mt-1">Only available assets are shown</p>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Employee *</label>
+                        <label class="form-label" for="assign-employee">Employee *</label>
                         <select id="assign-employee" class="form-select" required></select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Assignment Date</label>
+                        <label class="form-label" for="assign-date">Assignment Date</label>
                         <input type="date" id="assign-date" class="form-input" value="">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label" for="assign-notes">Notes</label>
                         <textarea id="assign-notes" class="form-textarea" rows="2" placeholder="Optional notes..."></textarea>
                     </div>
                 </div>
@@ -245,7 +245,7 @@
                     <p class="text-slate-300">Return this asset to inventory?</p>
                     <p class="text-sm text-slate-400" id="return-info"></p>
                     <div class="form-group">
-                        <label class="form-label">Return Condition</label>
+                        <label class="form-label" for="return-condition">Return Condition</label>
                         <select id="return-condition" class="form-select">
                             <option value="available">Good - Available for reassignment</option>
                             <option value="under_repair">Needs Repair</option>
@@ -253,7 +253,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label" for="return-notes">Notes</label>
                         <textarea id="return-notes" class="form-textarea" rows="2"></textarea>
                     </div>
                 </div>
@@ -356,12 +356,12 @@
                 return; 
             }
 
-            console.log('Assignments loaded:', assignments);
+            // console.log('Assignments loaded:', assignments);
             if (assignments && assignments.length > 0) {
-                console.log('First assignment:', assignments[0]);
-                console.log('Has asset_name?', assignments[0].asset_name);
-                console.log('Has employee_name?', assignments[0].employee_name);
-                console.log('Has department_name?', assignments[0].department_name);
+                // console.log('First assignment:', assignments[0]);
+                // console.log('Has asset_name?', assignments[0].asset_name);
+                // console.log('Has employee_name?', assignments[0].employee_name);
+                // console.log('Has department_name?', assignments[0].department_name);
             }
 
             document.getElementById('assignments-count').textContent = `(${count || 0})`;
@@ -617,8 +617,8 @@
 
                 // Debug: Log first assignment to see available fields
                 if (assignments && assignments.length > 0) {
-                    console.log('First assignment data:', assignments[0]);
-                    console.log('Has assigned_by_email?', assignments[0].assigned_by_email);
+                    // console.log('First assignment data:', assignments[0]);
+                    // console.log('Has assigned_by_email?', assignments[0].assigned_by_email);
                 }
 
                 // Get department names

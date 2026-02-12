@@ -393,7 +393,7 @@
          */
         async function init() {
             try {
-                console.log('🚀 Starting dashboard init...');
+                // console.log('🚀 Starting dashboard init...');
                 
                 // Check authentication
                 const { data: { session } } = await supabase.auth.getSession();
@@ -403,7 +403,7 @@
                     return;
                 }
                 
-                console.log('✅ Session found');
+                // console.log('✅ Session found');
 
                 // Get user profile
                 const { data: profile, error: profileError } = await supabase
@@ -450,12 +450,12 @@
                 // Check reports permission for IT staff
                 await Utils.handleReportsNavVisibility(currentUser, supabase);
 
-                console.log('📊 Loading dashboard data...');
+                // console.log('📊 Loading dashboard data...');
 
                 // Load dashboard data (all at once for speed)
                 await loadDashboardData();
 
-                console.log('✅ Dashboard loaded!');
+                // console.log('✅ Dashboard loaded!');
 
                 // Enable keyboard search for all dropdowns
                 Utils.enableAllSelectsKeyboardSearch('select');
@@ -1173,7 +1173,7 @@
                         });
                     }
                 } catch (e) {
-                    console.log('View v_warranty_expiring not available');
+                    // console.log('View v_warranty_expiring not available');
                 }
 
                 // Check refresh due (with error handling)
@@ -1192,7 +1192,7 @@
                         });
                     }
                 } catch (e) {
-                    console.log('View v_assets_refresh_due not available');
+                    // console.log('View v_assets_refresh_due not available');
                 }
 
                 // Check pending maintenance
