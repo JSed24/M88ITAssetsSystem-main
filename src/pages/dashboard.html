@@ -394,6 +394,11 @@
         // Global state
         let currentUser = null;
         let selectedRegionId = null; // null = all regions (for executive)
+        
+        // Chart instances (need to be destroyed before recreating)
+        let statusChartInstance = null;
+        let categoryChartInstance = null;
+        let acquisitionChartInstance = null;
 
         /**
          * Initialize the dashboard
@@ -675,8 +680,14 @@
                 // Calculate total for center text
                 const totalAssets = statusValues.reduce((a, b) => a + b, 0);
 
+                // Destroy existing chart if it exists
+                if (statusChartInstance) {
+                    statusChartInstance.destroy();
+                    statusChartInstance = null;
+                }
+
                 // Create chart
-                const statusChart = new Chart(document.getElementById('status-chart'), {
+                statusChartInstance = new Chart(document.getElementById('status-chart'), {
                     type: 'doughnut',
                     data: {
                         labels: statusLabels,
@@ -800,7 +811,13 @@
                 categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
             });
 
-            new Chart(document.getElementById('category-chart'), {
+            // Destroy existing chart if it exists
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+                categoryChartInstance = null;
+            }
+
+            categoryChartInstance = new Chart(document.getElementById('category-chart'), {
                 type: 'bar',
                 data: {
                     labels: Object.keys(categoryCounts),
@@ -890,7 +907,13 @@
                 gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
                 gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-                new Chart(canvas, {
+                // Destroy existing chart if it exists
+                if (acquisitionChartInstance) {
+                    acquisitionChartInstance.destroy();
+                    acquisitionChartInstance = null;
+                }
+
+                acquisitionChartInstance = new Chart(canvas, {
                     type: 'line',
                     data: {
                         labels: months,
@@ -1231,11 +1254,12 @@
             try {
                 // Check warranty expiring (with error handling)
                 try {
-                    let wQuery = supabase
+                    // Note: View v_warranty_expiring may not exist yet
+                    // Don't apply region filter to avoid 400 errors
+                    const { data: warrantyExpiring } = await supabase
                         .from('v_warranty_expiring')
-                        .select('*');
-                    if (selectedRegionId) wQuery = wQuery.eq('region_id', selectedRegionId);
-                    const { data: warrantyExpiring } = await wQuery.limit(3);
+                        .select('*')
+                        .limit(3);
 
                     if (warrantyExpiring?.length) {
                         alerts.push({
@@ -1251,11 +1275,12 @@
 
                 // Check refresh due (with error handling)
                 try {
-                    let rQuery = supabase
+                    // Note: View v_assets_refresh_due may not exist yet
+                    // Don't apply region filter to avoid 400 errors
+                    const { data: refreshDue } = await supabase
                         .from('v_assets_refresh_due')
-                        .select('*');
-                    if (selectedRegionId) rQuery = rQuery.eq('region_id', selectedRegionId);
-                    const { data: refreshDue } = await rQuery.limit(3);
+                        .select('*')
+                        .limit(3);
 
                     if (refreshDue?.length) {
                         alerts.push({

@@ -316,7 +316,7 @@
         }
 
         async function loadStats() {
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
 
             // Active assignments (region-scoped via view)
             let activeQ = supabase.from('v_asset_assignments_full').select('*', { count: 'exact', head: true }).is('returned_date', null);
@@ -346,7 +346,7 @@
             let query = supabase.from('v_asset_assignments_full').select('*', { count: 'exact' }).order('assigned_date', { ascending: false });
 
             // Apply region filter
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
             if (regionId) query = query.eq('region_id', regionId);
 
             if (filter === 'active') query = query.is('returned_date', null);
@@ -446,7 +446,7 @@
 
         async function loadAssetOptions() {
             let assetQ = supabase.from('assets').select('id, asset_tag, name').eq('status', 'available');
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
             if (regionId) assetQ = assetQ.eq('region_id', regionId);
             const { data: assets } = await assetQ.order('name');
             const select = document.getElementById('assign-asset');
@@ -455,7 +455,7 @@
 
         async function loadEmployeeOptions() {
             let empQ = supabase.from('employees').select('id, full_name, employee_id').eq('is_active', true);
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
             if (regionId) empQ = empQ.eq('region_id', regionId);
             const { data: employees } = await empQ.order('full_name');
             const select = document.getElementById('assign-employee');
@@ -491,24 +491,28 @@
             // Get submit button
             const submitBtn = e.target.querySelector('button[type="submit"]');
             
-            // Handle form submission with loading state
-            await Utils.handleFormSubmit(submitBtn, async () => {
-                // Use Assignments module (includes audit logging)
-                const result = await Assignments.assign({
-                    assetId,
-                    employeeId,
-                    notes,
-                    assignedBy: currentUser.id
-                });
-                
-                if (!result.success) throw new Error(result.error);
+            try {
+                // Handle form submission with loading state
+                await Utils.handleFormSubmit(submitBtn, async () => {
+                    // Use Assignments module (includes audit logging)
+                    const result = await Assignments.assign({
+                        assetId,
+                        employeeId,
+                        notes,
+                        assignedBy: currentUser.id
+                    });
+                    
+                    if (!result.success) throw new Error(result.error);
 
-                showToast('Asset assigned successfully', 'success');
-                closeAssignModal();
-                loadStats();
-                loadAssignments();
-                loadAssetOptions();
-            }, 'Assigning...');
+                    showToast('Asset assigned successfully', 'success');
+                    closeAssignModal();
+                    loadStats();
+                    loadAssignments();
+                    loadAssetOptions();
+                }, 'Assigning...');
+            } catch (error) {
+                showToast(error.message || 'Failed to assign asset', 'error');
+            }
         };
 
         window.openReturnModal = (assignmentId, assetId, assetInfo) => {
@@ -609,7 +613,7 @@
                     .order('full_name');
 
                 // Apply region filter
-                const regionId = Auth.getRegionId();
+                const regionId = currentUser.region_id || null;
                 if (regionId) empQuery = empQuery.eq('region_id', regionId);
                 
                 if (deptFilter !== 'all') {
@@ -626,7 +630,7 @@
                     .select('*')
                     .order('assigned_date', { ascending: false });
 
-                // Apply region filter
+                // Apply region filter (reuse regionId from employee query above)
                 if (regionId) query = query.eq('region_id', regionId);
 
                 if (filter === 'active') query = query.is('returned_date', null);

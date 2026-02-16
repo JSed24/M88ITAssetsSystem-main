@@ -331,11 +331,12 @@
                         
                         <!-- Employee (Auto-detected) -->
                         <div class="form-group">
-                            <label class="form-label" for="employee-select">Employee Responsible *</label>
-                            <select id="employee-select" class="form-select" required>
-                                <option value="">Select Employee</option>
+                            <label class="form-label" for="employee-select">Employee Responsible</label>
+                            <select id="employee-select" class="form-select">
+                                <option value="unassigned">Unassigned</option>
+                                <option value="" disabled>──────────</option>
                             </select>
-                            <p class="text-xs text-slate-400 mt-1">Auto-detected from last assignment</p>
+                            <p class="text-xs text-slate-400 mt-1">Auto-detected from last assignment or select Unassigned</p>
                         </div>
                         
                         <!-- Date Reported -->
@@ -509,7 +510,7 @@
         }
 
         async function loadStats() {
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
 
             // Use the view which has region_id
             let invQ = supabase.from('v_lost_assets_full').select('*', { count: 'exact', head: true }).eq('status', 'under_investigation');
@@ -537,7 +538,7 @@
                 let query = supabase.from('v_lost_assets_full').select('*', { count: 'exact' });
 
                 // Apply region filter
-                const regionId = Auth.getRegionId();
+                const regionId = currentUser.region_id || null;
                 if (regionId) query = query.eq('region_id', regionId);
                 
                 const status = document.getElementById('status-filter').value;
@@ -672,7 +673,7 @@
 
         async function loadAssets() {
             let assetQ = supabase.from('assets').select('id, asset_tag, name');
-            const regionId = Auth.getRegionId();
+            const regionId = currentUser.region_id || null;
             if (regionId) assetQ = assetQ.eq('region_id', regionId);
             const { data } = await assetQ.order('asset_tag');
             assets = data || [];
@@ -683,12 +684,13 @@
 
         async function loadEmployees() {
             let empQ = supabase.from('employees').select('id, full_name, departments(name)');
-            const regionId2 = Auth.getRegionId();
-            if (regionId2) empQ = empQ.eq('region_id', regionId2);
+            const regionId = currentUser.region_id || null;
+            if (regionId) empQ = empQ.eq('region_id', regionId);
             const { data } = await empQ.order('full_name');
             employees = data || [];
             const select = document.getElementById('employee-select');
-            select.innerHTML = '<option value="">Select Employee</option>' + 
+            select.innerHTML = '<option value="unassigned">Unassigned</option>' +
+                '<option value="" disabled>──────────</option>' + 
                 employees.map(e => `<option value="${e.id}">${e.full_name} (${e.departments?.name || 'N/A'})</option>`).join('');
         }
 
@@ -707,6 +709,9 @@
             
             if (assignments && assignments.length > 0 && assignments[0].employee_id) {
                 document.getElementById('employee-select').value = assignments[0].employee_id;
+            } else {
+                // No assignment found, set to unassigned
+                document.getElementById('employee-select').value = 'unassigned';
             }
         };
 
@@ -732,6 +737,7 @@
             document.getElementById('modal-title').textContent = 'Report Lost Asset';
             document.getElementById('date-reported').valueAsDate = new Date();
             document.getElementById('status-select').value = 'under_investigation';
+            document.getElementById('employee-select').value = 'unassigned';
             handleStatusChange();
             document.getElementById('lost-asset-modal').classList.remove('hidden');
         };
@@ -747,7 +753,7 @@
                 
                 document.getElementById('record-id').value = record.id;
                 document.getElementById('asset-select').value = record.asset_id || '';
-                document.getElementById('employee-select').value = record.employee_id || '';
+                document.getElementById('employee-select').value = record.employee_id || 'unassigned';
                 document.getElementById('date-reported').value = record.date_reported || '';
                 document.getElementById('last-location').value = record.last_known_location || '';
                 document.getElementById('status-select').value = record.status || '';
@@ -783,7 +789,7 @@
                 document.getElementById('view-content').innerHTML = `
                     <div class="grid grid-cols-2 gap-4">
                         <div><span class="text-slate-400">Asset:</span><br><span class="text-white font-medium">${record.asset_name} (${record.asset_tag})</span></div>
-                        <div><span class="text-slate-400">Employee:</span><br><span class="text-white font-medium">${record.employee_name}</span></div>
+                        <div><span class="text-slate-400">Employee:</span><br><span class="text-white font-medium">${record.employee_name || 'Unassigned'}</span></div>
                         <div><span class="text-slate-400">Department:</span><br><span class="text-white">${record.department || '-'}</span></div>
                         <div><span class="text-slate-400">Date Reported:</span><br><span class="text-white">${new Date(record.date_reported).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}</span></div>
                         <div><span class="text-slate-400">Last Location:</span><br><span class="text-white">${record.last_known_location || '-'}</span></div>
@@ -816,9 +822,10 @@
             const assetId = document.getElementById('asset-select').value;
             const newStatus = document.getElementById('status-select').value;
             
+            const employeeValue = document.getElementById('employee-select').value;
             const data = {
                 asset_id: assetId,
-                employee_id: document.getElementById('employee-select').value,
+                employee_id: (employeeValue === 'unassigned' || !employeeValue) ? null : employeeValue,
                 date_reported: document.getElementById('date-reported').value,
                 last_known_location: document.getElementById('last-location').value || null,
                 circumstances: document.getElementById('circumstances').value,
