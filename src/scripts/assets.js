@@ -498,7 +498,14 @@ const Assets = {
             };
             
             for (const asset of assets) {
-                const result = await this.create(asset);
+                const { _existingId, ...assetData } = asset; // strip internal flag
+                let result;
+                if (_existingId) {
+                    // Overwrite: update the existing record
+                    result = await this.update(_existingId, assetData);
+                } else {
+                    result = await this.create(assetData);
+                }
                 if (result.success) {
                     results.success++;
                 } else {

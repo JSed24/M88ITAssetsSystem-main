@@ -418,7 +418,14 @@ const Employees = {
             };
             
             for (const employee of employees) {
-                const result = await this.create(employee);
+                const { _existingId, ...employeeData } = employee; // strip internal flag
+                let result;
+                if (_existingId) {
+                    // Overwrite: update the existing record
+                    result = await this.update(_existingId, employeeData);
+                } else {
+                    result = await this.create(employeeData);
+                }
                 if (result.success) {
                     results.success++;
                 } else {

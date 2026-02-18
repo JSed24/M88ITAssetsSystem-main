@@ -431,7 +431,7 @@ const Audit = {
      */
     async getLogs({ 
         page = 1, 
-        perPage = 100,
+        perPage = 200,
         action = null, 
         actionCategory = null,
         tableName = null, 

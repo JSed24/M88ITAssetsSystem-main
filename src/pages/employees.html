@@ -673,92 +673,68 @@
         window.handleImportEmployees = async function(event) {
             const file = event.target.files[0];
             if (!file) return;
+            event.target.value = ''; // Reset file input immediately
 
             try {
-                showLoadingModal('Importing Employees', 'Reading file and validating data...');
-                
+                showLoadingModal('Validating Import', 'Reading file and checking data...');
+
                 const XLSX = window.XLSX;
                 if (!XLSX) {
                     hideLoadingModal();
                     showToast('Please wait, loading import library...', 'info');
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    showLoadingModal('Importing Employees', 'Reading file and validating data...');
+                    showLoadingModal('Validating Import', 'Reading file and checking data...');
                 }
 
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                // Parse file
+                const jsonData = await window.Import.parseFile(file);
 
-                        if (!jsonData.length) {
-                            showToast('No data found in file', 'error');
-                            return;
-                        }
+                if (!jsonData || !jsonData.length) {
+                    hideLoadingModal();
+                    showToast('No data found in file', 'error');
+                    return;
+                }
 
-                        // Fetch departments and locations for mapping
-                        const { data: departments } = await supabase.from('departments').select('id, name');
-                        const { data: locations } = await supabase.from('locations').select('id, name');
-                        
-                        const deptMap = {};
-                        const locMap = {};
-                        departments?.forEach(d => {
-                            deptMap[d.name.toLowerCase()] = d.id;
-                        });
-                        locations?.forEach(l => {
-                            locMap[l.name.toLowerCase()] = l.id;
-                        });
+                // Validate against database
+                document.getElementById('loading-message').textContent = 'Validating ' + jsonData.length + ' rows against database...';
+                const validation = await window.Import.validateEmployeeImport(jsonData, supabase);
 
-                        // Map CSV columns to database columns
-                        const employeesToImport = jsonData.map(row => {
-                            const deptName = row.Department || row.department || '';
-                            const locName = row.Location || row.location || '';
-                            
-                            return {
-                                full_name: row.Full_Name || row.full_name || row.Name || row.name || '',
-                                employee_id: row.Employee_ID || row.employee_id || row.EmployeeID || '',
-                                email: row.Email || row.email || null,
-                                position: row.Position || row.position || null,
-                                department_id: deptName ? deptMap[deptName.toLowerCase()] || null : null,
-                                location_id: locName ? locMap[locName.toLowerCase()] || null : null,
-                                is_active: (row.Status || row.status || 'active').toLowerCase() === 'active'
-                            };
-                        });
+                hideLoadingModal();
 
-                        // Update loading message
-                        document.getElementById('loading-message').textContent = `Importing ${employeesToImport.length} employees...`;
-                        
-                        // Use Employees module bulkImport (includes audit logging)
-                        const result = await Employees.bulkImport(employeesToImport, file);
-                        
-                        hideLoadingModal();
-                        
-                        if (!result.success) {
-                            throw new Error(result.error);
-                        }
+                if (validation.error) {
+                    showToast(validation.error, 'error');
+                    return;
+                }
 
-                        const imported = result.data.success;
-                        const failed = result.data.failed;
-                        
-                        if (failed > 0) {
-                            showToast(`Imported ${imported} employees, ${failed} failed`, 'warning');
-                            // console.log('Import errors:', result.data.errors);
-                        } else {
-                            showToast(`Successfully imported ${imported} employees`, 'success');
-                        }
-                        
-                        loadEmployees();
-                        event.target.value = ''; // Reset file input
-                    } catch (error) {
-                        hideLoadingModal();
-                        console.error('Parse error:', error);
-                        showToast('Failed to parse file: ' + error.message, 'error');
-                    }
-                };
+                // Show preview modal — user selects which rows to import
+                const { action, selectedRows } = await window.Import.showValidationPreview(validation, 'employees');
 
-                reader.readAsArrayBuffer(file);
+                if (action === 'cancel' || selectedRows.length === 0) {
+                    if (action !== 'cancel') showToast('No records selected for import', 'info');
+                    return;
+                }
+
+                // Proceed with actual import
+                showLoadingModal('Importing Employees', 'Importing ' + selectedRows.length + ' records...');
+
+                const result = await Employees.bulkImport(selectedRows, file);
+
+                hideLoadingModal();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                const imported = result.data.success;
+                const failed = result.data.failed;
+
+                if (failed > 0) {
+                    showToast('Imported ' + imported + ' employees, ' + failed + ' failed', 'warning');
+                } else {
+                    showToast('Successfully imported ' + imported + ' employees', 'success');
+                }
+
+                loadEmployees();
             } catch (error) {
                 hideLoadingModal();
                 console.error('Import error:', error);

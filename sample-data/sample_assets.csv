@@ -1,11 +1,11 @@
 Name,Asset_Tag,Serial_Number,Brand,Model,Category,Status
 Dell Latitude Laptop,M88-2602-00001,DL5520-001234,Dell,Latitude 5520,Laptop,available
 HP E24 Monitor,M88-2602-00002,HPE24-789012,HP,E24 G4,Monitor,available
-Lenovo ThinkCentre Desktop,M88-2602-00003,LTC-345678,Lenovo,ThinkCentre M720,Desktop,lost
+Lenovo ThinkCentre Desktop,M88-2602-00003,LTC-345678,Lenovo,ThinkCentre M720,Mouse,lost
 Logitech Wireless Keyboard,M88-2602-00004,LGK-556789,Logitech,K780,Keyboard,available
 Dell Ultrasharp Monitor,M88-2602-00005,DLU27-667890,Dell,UltraSharp U2722DE,Monitor,assigned
 MacBook Pro,M88-2602-00006,MBP16-778901,Apple,MacBook Pro 16,Laptop,damaged
-HP EliteDesk Desktop,M88-2602-00007,HPED-889012,HP,EliteDesk 800 G6,Desktop,available
+HP EliteDesk Desktop,M88-2602-00007,HPED-889012,HP,EliteDesk 800 G6,Keyboard,available
 Microsoft Surface Keyboard,M88-2602-00008,MSSF-990123,Microsoft,Surface Keyboard,Keyboard,assigned
 Lenovo ThinkPad Laptop,M88-2602-00009,LTP14-101234,Lenovo,ThinkPad T14,Laptop,assigned
 Dell P2422H Monitor,M88-2602-00010,DLP24-112345,Dell,P2422H,Monitor,available
@@ -13,7 +13,7 @@ HP LaserJet Printer,M88-2602-00011,HPLJ-123456,HP,LaserJet Pro M404dn,Printer,av
 Logitech Wireless Mouse,M88-2602-00012,LGM-234567,Logitech,MX Master 3,Mouse,assigned
 ASUS ROG Monitor,M88-2602-00013,ASROG-345678,ASUS,ROG Swift PG279Q,Monitor,available
 HP Elite Laptop,M88-2602-00014,HPEL-456789,HP,EliteBook 840 G8,Laptop,available
-Dell OptiPlex Desktop,M88-2602-00015,DLOP-567890,Dell,OptiPlex 7090,Desktop,decommissioned
+Dell OptiPlex Desktop,M88-2602-00015,DLOP-567890,Dell,OptiPlex 7090,Laptop,decommissioned
 Logitech C920 Webcam,M88-2602-00016,LGC920-678901,Logitech,C920 HD Pro,HDMI Cable,available
 Samsung Monitor,M88-2602-00017,SMS27-789012,Samsung,S27R750,Monitor,assigned
 Microsoft Surface Laptop,M88-2602-00018,MSLS-890123,Microsoft,Surface Laptop 4,Laptop,decommissioned

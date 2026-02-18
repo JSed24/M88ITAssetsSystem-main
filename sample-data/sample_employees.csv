@@ -2,4 +2,4 @@ Employee_ID,Full_Name,Email,Department,Location,Position,Status
 EMP001,John Doe,john@example.com,Costing,T1,Manager,active
 EMP002,Jane Smith,jane@example.com,HR,T5,Associate,active
 EMP003,Bob Johnson,bob@example.com,IT,T3,Analyst,active
-EMP004,Alice Williams,alice@example.com,Marketing,T2,Coordinator,active
+EMP004,Alice Williams,alice@example.com,Admin,T2,Coordinator,active

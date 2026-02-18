@@ -933,3 +933,280 @@ body {
 .transition-all {
     transition: all 0.15s ease;
 }
+
+/* ===========================================
+   IMPORT PREVIEW MODAL
+   =========================================== */
+.import-preview-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.import-preview-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.import-preview-modal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    width: 92vw;
+    max-width: 1200px;
+    height: 88vh;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.25s ease;
+}
+
+.import-preview-overlay.open .import-preview-modal {
+    transform: scale(1) translateY(0);
+}
+
+.import-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #334155;
+    flex-shrink: 0;
+}
+
+.import-preview-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.75rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.import-preview-close:hover {
+    color: #f1f5f9;
+    background-color: #334155;
+}
+
+/* Summary Stats Bar */
+.import-preview-summary {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.import-preview-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+}
+
+.import-preview-stat-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.import-preview-stat-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.15rem;
+}
+
+/* Toolbar (select controls + count) */
+.import-preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1.25rem;
+    border-bottom: 1px solid #1e293b;
+    background: #1a2536;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Scrollable Table */
+.import-preview-table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 0;
+}
+
+.import-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.import-preview-th {
+    position: sticky;
+    top: 0;
+    background: #0f172a;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 2px solid #334155;
+    z-index: 2;
+}
+
+.import-preview-td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #1e293b;
+    color: #e2e8f0;
+    vertical-align: top;
+}
+
+.import-preview-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+/* Row status classes */
+.import-row-error {
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.import-row-error:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.import-row-duplicate {
+    background: rgba(234, 179, 8, 0.05);
+}
+
+.import-row-duplicate:hover {
+    background: rgba(234, 179, 8, 0.09) !important;
+}
+
+/* Duplicate detail sub-row */
+.import-row-dup-detail {
+    background: rgba(234, 179, 8, 0.03);
+}
+
+.import-dup-info {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    padding: 0.25rem 0;
+    border-left: 3px solid #ca8a04;
+    padding-left: 0.75rem;
+}
+
+/* Status badges */
+.import-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.import-badge-new {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.import-badge-dup {
+    background: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.import-badge-filedup {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.import-badge-error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Issues column */
+.import-preview-issues {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-width: 280px;
+}
+
+/* Footer */
+.import-preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #334155;
+    background: #0f172a;
+    flex-shrink: 0;
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+
+/* Checkbox styling inside preview */
+.import-row-check {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #6366f1;
+    cursor: pointer;
+}
+
+.import-row-check:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .import-preview-modal {
+        width: 98vw;
+        height: 95vh;
+        max-height: 95vh;
+        border-radius: 0.5rem;
+    }
+
+    .import-preview-summary {
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .import-preview-stat-count {
+        font-size: 1.15rem;
+    }
+
+    .import-preview-th,
+    .import-preview-td {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}

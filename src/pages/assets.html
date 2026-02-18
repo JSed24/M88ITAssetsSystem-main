@@ -1459,120 +1459,68 @@
         window.handleImportAssets = async function(event) {
             const file = event.target.files[0];
             if (!file) return;
+            event.target.value = ''; // Reset file input immediately
 
             try {
-                showLoadingModal('Importing Assets', 'Reading file and validating data...');
-                
+                showLoadingModal('Validating Import', 'Reading file and checking data...');
+
                 const XLSX = window.XLSX;
                 if (!XLSX) {
                     hideLoadingModal();
                     showToast('Please wait, loading import library...', 'info');
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    showLoadingModal('Importing Assets', 'Reading file and validating data...');
+                    showLoadingModal('Validating Import', 'Reading file and checking data...');
                 }
 
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                // Parse file
+                const jsonData = await window.Import.parseFile(file);
 
-                        if (!jsonData.length) {
-                            showToast('No data found in file', 'error');
-                            return;
-                        }
+                if (!jsonData || !jsonData.length) {
+                    hideLoadingModal();
+                    showToast('No data found in file', 'error');
+                    return;
+                }
 
-                        // Get all categories to map names to IDs
-                        const { data: categories } = await supabase
-                            .from('asset_categories')
-                            .select('id, name');
-                        
-                        if (!categories || categories.length === 0) {
-                            showToast('No categories found. Please create at least one category first.', 'error');
-                            return;
-                        }
+                // Validate against database
+                document.getElementById('loading-message').textContent = 'Validating ' + jsonData.length + ' rows against database...';
+                const validation = await window.Import.validateAssetImport(jsonData, supabase);
 
-                        // Create a mapping of category names to IDs (case-insensitive)
-                        const categoryMap = {};
-                        categories.forEach(cat => {
-                            categoryMap[cat.name.toLowerCase()] = cat.id;
-                        });
-                        
-                        const defaultCategoryId = categories[0].id;
+                hideLoadingModal();
 
-                        // Get all locations to map names to IDs
-                        const { data: locations } = await supabase
-                            .from('locations')
-                            .select('id, name');
-                        
-                        const locationMap = {};
-                        if (locations) {
-                            locations.forEach(loc => {
-                                locationMap[loc.name.toLowerCase()] = loc.id;
-                            });
-                        }
+                if (validation.error) {
+                    showToast(validation.error, 'error');
+                    return;
+                }
 
-                        // Map CSV columns to database columns
-                        const assetsToImport = jsonData.map(row => {
-                            // Map category name to ID
-                            const categoryName = (row.Category || row.category || '').toLowerCase();
-                            const categoryId = categoryMap[categoryName] || defaultCategoryId;
-                            
-                            // Map location name to ID
-                            const locationName = (row.Location || row.location || '').toLowerCase();
-                            const locationId = locationMap[locationName] || null;
-                            
-                            return {
-                                name: row.Name || row.name || row.Asset_Name || '',
-                                asset_tag: row.Asset_Tag || row.asset_tag || row.AssetTag || '',
-                                serial_number: row.Serial_Number || row.serial_number || row.SerialNumber || '',
-                                brand: row.Brand || row.brand || '',
-                                model: row.Model || row.model || '',
-                                status: 'available', // All imported assets must be available
-                                category_id: categoryId,
-                                location_id: locationId,
-                                purchase_date: row.Purchase_Date || row.purchase_date || null,
-                                purchase_cost: row.Purchase_Cost || row.purchase_cost || row.Cost || null,
-                                warranty_end_date: row.Warranty_End || row.warranty_end || row.Warranty_End_Date || null,
-                                specifications: row.Specifications || row.specifications || null,
-                                notes: row.Notes || row.notes || null
-                            };
-                        });
+                // Show preview modal — user selects which rows to import
+                const { action, selectedRows } = await window.Import.showValidationPreview(validation, 'assets');
 
-                        // Update loading message
-                        document.getElementById('loading-message').textContent = `Importing ${assetsToImport.length} assets...`;
-                        
-                        // Use Assets module bulkImport (includes audit logging)
-                        const result = await Assets.bulkImport(assetsToImport, file);
-                        
-                        hideLoadingModal();
-                        
-                        if (!result.success) {
-                            throw new Error(result.error);
-                        }
+                if (action === 'cancel' || selectedRows.length === 0) {
+                    if (action !== 'cancel') showToast('No records selected for import', 'info');
+                    return;
+                }
 
-                        const imported = result.data.success;
-                        const failed = result.data.failed;
-                        
-                        if (failed > 0) {
-                            showToast(`Imported ${imported} assets, ${failed} failed`, 'warning');
-                            // console.log('Import errors:', result.data.errors);
-                        } else {
-                            showToast(`Successfully imported ${imported} assets`, 'success');
-                        }
-                        
-                        loadAssets();
-                        event.target.value = ''; // Reset file input
-                    } catch (error) {
-                        hideLoadingModal();
-                        console.error('Parse error:', error);
-                        showToast('Failed to parse file: ' + error.message, 'error');
-                    }
-                };
+                // Proceed with actual import
+                showLoadingModal('Importing Assets', 'Importing ' + selectedRows.length + ' records...');
 
-                reader.readAsArrayBuffer(file);
+                const result = await Assets.bulkImport(selectedRows, file);
+
+                hideLoadingModal();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                const imported = result.data.success;
+                const failed = result.data.failed;
+
+                if (failed > 0) {
+                    showToast('Imported ' + imported + ' assets, ' + failed + ' failed', 'warning');
+                } else {
+                    showToast('Successfully imported ' + imported + ' assets', 'success');
+                }
+
+                loadAssets();
             } catch (error) {
                 hideLoadingModal();
                 console.error('Import error:', error);
