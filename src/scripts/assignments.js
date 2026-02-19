@@ -129,7 +129,7 @@ const Assignments = {
      * @param {object} assignmentData - Assignment data
      * @returns {Promise<object>} Created assignment
      */
-    async assign({ assetId, employeeId, notes = '', assignedBy = null }) {
+    async assign({ assetId, employeeId, notes = '', assignedBy = null, assignedDate = null }) {
         try {
             // Validate asset
             const asset = await Assets.getById(assetId);
@@ -196,7 +196,7 @@ const Assignments = {
                 .insert({
                     asset_id: assetId,
                     employee_id: employeeId,
-                    assigned_date: new Date().toISOString().split('T')[0],
+                    assigned_date: assignedDate || new Date().toISOString().split('T')[0],
                     assigned_by: currentUserId,
                     notes
                 })

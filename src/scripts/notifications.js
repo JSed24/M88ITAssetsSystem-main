@@ -11,11 +11,25 @@ const Notifications = {
     // Cached notifications
     notifications: [],
     unreadCount: 0,
+
+    // Current user context (set via setUser() when Auth global is unavailable)
+    _userId: null,
+    _userRole: null,
     
     // ===========================================
     // INITIALIZATION
     // ===========================================
-    
+
+    /**
+     * Set user context so the module can work without the Auth global.
+     * Call this before init() when Auth.user is not available.
+     * @param {object} user - user profile object with id and role
+     */
+    setUser(user) {
+        this._userId = user?.id || null;
+        this._userRole = user?.role || null;
+    },
+
     /**
      * Initialize notifications
      */
@@ -33,13 +47,14 @@ const Notifications = {
      * Load user notifications
      */
     async loadNotifications() {
-        if (!Auth.user) return;
-        
+        const userId = this._userId || (typeof Auth !== 'undefined' && Auth.user ? Auth.user.id : null);
+        if (!userId) return;
+
         try {
             const { data, error } = await window.supabase
                 .from('notifications')
                 .select('*')
-                .or(`user_id.eq.${Auth.user.id},user_id.is.null`)
+                .or(`user_id.eq.${userId},user_id.is.null`)
                 .order('created_at', { ascending: false })
                 .limit(50);
             
@@ -115,13 +130,14 @@ const Notifications = {
      * Mark all notifications as read
      */
     async markAllAsRead() {
-        if (!Auth.user) return;
-        
+        const userId = this._userId || (typeof Auth !== 'undefined' && Auth.user ? Auth.user.id : null);
+        if (!userId) return;
+
         try {
             const { error } = await window.supabase
                 .from('notifications')
                 .update({ is_read: true })
-                .or(`user_id.eq.${Auth.user.id},user_id.is.null`)
+                .or(`user_id.eq.${userId},user_id.is.null`)
                 .eq('is_read', false);
             
             if (error) throw error;
@@ -177,7 +193,11 @@ const Notifications = {
      * Creates notifications for warranties, maintenance, etc.
      */
     async checkAlerts() {
-        if (!Auth.canEdit()) return; // Only IT staff and admins see these
+        // Only IT staff and admins trigger automatic alert notifications
+        const canEdit = (typeof Auth !== 'undefined' && typeof Auth.canEdit === 'function')
+            ? Auth.canEdit()
+            : (this._userRole === 'admin' || this._userRole === 'it_staff');
+        if (!canEdit) return;
         
         await this.checkWarrantyExpiring();
         await this.checkPendingMaintenance();

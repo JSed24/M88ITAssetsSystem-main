@@ -985,6 +985,14 @@
                             }
                         }
 
+                        // Update notes on existing asset from CSV if provided
+                        if (row._existingAssetId && row.mapped?.notes) {
+                            await supabase
+                                .from('assets')
+                                .update({ notes: row.mapped.notes })
+                                .eq('id', row._existingAssetId);
+                        }
+
                         // Handle reassignment: return from current employee first
                         if (row._action === 'reassign' && row._currentAssignmentId) {
                             const unResult = await Assignments.unassign(row._currentAssignmentId, 'Reassigned via import');
@@ -996,13 +1004,19 @@
 
                         // Handle overwrite of existing assignment (same employee)
                         if (row._action === 'already_assigned' && row._currentAssignmentId) {
-                            const updates = {};
-                            if (row.assignmentData.notes) updates.notes = row.assignmentData.notes;
-                            if (row.assignmentData.assigned_date) updates.assigned_date = row.assignmentData.assigned_date;
-                            if (Object.keys(updates).length > 0) {
+                            // Update asset notes if provided
+                            if (row.mapped?.notes && row._existingAssetId) {
+                                const { error: assetNotesError } = await supabase
+                                    .from('assets')
+                                    .update({ notes: row.mapped.notes })
+                                    .eq('id', row._existingAssetId);
+                                if (assetNotesError) throw new Error('Failed to update asset notes: ' + assetNotesError.message);
+                            }
+                            // Update assignment date if provided
+                            if (row.assignmentData.assigned_date) {
                                 const { error: updateError } = await supabase
                                     .from('asset_assignments')
-                                    .update(updates)
+                                    .update({ assigned_date: row.assignmentData.assigned_date })
                                     .eq('id', row._currentAssignmentId);
                                 if (updateError) throw new Error('Failed to update assignment: ' + updateError.message);
                             }
@@ -1023,8 +1037,9 @@
                         const assignResult = await Assignments.assign({
                             assetId,
                             employeeId,
-                            notes: row.assignmentData?.notes || 'Imported via bulk assignment',
-                            assignedBy: currentUser.id
+                            notes: 'Imported via bulk assignment',
+                            assignedBy: currentUser.id,
+                            assignedDate: row.assignmentData?.assigned_date || null
                         });
 
                         if (!assignResult.success) {

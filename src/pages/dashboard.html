@@ -22,6 +22,7 @@
     <!-- Application Modules -->
     <script type="module" src="../scripts/utils.js"></script>
     <script src="../scripts/audit.js"></script>
+    <script src="../scripts/notifications.js"></script>
 </head>
 <body>
     <!-- =============================================
@@ -182,8 +183,8 @@
                     <span id="region-label" class="hidden ml-3 text-sm text-slate-400"></span>
                 </div>
                 <div class="topbar-right">
-                    <!-- Notifications -->
-                    <div class="dropdown relative">
+                    <!-- Notifications (hidden for admin/IT staff who have the Alerts panel) -->
+                    <div class="dropdown relative" id="notification-bell-wrapper">
                         <button class="btn btn-icon btn-secondary relative" onclick="toggleNotifications()">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -380,6 +381,28 @@
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
+    <!-- Alert Detail Modal -->
+    <div id="alert-detail-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" onclick="closeAlertDetailModal()">
+        <div class="modal" style="max-width:860px; width:100%;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title" id="alert-detail-title">Alert Details</h3>
+                <button onclick="closeAlertDetailModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="alert-detail-body">
+                    <div class="text-center py-8 text-slate-400">
+                        <div class="spinner mx-auto mb-3"></div>
+                        Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- =============================================
          SCRIPTS
          ============================================= -->
@@ -452,7 +475,21 @@
                 // Setup region context
                 await setupRegionContext();
 
-                // console.log('📊 Loading dashboard data...');
+                // Hide notification bell for admin/IT staff (they use the Alerts & Reminders panel)
+                if (currentUser.role === 'admin' || currentUser.role === 'it_staff' || currentUser.role === 'viewer' || currentUser.role === 'executive') {
+                    const bellWrapper = document.getElementById('notification-bell-wrapper');
+                    if (bellWrapper) bellWrapper.classList.add('hidden');
+                } else {
+                    // Initialize notifications for non-admin/IT roles (non-blocking)
+                    try {
+                        if (typeof Notifications !== 'undefined') {
+                            Notifications.setUser(currentUser);
+                            Notifications.init();
+                        }
+                    } catch (notifErr) {
+                        console.warn('Notifications init failed:', notifErr);
+                    }
+                }
 
                 // Load dashboard data (all at once for speed)
                 await loadDashboardData();
@@ -1255,18 +1292,20 @@
                 // Check warranty expiring (with error handling)
                 try {
                     // Note: View v_warranty_expiring may not exist yet
-                    // Don't apply region filter to avoid 400 errors
-                    const { data: warrantyExpiring } = await supabase
+                    let wQuery = supabase
                         .from('v_warranty_expiring')
-                        .select('*')
-                        .limit(3);
+                        .select('*');
+                    if (selectedRegionId) wQuery = wQuery.eq('region_id', selectedRegionId);
+                    const { data: warrantyExpiring } = await wQuery.limit(3);
 
                     if (warrantyExpiring?.length) {
                         alerts.push({
                             type: 'warning',
                             title: 'Warranty Expiring Soon',
-                            message: `${warrantyExpiring.length} asset(s) have warranty expiring within 30 days`,
-                            icon: 'shield'
+                            message: `${warrantyExpiring.length} asset(s) have warranty expiring within 90 days`,
+                            icon: 'shield',
+                            link: '#',
+                            onclick: `showAlertDetail('warranty')`
                         });
                     }
                 } catch (e) {
@@ -1276,18 +1315,20 @@
                 // Check refresh due (with error handling)
                 try {
                     // Note: View v_assets_refresh_due may not exist yet
-                    // Don't apply region filter to avoid 400 errors
-                    const { data: refreshDue } = await supabase
+                    let rQuery = supabase
                         .from('v_assets_refresh_due')
-                        .select('*')
-                        .limit(3);
+                        .select('*');
+                    if (selectedRegionId) rQuery = rQuery.eq('region_id', selectedRegionId);
+                    const { data: refreshDue } = await rQuery.limit(3);
 
                     if (refreshDue?.length) {
                         alerts.push({
                             type: 'info',
                             title: 'Refresh Due',
                             message: `${refreshDue.length} asset(s) are due for refresh`,
-                            icon: 'refresh'
+                            icon: 'refresh',
+                            link: '#',
+                            onclick: `showAlertDetail('refresh')`
                         });
                     }
                 } catch (e) {
@@ -1310,7 +1351,8 @@
                         type: 'warning',
                         title: 'Maintenance In Progress',
                         message: `${filteredMaintenance.length} asset(s) are currently being repaired`,
-                        icon: 'tool'
+                        icon: 'tool',
+                        link: 'maintenance.html'
                     });
                 }
 
@@ -1330,7 +1372,7 @@
                         title: 'Lost Assets Under Investigation',
                         message: `${lostAssets.length} asset(s) reported lost and under investigation`,
                         icon: 'alert',
-                        // link: 'lost-assets.html'
+                        link: 'lost-assets.html'
                     });
                 }
             } catch (error) {
@@ -1365,7 +1407,7 @@
             };
 
             container.innerHTML = alerts.map(alert => `
-                <div class="p-4 hover:bg-slate-700/50 ${alert.link ? 'cursor-pointer' : ''}" ${alert.link ? 'onclick="window.location.href=\'' + alert.link + '\'"' : ''}>
+                <div class="p-4 hover:bg-slate-700/50 ${alert.link ? 'cursor-pointer' : ''}" ${alert.onclick ? `onclick="${alert.onclick}"` : alert.link ? `onclick="window.location.href='${alert.link}'"` : ''}>
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-full ${alertColors[alert.type]} flex items-center justify-center flex-shrink-0">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1376,7 +1418,7 @@
                             <p class="text-sm font-medium text-white">${alert.title}</p>
                             <p class="text-xs text-slate-400 mt-1">${alert.message}</p>
                         </div>
-                        ${alert.link ? `
+                        ${alert.link || alert.onclick ? `
                         <div>
                             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -1389,6 +1431,118 @@
         }
 
         // Global functions
+        window.showAlertDetail = async function(type) {
+            const modal = document.getElementById('alert-detail-modal');
+            const title = document.getElementById('alert-detail-title');
+            const body  = document.getElementById('alert-detail-body');
+
+            modal.classList.remove('hidden');
+            body.innerHTML = `<div class="text-center py-8 text-slate-400"><div class="spinner mx-auto mb-3"></div>Loading...</div>`;
+
+            try {
+                if (type === 'warranty') {
+                    title.textContent = 'Warranty Expiring Soon';
+                    let q = supabase.from('v_warranty_expiring').select('*').order('warranty_expiry', { ascending: true });
+                    if (selectedRegionId) q = q.eq('region_id', selectedRegionId);
+                    const { data, error } = await q;
+                    if (error) throw error;
+
+                    if (!data?.length) {
+                        body.innerHTML = `<p class="text-center text-slate-400 py-6">No assets with expiring warranties.</p>`;
+                        return;
+                    }
+
+                    body.innerHTML = `
+                        <p class="text-xs text-slate-400 mb-4">${data.length} asset(s) with warranty expiring within 90 days.</p>
+                        <div class="overflow-x-auto">
+                            <table class="table w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Name</th>
+                                        <th>Serial Number</th>
+                                        <th>Category</th>
+                                        <th>Department</th>
+                                        <th>Warranty Expiry</th>
+                                        <th>Days Left</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="text-align: center;">
+                                    ${data.map(a => {
+                                        const days = a.days_until_expiry ?? Math.ceil((new Date(a.warranty_expiry) - new Date()) / 86400000);
+                                        const urgency = days <= 30 ? 'text-red-400' : days <= 60 ? 'text-yellow-400' : 'text-slate-300';
+                                        return `<tr>
+                                            <td class="font-medium text-white">${a.name || '-'}</td>
+                                            <td class="text-slate-400">${a.serial_number || '-'}</td>
+                                            <td>${a.category_name || '-'}</td>
+                                            <td>${a.department_name || '-'}</td>
+                                            <td>${a.warranty_expiry ? new Date(a.warranty_expiry).toLocaleDateString('en-US', {month:'short',day:'2-digit',year:'numeric'}) : '-'}</td>
+                                            <td class="font-semibold ${urgency}">${days} days</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                } else if (type === 'refresh') {
+                    title.textContent = 'Assets Due for Refresh';
+                    let q = supabase.from('v_assets_refresh_due').select('*').order('purchase_date', { ascending: true });
+                    if (selectedRegionId) q = q.eq('region_id', selectedRegionId);
+                    const { data, error } = await q;
+                    if (error) throw error;
+
+                    if (!data?.length) {
+                        body.innerHTML = `<p class="text-center text-slate-400 py-6">No assets due for refresh.</p>`;
+                        return;
+                    }
+
+                    body.innerHTML = `
+                        <p class="text-xs text-slate-400 mb-4">${data.length} asset(s) due for refresh (5+ years old or past refresh date).</p>
+                        <div class="overflow-x-auto">
+                            <table class="table w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Name</th>
+                                        <th>Serial Number</th>
+                                        <th>Category</th>
+                                        <th>Department</th>
+                                        <th>Purchase Date</th>
+                                        <th>Age</th>
+                                        <th>Refresh Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="text-align: center;">
+                                    ${data.map(a => {
+                                        const age = a.age_years != null ? a.age_years : (a.purchase_date ? Math.floor((Date.now() - new Date(a.purchase_date)) / (365.25 * 86400000)) : null);
+                                        return `<tr>
+                                            <td class="font-medium text-white">${a.name || '-'}</td>
+                                            <td class="text-slate-400">${a.serial_number || '-'}</td>
+                                            <td>${a.category_name || '-'}</td>
+                                            <td>${a.department_name || '-'}</td>
+                                            <td>${a.purchase_date ? new Date(a.purchase_date).toLocaleDateString('en-US', {month:'short',day:'2-digit',year:'numeric'}) : '-'}</td>
+                                            <td class="font-semibold text-yellow-400">${age != null ? age + ' yrs' : '-'}</td>
+                                            <td class="text-slate-400">${
+                                                a.suggested_refresh_date
+                                                    ? new Date(a.suggested_refresh_date).toLocaleDateString('en-US', {month:'short',day:'2-digit',year:'numeric'})
+                                                      + (a.is_refresh_date_estimated ? ' <span class="text-xs text-slate-500">(est.)</span>' : '')
+                                                    : '-'
+                                            }</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                body.innerHTML = `<p class="text-center text-red-400 py-6">Failed to load: ${err.message}</p>`;
+            }
+        };
+
+        window.closeAlertDetailModal = function() {
+            document.getElementById('alert-detail-modal').classList.add('hidden');
+        };
+
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -1398,17 +1552,25 @@
 
         window.toggleNotifications = function() {
             const dropdown = document.getElementById('notifications-dropdown');
-            dropdown.classList.toggle('hidden');
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                // Render latest notifications before showing
+                if (typeof Notifications !== 'undefined') {
+                    Notifications.renderDropdown(dropdown);
+                }
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
         };
 
         window.markAllNotificationsRead = async function() {
             try {
-                await supabase
-                    .from('notifications')
-                    .update({ is_read: true })
-                    .eq('user_id', currentUser.id);
-                
-                document.getElementById('notification-count').classList.add('hidden');
+                if (typeof Notifications !== 'undefined') {
+                    await Notifications.markAllAsRead();
+                    const dropdown = document.getElementById('notifications-dropdown');
+                    Notifications.renderDropdown(dropdown);
+                }
                 showToast('All notifications marked as read', 'success');
             } catch (error) {
                 showToast('Failed to update notifications', 'error');

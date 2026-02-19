@@ -488,8 +488,7 @@ const Import = {
                 assetDbRecord: null,
                 employeeDbRecord: null,
                 assignmentData: {
-                    notes: mapped.notes || '',
-                    assigned_date: mapped.assigned_date || new Date().toISOString().split('T')[0]
+                    assigned_date: mapped.assigned_date ? this.parseDate(mapped.assigned_date) || new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
                 }
             };
 
@@ -572,7 +571,8 @@ const Import = {
                     status: 'available',
                     category_id: categoryId,
                     department_id: departmentId,
-                    location_id: locationId
+                    location_id: locationId,
+                    notes: mapped.notes || null
                 };
             }
 
@@ -1069,6 +1069,13 @@ const Import = {
 
     parseDate(dateStr) {
         if (!dateStr) return null;
+        // Handle Excel serial date numbers (e.g. 44436 → 2021-09-02)
+        const num = Number(dateStr);
+        if (!isNaN(num) && num > 25569 && num < 2958465) {
+            // Excel serial: days since 1899-12-30, convert to JS timestamp
+            const date = new Date(Math.round((num - 25569) * 86400 * 1000));
+            if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+        }
         const date = new Date(dateStr);
         if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
         return null;
