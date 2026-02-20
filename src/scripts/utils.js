@@ -818,6 +818,89 @@ const Utils = {
             button.classList.remove('opacity-75');
             delete button._originalContent;
         }
+    },
+
+    /**
+     * Show a logout confirmation modal and sign out on confirm.
+     * Shows a brief success toast before redirecting.
+     * @param {object} supabase - Supabase client
+     */
+    confirmLogout(supabase) {
+        // Remove any pre-existing instance
+        const existing = document.getElementById('_logout-confirm-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = '_logout-confirm-modal';
+        modal.style.cssText = [
+            'position:fixed', 'inset:0', 'z-index:9999',
+            'display:flex', 'align-items:center', 'justify-content:center',
+            'background:rgba(0,0,0,0.65)', 'backdrop-filter:blur(4px)'
+        ].join(';');
+
+        modal.innerHTML = `
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" stroke="#ef4444" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="color:#f1f5f9;font-size:16px;font-weight:600;margin:0 0 4px;font-family:inherit;">Sign Out</h3>
+                        <p style="color:#94a3b8;font-size:14px;margin:0;font-family:inherit;">Are you sure you want to log out?</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button id="_logout-cancel-btn"
+                        style="padding:8px 18px;border-radius:6px;border:1px solid #475569;background:transparent;color:#cbd5e1;font-size:14px;cursor:pointer;font-family:inherit;transition:background 0.15s;"
+                        onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">
+                        Cancel
+                    </button>
+                    <button id="_logout-confirm-btn"
+                        style="padding:8px 18px;border-radius:6px;border:none;background:#dc2626;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background 0.15s;"
+                        onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">
+                        Yes, Sign Out
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.remove();
+
+        const doLogout = async () => {
+            closeModal();
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && window.Audit) await Audit.logLogout(session.user.email);
+            } catch (e) { console.error(e); }
+
+            await supabase.auth.signOut();
+
+            // Success toast
+            const toast = document.createElement('div');
+            toast.style.cssText = [
+                'position:fixed', 'bottom:24px', 'right:24px', 'z-index:9999',
+                'background:#1e293b', 'border:1px solid #22c55e',
+                'border-left:4px solid #22c55e', 'border-radius:8px',
+                'padding:12px 18px', 'display:flex', 'align-items:center', 'gap:10px',
+                'box-shadow:0 10px 25px -5px rgba(0,0,0,0.5)'
+            ].join(';');
+            toast.innerHTML = `
+                <svg width="18" height="18" fill="none" stroke="#22c55e" viewBox="0 0 24 24" style="flex-shrink:0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span style="color:#f1f5f9;font-size:14px;font-family:inherit;">Signed out successfully.</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => { window.location.href = '/index.html'; }, 1500);
+        };
+
+        document.getElementById('_logout-cancel-btn').addEventListener('click', closeModal);
+        document.getElementById('_logout-confirm-btn').addEventListener('click', doLogout);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     }
 };
 

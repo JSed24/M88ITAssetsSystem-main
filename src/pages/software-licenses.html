@@ -123,6 +123,7 @@
                             <thead>
                                 <tr>
                                     <th>Software</th>
+                                    <th>Category</th>
                                     <th>License Key</th>
                                     <th>Type</th>
                                     <th>Seats</th>
@@ -167,6 +168,12 @@
                         <label class="form-label" for="license-name">Software Name *</label>
                         <input type="text" id="license-name" class="form-input" maxlength="25" required placeholder="e.g., Microsoft Office 365">
                         <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="license-category">Category</label>
+                        <select id="license-category" class="form-select">
+                            <option value="">-- Select Category --</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="license-vendor">Vendor</label>
@@ -264,6 +271,7 @@
             }
 
             await loadStats();
+            await loadSoftwareCategories();
             await loadLicenses();
 
             // Enable keyboard search for all dropdowns
@@ -271,6 +279,23 @@
 
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
+        }
+
+        // Software categories cache
+        let softwareCategories = [];
+
+        async function loadSoftwareCategories() {
+            const { data } = await supabase.from('software_categories').select('*').eq('is_active', true).order('name');
+            softwareCategories = data || [];
+            const select = document.getElementById('license-category');
+            select.innerHTML = '<option value="">-- Select Category --</option>' +
+                softwareCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        function getCategoryName(categoryId) {
+            if (!categoryId) return '-';
+            const cat = softwareCategories.find(c => c.id === categoryId);
+            return cat ? cat.name : '-';
         }
 
         async function loadStats() {
@@ -302,9 +327,9 @@
 
         async function loadLicenses() {
             const tbody = document.getElementById('licenses-table-body');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>';
 
-            let query = supabase.from('software_licenses').select('*', { count: 'exact' });
+            let query = supabase.from('software_licenses').select('*, category:software_categories(id, name)', { count: 'exact' });
             // Apply region filter
             const regionId = Auth.getRegionId();
             if (regionId) query = query.eq('region_id', regionId);
@@ -315,7 +340,7 @@
             const to = from + pageSize - 1;
 
             const { data: licenses, count, error } = await query.order('expiry_date', { ascending: true }).range(from, to);
-            if (error) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load</td></tr>'; return; }
+            if (error) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load</td></tr>'; return; }
 
             document.getElementById('licenses-count').textContent = `(${count || 0})`;
             
@@ -327,7 +352,7 @@
                 `Showing ${startRecord}-${endRecord} of ${count || 0} licenses`;
 
             if (!licenses?.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
                 updatePagination();
                 return;
             }
@@ -349,6 +374,7 @@
                             <p class="font-medium text-white">${l.name}</p>
                             <p class="text-xs text-slate-400">${l.vendor || ''}</p>
                         </td>
+                        <td class="text-sm">${l.category?.name || '<span class="text-slate-500">Uncategorized</span>'}</td>
                         <td class="font-mono text-sm">${l.license_key ? '••••' + l.license_key.slice(-8) : '-'}</td>
                         <td class="capitalize">${l.license_type || '-'}</td>
                         <td>${l.seats || 1}</td>
@@ -402,14 +428,7 @@
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadLicenses(); };
         
         window.changePage = function(page) {
@@ -421,6 +440,7 @@
         window.openLicenseModal = () => {
             document.getElementById('license-form').reset();
             document.getElementById('license-id').value = '';
+            document.getElementById('license-category').value = '';
             document.getElementById('modal-title').textContent = 'Add License';
             document.getElementById('license-key-error').classList.add('hidden');
             document.getElementById('license-modal').classList.remove('hidden');
@@ -435,6 +455,7 @@
             document.getElementById('license-name').value = license.name || '';
             document.getElementById('license-vendor').value = license.vendor || '';
             document.getElementById('license-key').value = license.license_key || '';
+            document.getElementById('license-category').value = license.category_id || '';
             document.getElementById('license-type').value = license.license_type || 'perpetual';
             document.getElementById('license-seats').value = license.seats || 1;
             document.getElementById('license-purchase').value = license.purchase_date || '';
@@ -500,6 +521,7 @@
                 vendor: document.getElementById('license-vendor').value || null,
                 license_key: licenseKey || null,
                 license_type: document.getElementById('license-type').value,
+                category_id: document.getElementById('license-category').value || null,
                 seats: parseInt(document.getElementById('license-seats').value) || 1,
                 purchase_date: document.getElementById('license-purchase').value || null,
                 expiry_date: document.getElementById('license-expiry').value || null,

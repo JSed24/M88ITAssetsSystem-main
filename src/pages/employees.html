@@ -260,6 +260,13 @@
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Required Asset Categories</label>
+                            <p class="text-xs text-slate-400 mb-2">Select the types of assets this employee needs to perform their job</p>
+                            <div id="required-categories-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-800 rounded-lg border border-slate-700">
+                                <p class="text-slate-400 text-sm col-span-2 text-center py-2">Loading categories...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -330,6 +337,7 @@
         let currentUser = null;
         let departments = [];
         let locations = [];
+        let assetCategories = [];
         let currentPage = 1;
         let totalPages = 1;
         let searchTerm = '';
@@ -463,6 +471,44 @@
             const locSelect = document.getElementById('employee-location');
             locSelect.innerHTML = '<option value="">Select Table Assignment</option>';
             locations.forEach(l => locSelect.innerHTML += `<option value="${l.id}">${l.name}</option>`);
+
+            // Load asset categories for the required-categories checkboxes
+            const { data: cats } = await supabase.from('asset_categories').select('id, name, is_active').eq('is_active', true).order('name');
+            assetCategories = cats || [];
+            renderCategoryCheckboxes();
+        }
+
+        function renderCategoryCheckboxes(selectedIds = []) {
+            const container = document.getElementById('required-categories-container');
+            if (!assetCategories.length) {
+                container.innerHTML = '<p class="text-slate-400 text-sm col-span-2 text-center py-2">No categories available</p>';
+                return;
+            }
+            container.innerHTML = assetCategories.map(c => `
+                <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-700 cursor-pointer text-sm">
+                    <input type="checkbox" class="req-category-cb rounded border-slate-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-0" value="${c.id}" ${selectedIds.includes(c.id) ? 'checked' : ''}>
+                    <span class="text-slate-300">${c.name}</span>
+                </label>
+            `).join('');
+        }
+
+        function getSelectedCategoryIds() {
+            return Array.from(document.querySelectorAll('.req-category-cb:checked')).map(cb => cb.value);
+        }
+
+        async function saveRequiredCategories(employeeId, categoryIds) {
+            // Delete all existing links for this employee
+            await supabase.from('employee_required_categories').delete().eq('employee_id', employeeId);
+            // Insert new links
+            if (categoryIds.length > 0) {
+                const rows = categoryIds.map(cid => ({ employee_id: employeeId, category_id: cid }));
+                await supabase.from('employee_required_categories').insert(rows);
+            }
+        }
+
+        async function loadRequiredCategories(employeeId) {
+            const { data } = await supabase.from('employee_required_categories').select('category_id').eq('employee_id', employeeId);
+            return (data || []).map(r => r.category_id);
         }
 
         async function loadEmployees() {
@@ -563,14 +609,7 @@
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadEmployees(); };
         window.handleFilter = () => { 
             filters.department = document.getElementById('department-filter').value; 
@@ -612,6 +651,9 @@
             // Reset validation states
             document.getElementById('emp-id-error').classList.add('hidden');
             document.getElementById('employee-emp-id').classList.remove('border-red-500');
+
+            // Reset category checkboxes
+            renderCategoryCheckboxes([]);
             
             document.getElementById('employee-modal').classList.remove('hidden');
         };
@@ -633,6 +675,10 @@
             // Reset validation states
             document.getElementById('emp-id-error').classList.add('hidden');
             document.getElementById('employee-emp-id').classList.remove('border-red-500');
+
+            // Load required categories for this employee
+            const selectedCats = await loadRequiredCategories(emp.id);
+            renderCategoryCheckboxes(selectedCats);
             
             document.getElementById('employee-modal').classList.remove('hidden');
         };
@@ -685,15 +731,21 @@
             
             // Handle form submission with loading state
             await Utils.handleFormSubmit(submitBtn, async () => {
+                const selectedCategoryIds = getSelectedCategoryIds();
+
                 if (id) {
                     // Update using Employees module (includes audit logging)
                     const result = await Employees.update(id, data);
                     if (!result.success) throw new Error(result.error);
+                    // Save required categories
+                    await saveRequiredCategories(id, selectedCategoryIds);
                     showToast('Employee updated', 'success');
                 } else {
                     // Create using Employees module (includes audit logging)
                     const result = await Employees.create(data);
                     if (!result.success) throw new Error(result.error);
+                    // Save required categories for the new employee
+                    await saveRequiredCategories(result.data.id, selectedCategoryIds);
                     showToast('Employee added', 'success');
                 }
                 closeEmployeeModal();

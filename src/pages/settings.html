@@ -99,7 +99,8 @@
                     <!-- <button onclick="switchTab('users')" id="tab-users" class="btn btn-primary">Users</button> -->
                     <button onclick="switchTab('permissions')" id="tab-permissions" class="btn btn-secondary">Permissions</button>
                     <button onclick="switchTab('assignment-rules')" id="tab-assignment-rules" class="btn btn-secondary">Assignment Rules</button>
-                    <button onclick="switchTab('categories')" id="tab-categories" class="btn btn-secondary">Categories</button>
+                    <button onclick="switchTab('categories')" id="tab-categories" class="btn btn-secondary">IT Hardware Categories</button>
+                    <button onclick="switchTab('software-categories')" id="tab-software-categories" class="btn btn-secondary">IT Software Categories</button>
                     <!-- <button onclick="switchTab('locations')" id="tab-locations" class="btn btn-secondary">Locations</button>
                     <button onclick="switchTab('departments')" id="tab-departments" class="btn btn-secondary">Departments</button> -->
                 </div>
@@ -249,6 +250,22 @@
                     </div>
                 </div>
 
+                <!-- Software Categories Section -->
+                <div id="section-software-categories" class="settings-section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Software Categories</h3>
+                            <button class="btn btn-sm btn-primary" onclick="openModal('software-category')">Add Category</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead><tr><th>Name</th><th>Description</th><th>Status</th><th style="text-align: right;">Actions</th></tr></thead>
+                                <tbody id="software-categories-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Assignment Rules Section -->
                 <div id="section-assignment-rules" class="settings-section hidden">
                     <div class="card">
@@ -339,7 +356,7 @@
         }
 
         async function loadAllData() {
-            await Promise.all([loadCategories(), loadLocations(), loadDepartments(), /* loadUsers() — Users tab disabled, see User Maintenance page */ loadAssignmentRules(), loadPermissions()]);
+            await Promise.all([loadCategories(), loadSoftwareCategories(), loadLocations(), loadDepartments(), /* loadUsers() — Users tab disabled, see User Maintenance page */ loadAssignmentRules(), loadPermissions()]);
         }
 
         async function loadCategories() {
@@ -497,6 +514,30 @@
             loadUsers();
         };
 
+        async function loadSoftwareCategories() {
+            const { data } = await supabase.from('software_categories').select('*').order('name');
+            document.getElementById('software-categories-table').innerHTML = (data || []).map(c => {
+                const isActive = c.is_active !== false;
+                const statusBadge = isActive 
+                    ? '<span class="badge badge-success">Active</span>' 
+                    : '<span class="badge badge-gray">Inactive</span>';
+                const toggleBtn = isActive
+                    ? `<button class="btn btn-sm btn-warning" onclick="toggleSoftwareCategoryStatus('${c.id}', false)">Deactivate</button>`
+                    : `<button class="btn btn-sm btn-success" onclick="toggleSoftwareCategoryStatus('${c.id}', true)">Activate</button>`;
+                return `
+                    <tr class="${!isActive ? 'opacity-60' : ''}">
+                        <td class="font-medium text-white">${c.name}</td>
+                        <td>${c.description || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-secondary" onclick="editItem('software-category', '${c.id}')">Edit</button>
+                            ${toggleBtn}
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" class="text-center py-8 text-slate-400">No software categories</td></tr>';
+        }
+
         async function loadAssignmentRules() {
             const { data } = await supabase.from('asset_categories').select('*').order('name');
             document.getElementById('assignment-rules-table').innerHTML = (data || []).map(c => `
@@ -549,23 +590,17 @@
          */
         function setupTabsForRole() {
             if (currentUser.role === 'executive') {
-                // Executive sees all 4 tabs — nothing to hide
+                // Executive sees all tabs — nothing to hide
             } else if (currentUser.role === 'admin') {
                 // Admin sees only Users and Permissions tabs
                 document.getElementById('tab-assignment-rules')?.classList.add('hidden');
                 document.getElementById('tab-categories')?.classList.add('hidden');
+                document.getElementById('tab-software-categories')?.classList.add('hidden');
             }
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
 
         window.switchTab = (tab) => {
             currentTab = tab;
@@ -582,6 +617,16 @@
             let fields = '';
             switch (type) {
                 case 'category':
+                    fields = `
+                        <div class="form-group">
+                            <label class="form-label" for="field-name">Name *</label>
+                            <input type="text" id="field-name" class="form-input" maxlength="25" required>
+                            <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        </div>
+                        <div class="form-group"><label class="form-label" for="field-description">Description</label><textarea id="field-description" class="form-textarea" rows="2"></textarea></div>
+                    `;
+                    break;
+                case 'software-category':
                     fields = `
                         <div class="form-group">
                             <label class="form-label" for="field-name">Name *</label>
@@ -613,14 +658,15 @@
                     break;
             }
             document.getElementById('modal-fields').innerHTML = fields;
-            document.getElementById('modal-title').textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            const titleType = type === 'software-category' ? 'Software Category' : type.charAt(0).toUpperCase() + type.slice(1);
+            document.getElementById('modal-title').textContent = `Add ${titleType}`;
             document.getElementById('edit-modal').classList.remove('hidden');
         };
 
         window.closeModal = () => document.getElementById('edit-modal').classList.add('hidden');
 
         window.editItem = async (type, id) => {
-            const tables = { category: 'asset_categories', location: 'locations', department: 'departments' };
+            const tables = { category: 'asset_categories', 'software-category': 'software_categories', location: 'locations', department: 'departments' };
             const { data } = await supabase.from(tables[type]).select('*').eq('id', id).single();
             if (!data) return;
 
@@ -632,7 +678,8 @@
             } else {
                 document.getElementById('field-description').value = data.description || '';
             }
-            document.getElementById('modal-title').textContent = `Edit ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            const editTitleType = type === 'software-category' ? 'Software Category' : type.charAt(0).toUpperCase() + type.slice(1);
+            document.getElementById('modal-title').textContent = `Edit ${editTitleType}`;
         };
 
         window.editUser = async (id) => {
@@ -717,7 +764,7 @@
             e.preventDefault();
             const id = document.getElementById('item-id').value;
             const type = document.getElementById('item-type').value;
-            const tables = { category: 'asset_categories', location: 'locations', department: 'departments', user: 'user_profiles' };
+            const tables = { category: 'asset_categories', 'software-category': 'software_categories', location: 'locations', department: 'departments', user: 'user_profiles' };
 
             // Get submit button
             const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -754,7 +801,7 @@
                         await Audit.logUserStatusChanged(id, oldUser.email, newActive);
                     }
                 } else {
-                    // Handle category, location, and department
+                    // Handle category, software-category, location, and department
                     const table = tables[type];
                     const name = document.getElementById('field-name').value.trim();
                     
@@ -780,11 +827,21 @@
                         // Log update
                         if (type === 'category') {
                             await Audit.logCategoryUpdated(id, oldData, { ...oldData, ...data });
+                        } else if (type === 'software-category') {
+                            await Audit.log({
+                                action: 'UPDATE',
+                                actionCategory: Audit.CATEGORIES.SETTINGS,
+                                description: `Updated software category: ${oldData.name} → ${data.name}`,
+                                tableName: 'software_categories',
+                                recordId: id,
+                                oldValues: oldData,
+                                newValues: { ...oldData, ...data }
+                            });
                         }
                     } else {
                         // Create new
                         // For categories, set is_active to true by default
-                        if (type === 'category') {
+                        if (type === 'category' || type === 'software-category') {
                             data.is_active = true;
                         }
                         
@@ -794,6 +851,15 @@
                         // Log creation
                         if (type === 'category') {
                             await Audit.logCategoryCreated(newRecord);
+                        } else if (type === 'software-category') {
+                            await Audit.log({
+                                action: 'CREATE',
+                                actionCategory: Audit.CATEGORIES.SETTINGS,
+                                description: `Created software category: ${newRecord.name}`,
+                                tableName: 'software_categories',
+                                recordId: newRecord.id,
+                                newValues: newRecord
+                            });
                         }
                     }
                 }
@@ -932,6 +998,36 @@
                 showToast(error.message || 'Failed to update permission', 'error');
                 // Revert toggle on error
                 document.getElementById('it-staff-audit-logs-toggle').checked = !enabled;
+            }
+        };
+
+        window.toggleSoftwareCategoryStatus = async (id, activate) => {
+            try {
+                const { data: category } = await supabase.from('software_categories').select('*').eq('id', id).single();
+                if (!category) throw new Error('Software category not found');
+
+                const { error } = await supabase
+                    .from('software_categories')
+                    .update({ is_active: activate })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                await Audit.log({
+                    action: 'UPDATE',
+                    actionCategory: Audit.CATEGORIES.SETTINGS,
+                    description: `${activate ? 'Activated' : 'Deactivated'} software category: ${category.name}`,
+                    tableName: 'software_categories',
+                    recordId: id,
+                    oldValues: { ...category, is_active: !activate },
+                    newValues: { ...category, is_active: activate }
+                });
+                
+                showToast(`Software category ${activate ? 'activated' : 'deactivated'} successfully`, 'success');
+                await loadSoftwareCategories();
+            } catch (error) {
+                console.error('Toggle software category status error:', error);
+                showToast(error.message || 'Failed to update software category status', 'error');
             }
         };
 

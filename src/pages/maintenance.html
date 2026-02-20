@@ -617,14 +617,7 @@
 
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadRecords(); };
         window.loadRecords = loadRecords;
         

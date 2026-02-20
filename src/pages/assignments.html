@@ -118,7 +118,7 @@
                 </div>
 
                 <!-- Quick Stats -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
                     <div class="card">
                         <div class="card-body text-center">
                             <p class="text-3xl font-bold text-blue-400" id="stat-active">--</p>
@@ -137,6 +137,12 @@
                             <p class="text-slate-400 text-sm">Returned This Month</p>
                         </div>
                     </div>
+                    <div class="card cursor-pointer hover:border-red-500/50 transition-colors" onclick="document.getElementById('lacking-filter').value = 'lacking'; switchView('requirements');">
+                        <div class="card-body text-center">
+                            <p class="text-3xl font-bold text-red-400" id="stat-lacking">--</p>
+                            <p class="text-slate-400 text-sm">Employees Lacking Assets</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Assignments Table -->
@@ -146,11 +152,11 @@
                         <div class="flex gap-2">
                             <!-- View Toggle -->
                             <div class="flex gap-1 bg-slate-800 rounded-lg p-1">
-                                <button id="table-view-btn" class="px-4 py-2 text-sm rounded bg-blue-600 text-white flex items-center gap-2 min-w-35 justify-center" onclick="switchView('table')">
+                                <button id="requirements-view-btn" class="px-4 py-2 text-sm rounded bg-blue-600 text-white flex items-center gap-2 min-w-35 justify-center" onclick="switchView('requirements')">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                                     </svg>
-                                    <span>Table View</span>
+                                    <span>Requirements</span>
                                 </button>
                                 <button id="grouped-view-btn" class="px-4 py-2 text-sm rounded text-slate-400 hover:text-white flex items-center gap-2 min-w-35 justify-center" onclick="switchView('grouped')">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,36 +165,26 @@
                                     <span>By Employee</span>
                                 </button>
                             </div>
-                            <select id="status-filter" class="form-select text-sm" onchange="handleFilterChange()">
+                            <select id="status-filter" class="form-select text-sm hidden" onchange="handleFilterChange()">
                                 <option value="active">Active Only</option>
                                 <option value="all">All Assignments</option>
                                 <option value="returned">Returned</option>
                             </select>
-                            <select id="department-filter" class="form-select text-sm hidden" onchange="handleFilterChange()">
+                            <select id="department-filter" class="form-select text-sm" onchange="handleFilterChange()">
                                 <option value="all">All Departments</option>
+                            </select>
+                            <select id="lacking-filter" class="form-select text-sm" onchange="handleFilterChange()">
+                                <option value="all">All Employees</option>
+                                <option value="lacking">Lacking Assets Only</option>
                             </select>
                         </div>
                     </div>
                     
-                    <!-- Table View -->
-                    <div id="table-view" class="overflow-x-auto">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Asset</th>
-                                    <th>Category</th>
-                                    <th>Assigned To</th>
-                                    <th>Department</th>
-                                    <th>Assigned Date</th>
-                                    <th>Returned</th>
-                                    <th>Status</th>
-                                    <th style="text-align: right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="assignments-table-body">
-                                <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>
-                            </tbody>
-                        </table>
+                    <!-- Requirements Checklist View (default) -->
+                    <div id="requirements-view" class="p-4">
+                        <div id="requirements-view-body" class="space-y-3">
+                            <div class="text-center py-8 text-slate-400">Loading...</div>
+                        </div>
                     </div>
 
                     <!-- Grouped View -->
@@ -198,8 +194,8 @@
                         </div>
                     </div>
                     
-                    <!-- Pagination -->
-                    <div class="card-footer">
+                    <!-- Pagination (for By Employee view) -->
+                    <div class="card-footer hidden" id="pagination-footer">
                         <div class="flex items-center justify-between">
                             <p class="text-sm text-slate-400" id="pagination-info">
                                 Showing 0 of 0 assignments
@@ -275,6 +271,47 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeReturnModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">Confirm Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Assign Modal (from Requirements checklist) -->
+    <div id="quick-assign-modal" class="modal-overlay hidden">
+        <div class="modal max-w-lg">
+            <div class="modal-header">
+                <h3 class="modal-title">Quick Assign</h3>
+                <button onclick="closeQuickAssignModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="quick-assign-form" onsubmit="handleQuickAssign(event)">
+                <input type="hidden" id="qa-employee-id">
+                <input type="hidden" id="qa-category-id">
+                <div class="modal-body space-y-4">
+                    <div class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                        <div>
+                            <p class="text-xs text-slate-400">Employee</p>
+                            <p class="font-medium text-white" id="qa-employee-name"></p>
+                        </div>
+                        <div class="ml-auto">
+                            <p class="text-xs text-slate-400">Category Needed</p>
+                            <p class="font-medium text-red-300" id="qa-category-name"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="qa-asset">Available Assets in this Category *</label>
+                        <select id="qa-asset" class="form-select" required>
+                            <option value="">Loading...</option>
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1" id="qa-asset-count"></p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="qa-notes">Notes</label>
+                        <textarea id="qa-notes" class="form-textarea" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeQuickAssignModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="qa-submit-btn">Assign Asset</button>
                 </div>
             </form>
         </div>
@@ -380,7 +417,7 @@
             }
 
             await loadStats();
-            await loadAssignments();
+            await loadRequirementsView();
             await loadAssetOptions();
             await loadEmployeeOptions();
             await loadDepartments();
@@ -413,6 +450,327 @@
             if (regionId) retQ = retQ.eq('region_id', regionId);
             const { count: returned } = await retQ;
             document.getElementById('stat-returned').textContent = returned || 0;
+
+            // Employees lacking assets
+            await loadLackingStat(regionId);
+        }
+
+        /**
+         * Count how many active employees are missing at least one required asset category.
+         */
+        async function loadLackingStat(regionId) {
+            try {
+                // Get active employees
+                let empQ = supabase.from('employees').select('id').eq('is_active', true);
+                if (regionId) empQ = empQ.eq('region_id', regionId);
+                const { data: employees } = await empQ;
+                if (!employees || employees.length === 0) {
+                    document.getElementById('stat-lacking').textContent = 0;
+                    return;
+                }
+                const empIds = employees.map(e => e.id);
+
+                // Get all required categories
+                const { data: reqCats } = await supabase
+                    .from('employee_required_categories')
+                    .select('employee_id, category_id')
+                    .in('employee_id', empIds);
+
+                // Get all active assignments with category_id
+                const { data: activeAssignments } = await supabase
+                    .from('asset_assignments')
+                    .select('employee_id, asset:assets(category_id)')
+                    .in('employee_id', empIds)
+                    .is('returned_date', null);
+
+                // Build set of category_ids assigned per employee
+                const assignedMap = {};
+                (activeAssignments || []).forEach(a => {
+                    if (!assignedMap[a.employee_id]) assignedMap[a.employee_id] = new Set();
+                    if (a.asset?.category_id) assignedMap[a.employee_id].add(a.asset.category_id);
+                });
+
+                // Count employees missing at least one required category
+                const reqByEmp = {};
+                (reqCats || []).forEach(r => {
+                    if (!reqByEmp[r.employee_id]) reqByEmp[r.employee_id] = [];
+                    reqByEmp[r.employee_id].push(r.category_id);
+                });
+
+                let lacking = 0;
+                for (const [empId, cats] of Object.entries(reqByEmp)) {
+                    const assigned = assignedMap[empId] || new Set();
+                    const missing = cats.filter(c => !assigned.has(c));
+                    if (missing.length > 0) lacking++;
+                }
+
+                document.getElementById('stat-lacking').textContent = lacking;
+            } catch (err) {
+                console.error('Error loading lacking stat:', err);
+                document.getElementById('stat-lacking').textContent = '--';
+            }
+        }
+
+        /**
+         * Requirements Checklist View — shows each employee with their required
+         * asset categories as a checklist. Fulfilled categories show the assigned
+         * asset details; missing ones are flagged red.
+         */
+        async function loadRequirementsView() {
+            const container = document.getElementById('requirements-view-body');
+
+            // Save scroll position & expanded employees before refresh
+            const scrollY = window.scrollY;
+            const expandedIds = [];
+            container.querySelectorAll('[id^="employee-req-"]').forEach(el => {
+                if (!el.classList.contains('hidden')) {
+                    expandedIds.push(el.id.replace('employee-', ''));
+                }
+            });
+
+            container.innerHTML = '<div class="text-center py-8 text-slate-400">Loading...</div>';
+
+            try {
+                const deptFilterVal = document.getElementById('department-filter').value;
+                const lackingFilter = document.getElementById('lacking-filter').value;
+                const regionId = currentUser.region_id || null;
+
+                // 1. Get active employees
+                let empQuery = supabase
+                    .from('employees')
+                    .select('id, full_name, email, employee_id, department_id')
+                    .eq('is_active', true)
+                    .order('full_name');
+                if (regionId) empQuery = empQuery.eq('region_id', regionId);
+                if (deptFilterVal !== 'all') empQuery = empQuery.eq('department_id', deptFilterVal);
+                if (employeeFilter) empQuery = empQuery.eq('id', employeeFilter);
+
+                const { data: employees, error: empError } = await empQuery;
+                if (empError) throw empError;
+
+                if (!employees || employees.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-400">No employees found</div>';
+                    document.getElementById('assignments-count').textContent = '(0)';
+                    return;
+                }
+
+                const empIds = employees.map(e => e.id);
+
+                // 2. Get required categories for these employees
+                const { data: reqCatsData } = await supabase
+                    .from('employee_required_categories')
+                    .select('employee_id, category_id, category:asset_categories(id, name)')
+                    .in('employee_id', empIds);
+
+                // Build map: empId → [ { id, name } ]
+                const reqCatsMap = {};
+                (reqCatsData || []).forEach(r => {
+                    if (!reqCatsMap[r.employee_id]) reqCatsMap[r.employee_id] = [];
+                    if (r.category) reqCatsMap[r.employee_id].push({ id: r.category.id, name: r.category.name });
+                });
+
+                // 3. Get active assignments with asset details
+                let assignQuery = supabase
+                    .from('v_asset_assignments_full')
+                    .select('*')
+                    .is('returned_date', null)
+                    .in('employee_id', empIds);
+                if (regionId) assignQuery = assignQuery.eq('region_id', regionId);
+
+                const { data: assignments } = await assignQuery;
+
+                // Build map: empId → [ assignment ]
+                const assignMap = {};
+                (assignments || []).forEach(a => {
+                    if (!assignMap[a.employee_id]) assignMap[a.employee_id] = [];
+                    assignMap[a.employee_id].push(a);
+                });
+
+                // 4. Get department names
+                const { data: departments } = await supabase.from('departments').select('id, name');
+                const deptMap = {};
+                departments?.forEach(d => deptMap[d.id] = d.name);
+
+                // 5. Build data for each employee
+                const employeeViewData = employees.map(emp => {
+                    const requiredCats = reqCatsMap[emp.id] || [];
+                    const empAssignments = assignMap[emp.id] || [];
+
+                    // Map category_id → assigned asset(s)
+                    const catAssignMap = {};
+                    empAssignments.forEach(a => {
+                        if (a.category_id) {
+                            if (!catAssignMap[a.category_id]) catAssignMap[a.category_id] = [];
+                            catAssignMap[a.category_id].push(a);
+                        }
+                    });
+
+                    const checklist = requiredCats.map(cat => {
+                        const assigned = catAssignMap[cat.id] || [];
+                        return {
+                            categoryName: cat.name,
+                            categoryId: cat.id,
+                            fulfilled: assigned.length > 0,
+                            assets: assigned
+                        };
+                    });
+
+                    const missingCount = checklist.filter(c => !c.fulfilled).length;
+                    const fulfilledCount = checklist.filter(c => c.fulfilled).length;
+                    const isLacking = missingCount > 0;
+
+                    return {
+                        emp,
+                        departmentName: deptMap[emp.department_id] || '-',
+                        checklist,
+                        missingCount,
+                        fulfilledCount,
+                        isLacking,
+                        totalRequired: requiredCats.length,
+                        totalAssigned: empAssignments.length
+                    };
+                });
+
+                // 6. Apply lacking filter
+                let filteredData = employeeViewData;
+                if (lackingFilter === 'lacking') {
+                    filteredData = employeeViewData.filter(d => d.isLacking);
+                }
+
+                // Update count
+                document.getElementById('assignments-count').textContent = `(${filteredData.length} employees)`;
+
+                // 7. Render
+                if (filteredData.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-400">No employees found matching the filter</div>';
+                    return;
+                }
+
+                const html = filteredData.map(({ emp, departmentName, checklist, missingCount, fulfilledCount, isLacking, totalRequired, totalAssigned }) => {
+                    const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+                    // Progress bar percentage
+                    const progressPct = totalRequired > 0 ? Math.round((fulfilledCount / totalRequired) * 100) : 0;
+
+                    // Checklist items HTML
+                    let checklistHtml = '';
+                    if (checklist.length > 0) {
+                        checklistHtml = checklist.map(item => {
+                            if (item.fulfilled) {
+                                // Show each assigned asset for this category
+                                return item.assets.map(a => `
+                                    <div class="flex items-start gap-3 py-2 px-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                                        <svg class="w-5 h-5 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="font-medium text-green-300">${item.categoryName}</span>
+                                                <span class="text-slate-500">—</span>
+                                                <span class="text-white">${a.asset_name || 'Unknown'}</span>
+                                                <span class="text-xs text-blue-400 font-mono">${a.asset_tag || ''}</span>
+                                            </div>
+                                            <p class="text-xs text-slate-500 mt-0.5">SN: ${a.serial_number || 'N/A'} · Assigned ${a.assigned_date ? new Date(a.assigned_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : 'N/A'}</p>
+                                        </div>
+                                        ${currentUser.role !== 'viewer' ? `
+                                            <button class="btn btn-sm btn-secondary shrink-0" onclick="openReturnModal('${a.id}', '${a.asset_id}', '${a.asset_tag} - ${a.asset_name}')">Return</button>
+                                        ` : ''}
+                                    </div>
+                                `).join('');
+                            } else {
+                                return `
+                                    <div class="flex items-center gap-3 py-2 px-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                                        <svg class="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <span class="font-medium text-red-300">${item.categoryName}</span>
+                                            <span class="text-slate-500 ml-2">— Not assigned</span>
+                                        </div>
+                                        ${currentUser.role !== 'viewer' ? `
+                                            <button type="button" class="btn btn-sm btn-primary shrink-0" onclick="openQuickAssignModal('${emp.id}', '${emp.full_name.replace(/'/g, "\\'") }', '${item.categoryId}', '${item.categoryName.replace(/'/g, "\\'")}')">
+                                                <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                Assign
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }
+                        }).join('');
+                    } else {
+                        checklistHtml = `
+                            <div class="text-center py-4 text-slate-500 text-sm">
+                                No required categories defined for this employee.
+                                <a href="employees.html" class="text-blue-400 hover:underline ml-1">Edit in Employees</a>
+                            </div>
+                        `;
+                    }
+
+                    // Status badges
+                    let statusBadge = '';
+                    if (totalRequired === 0) {
+                        statusBadge = '<span class="badge badge-gray">No Requirements</span>';
+                    } else if (!isLacking) {
+                        statusBadge = '<span class="badge badge-success">Complete</span>';
+                    } else {
+                        statusBadge = `<span class="badge badge-danger">${missingCount} Missing</span>`;
+                    }
+
+                    return `
+                        <div class="bg-slate-800 rounded-lg border ${isLacking ? 'border-red-500/40' : 'border-slate-700'} overflow-hidden">
+                            <!-- Employee Header -->
+                            <button class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-750 transition-colors" onclick="toggleEmployee('req-${emp.id}')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full ${isLacking ? 'bg-red-600' : totalRequired > 0 ? 'bg-green-600' : 'bg-slate-600'} flex items-center justify-center text-white font-semibold text-sm">
+                                        ${initials}
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-medium text-white">${emp.full_name}</p>
+                                        <p class="text-sm text-slate-400">${departmentName} · ${emp.employee_id || ''}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    ${totalRequired > 0 ? `
+                                        <!-- Progress indicator -->
+                                        <div class="hidden sm:flex items-center gap-2">
+                                            <div class="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                                <div class="h-full ${isLacking ? 'bg-red-500' : 'bg-green-500'} rounded-full transition-all" style="width: ${progressPct}%"></div>
+                                            </div>
+                                            <span class="text-xs text-slate-400">${fulfilledCount}/${totalRequired}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${statusBadge}
+                                    <svg id="chevron-req-${emp.id}" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+                            <!-- Checklist (expandable) -->
+                            <div id="employee-req-${emp.id}" class="hidden px-4 pb-4">
+                                <div class="space-y-2">
+                                    ${checklistHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+
+                // Restore expanded employees & scroll position
+                expandedIds.forEach(id => {
+                    const content = document.getElementById(`employee-${id}`);
+                    const chevron = document.getElementById(`chevron-${id}`);
+                    if (content) {
+                        content.classList.remove('hidden');
+                        if (chevron) chevron.classList.add('rotate-180');
+                    }
+                });
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
+            } catch (error) {
+                console.error('Error loading requirements view:', error);
+                container.innerHTML = '<div class="text-center py-8 text-red-400">Failed to load requirements</div>';
+            }
         }
 
         async function loadAssignments() {
@@ -522,7 +880,7 @@
         window.changePage = function(page) {
             if (page < 1 || page > totalPages) return;
             currentPage = page;
-            loadAssignments();
+            loadGroupedView();
         }
 
         async function loadAssetOptions() {
@@ -550,17 +908,89 @@
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
 
         window.openAssignModal = () => { document.getElementById('assign-form').reset(); document.getElementById('assign-date').value = new Date().toISOString().split('T')[0]; loadAssetOptions(); document.getElementById('assign-modal').classList.remove('hidden'); };
         window.closeAssignModal = () => document.getElementById('assign-modal').classList.add('hidden');
+
+        // ==============================
+        // QUICK ASSIGN (from Requirements checklist)
+        // ==============================
+        window.openQuickAssignModal = async (employeeId, employeeName, categoryId, categoryName) => {
+            document.getElementById('qa-employee-id').value = employeeId;
+            document.getElementById('qa-category-id').value = categoryId;
+            document.getElementById('qa-employee-name').textContent = employeeName;
+            document.getElementById('qa-category-name').textContent = categoryName;
+            document.getElementById('qa-notes').value = '';
+
+            const select = document.getElementById('qa-asset');
+            select.innerHTML = '<option value="">Loading...</option>';
+            document.getElementById('qa-asset-count').textContent = '';
+            document.getElementById('qa-submit-btn').disabled = false;
+
+            document.getElementById('quick-assign-modal').classList.remove('hidden');
+
+            // Load only available assets matching this category
+            let assetQ = supabase
+                .from('assets')
+                .select('id, asset_tag, name, serial_number')
+                .eq('status', 'available')
+                .eq('category_id', categoryId);
+            const regionId = currentUser.region_id || null;
+            if (regionId) assetQ = assetQ.eq('region_id', regionId);
+            const { data: assets } = await assetQ.order('name');
+
+            if (!assets || assets.length === 0) {
+                select.innerHTML = '<option value="">No available assets in this category</option>';
+                document.getElementById('qa-asset-count').textContent = '0 assets available';
+                document.getElementById('qa-submit-btn').disabled = true;
+            } else {
+                select.innerHTML = '<option value="">Select an asset</option>' +
+                    assets.map(a => `<option value="${a.id}">${a.name} (${a.asset_tag})${a.serial_number ? ' — SN: ' + a.serial_number : ''}</option>`).join('');
+                document.getElementById('qa-asset-count').textContent = `${assets.length} asset${assets.length !== 1 ? 's' : ''} available`;
+                document.getElementById('qa-submit-btn').disabled = false;
+            }
+        };
+
+        window.closeQuickAssignModal = () => document.getElementById('quick-assign-modal').classList.add('hidden');
+
+        window.handleQuickAssign = async (e) => {
+            e.preventDefault();
+            const assetId = document.getElementById('qa-asset').value;
+            const employeeId = document.getElementById('qa-employee-id').value;
+            const notes = document.getElementById('qa-notes').value;
+            const submitBtn = document.getElementById('qa-submit-btn');
+
+            if (!assetId) {
+                showToast('Please select an asset', 'error');
+                return;
+            }
+
+            try {
+                await Utils.handleFormSubmit(submitBtn, async () => {
+                    const result = await Assignments.assign({
+                        assetId,
+                        employeeId,
+                        notes,
+                        assignedBy: currentUser.id
+                    });
+
+                    if (!result.success) throw new Error(result.error);
+
+                    showToast('Asset assigned successfully', 'success');
+                    closeQuickAssignModal();
+                    loadStats();
+                    if (activeView === 'requirements') {
+                        await loadRequirementsView();
+                    } else {
+                        await loadGroupedView();
+                    }
+                    loadAssetOptions();
+                }, 'Assigning...');
+            } catch (error) {
+                showToast(error.message || 'Failed to assign asset', 'error');
+            }
+        };
 
         window.handleAssign = async (e) => {
             e.preventDefault();
@@ -588,7 +1018,12 @@
                     showToast('Asset assigned successfully', 'success');
                     closeAssignModal();
                     loadStats();
-                    loadAssignments();
+                    // Refresh the active view
+                    if (activeView === 'requirements') {
+                        await loadRequirementsView();
+                    } else {
+                        await loadGroupedView();
+                    }
                     loadAssetOptions();
                 }, 'Assigning...');
             } catch (error) {
@@ -626,11 +1061,11 @@
                 showToast('Asset returned successfully', 'success');
                 closeReturnModal();
                 loadStats();
-                loadAssignments();
-                
-                // Refresh grouped view if it's currently visible
-                const groupedView = document.getElementById('grouped-view');
-                if (!groupedView.classList.contains('hidden')) {
+
+                // Refresh the active view
+                if (activeView === 'requirements') {
+                    await loadRequirementsView();
+                } else {
                     await loadGroupedView();
                 }
             } catch (error) {
@@ -640,51 +1075,66 @@
 
         // Handle filter change - refresh the active view
         window.handleFilterChange = async () => {
-            const groupedView = document.getElementById('grouped-view');
-            if (groupedView.classList.contains('hidden')) {
-                // Table view is active
-                await loadAssignments();
+            if (activeView === 'requirements') {
+                await loadRequirementsView();
             } else {
-                // Grouped view is active
                 await loadGroupedView();
             }
         };
 
         // View switching functions
+        let activeView = 'requirements';
         window.switchView = async (viewType) => {
-            const tableView = document.getElementById('table-view');
+            const requirementsView = document.getElementById('requirements-view');
             const groupedView = document.getElementById('grouped-view');
-            const tableBtn = document.getElementById('table-view-btn');
+            const requirementsBtn = document.getElementById('requirements-view-btn');
             const groupedBtn = document.getElementById('grouped-view-btn');
-            const deptFilter = document.getElementById('department-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const paginationFooter = document.getElementById('pagination-footer');
 
-            if (viewType === 'table') {
-                tableView.classList.remove('hidden');
+            activeView = viewType;
+
+            if (viewType === 'requirements') {
+                requirementsView.classList.remove('hidden');
                 groupedView.classList.add('hidden');
-                tableBtn.classList.add('bg-blue-600', 'text-white');
-                tableBtn.classList.remove('text-slate-400');
+                requirementsBtn.classList.add('bg-blue-600', 'text-white');
+                requirementsBtn.classList.remove('text-slate-400');
                 groupedBtn.classList.remove('bg-blue-600', 'text-white');
                 groupedBtn.classList.add('text-slate-400');
-                deptFilter.classList.add('hidden');
+                statusFilter.classList.add('hidden');
+                paginationFooter.classList.add('hidden');
+                await loadRequirementsView();
             } else {
-                tableView.classList.add('hidden');
+                requirementsView.classList.add('hidden');
                 groupedView.classList.remove('hidden');
                 groupedBtn.classList.add('bg-blue-600', 'text-white');
                 groupedBtn.classList.remove('text-slate-400');
-                tableBtn.classList.remove('bg-blue-600', 'text-white');
-                tableBtn.classList.add('text-slate-400');
-                deptFilter.classList.remove('hidden');
+                requirementsBtn.classList.remove('bg-blue-600', 'text-white');
+                requirementsBtn.classList.add('text-slate-400');
+                statusFilter.classList.remove('hidden');
+                paginationFooter.classList.remove('hidden');
                 await loadGroupedView();
             }
         };
 
         async function loadGroupedView() {
             const container = document.getElementById('grouped-view-body');
+
+            // Save scroll position & expanded employees before refresh
+            const scrollY = window.scrollY;
+            const expandedIds = [];
+            container.querySelectorAll('[id^="employee-"]').forEach(el => {
+                if (!el.classList.contains('hidden')) {
+                    expandedIds.push(el.id.replace('employee-', ''));
+                }
+            });
+
             container.innerHTML = '<div class="text-center py-8 text-slate-400">Loading...</div>';
 
             try {
                 const filter = document.getElementById('status-filter').value;
-                const deptFilter = document.getElementById('department-filter').value;
+                const deptFilterVal = document.getElementById('department-filter').value;
+                const lackingFilter = document.getElementById('lacking-filter').value;
 
                 // Get all employees (filtered by department if selected)
                 let empQuery = supabase
@@ -697,8 +1147,8 @@
                 const regionId = currentUser.region_id || null;
                 if (regionId) empQuery = empQuery.eq('region_id', regionId);
                 
-                if (deptFilter !== 'all') {
-                    empQuery = empQuery.eq('department_id', deptFilter);
+                if (deptFilterVal !== 'all') {
+                    empQuery = empQuery.eq('department_id', deptFilterVal);
                 }
                 
                 const { data: employees, error: empError } = await empQuery;
@@ -720,16 +1170,24 @@
                 const { data: assignments, error: assignError } = await query;
                 if (assignError) throw assignError;
 
-                // Debug: Log first assignment to see available fields
-                if (assignments && assignments.length > 0) {
-                    // console.log('First assignment data:', assignments[0]);
-                    // console.log('Has assigned_by_email?', assignments[0].assigned_by_email);
-                }
-
                 // Get department names
                 const { data: departments } = await supabase.from('departments').select('id, name');
                 const deptMap = {};
                 departments?.forEach(d => deptMap[d.id] = d.name);
+
+                // Load required categories for all displayed employees
+                const empIds = employees.map(e => e.id);
+                const { data: reqCatsData } = await supabase
+                    .from('employee_required_categories')
+                    .select('employee_id, category_id, category:asset_categories(id, name)')
+                    .in('employee_id', empIds.length > 0 ? empIds : ['00000000-0000-0000-0000-000000000000']);
+
+                // Build required categories map: { empId: [{ id, name }] }
+                const reqCatsMap = {};
+                (reqCatsData || []).forEach(r => {
+                    if (!reqCatsMap[r.employee_id]) reqCatsMap[r.employee_id] = [];
+                    if (r.category) reqCatsMap[r.employee_id].push({ id: r.category.id, name: r.category.name });
+                });
 
                 // Group assignments by employee
                 const employeeMap = {};
@@ -747,21 +1205,68 @@
                     }
                 });
 
-                // Build HTML
-                const html = employees.map(emp => {
+                // Build data for each employee including lacking info
+                const employeeViewData = employees.map(emp => {
                     const empData = employeeMap[emp.id];
                     const activeAssignments = empData.assignments.filter(a => !a.returned_date);
                     const returnedAssignments = empData.assignments.filter(a => a.returned_date);
+                    const requiredCats = reqCatsMap[emp.id] || [];
+
+                    // Determine which categories are fulfilled vs missing
+                    const assignedCategoryIds = new Set();
+                    activeAssignments.forEach(a => {
+                        if (a.category_id) assignedCategoryIds.add(a.category_id);
+                    });
+
+                    const fulfilledCats = requiredCats.filter(c => assignedCategoryIds.has(c.id));
+                    const missingCats = requiredCats.filter(c => !assignedCategoryIds.has(c.id));
+                    const isLacking = missingCats.length > 0;
+
+                    return { emp, empData, activeAssignments, returnedAssignments, requiredCats, fulfilledCats, missingCats, isLacking };
+                });
+
+                // Apply lacking filter
+                let filteredData = employeeViewData;
+                if (lackingFilter === 'lacking') {
+                    filteredData = employeeViewData.filter(d => d.isLacking);
+                }
+
+                // Build HTML
+                const html = filteredData.map(({ emp, empData, activeAssignments, returnedAssignments, requiredCats, fulfilledCats, missingCats, isLacking }) => {
                     const totalAssignments = empData.assignments.length;
                     
                     // Get initials from full name
                     const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
+                    // Build required categories status HTML
+                    let reqCatsHtml = '';
+                    if (requiredCats.length > 0) {
+                        reqCatsHtml = `
+                            <div class="mt-3 pt-3 border-t border-slate-700">
+                                <p class="text-xs font-medium text-slate-400 mb-2">Required Asset Categories:</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${fulfilledCats.map(c => `
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400 border border-green-500/30">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            ${c.name}
+                                        </span>
+                                    `).join('')}
+                                    ${missingCats.map(c => `
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-500/15 text-red-400 border border-red-500/30">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
+                                            ${c.name}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
                     return `
-                        <div class="bg-slate-800 rounded-lg border border-slate-700">
+                        <div class="bg-slate-800 rounded-lg border ${isLacking ? 'border-red-500/40' : 'border-slate-700'}">
                             <button class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-750 rounded-lg transition-colors" onclick="toggleEmployee('${emp.id}')">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                                    <div class="w-10 h-10 rounded-full ${isLacking ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center text-white font-semibold">
                                         ${initials}
                                     </div>
                                     <div class="text-left">
@@ -770,6 +1275,8 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">
+                                    ${isLacking ? `<span class="badge badge-danger">${missingCats.length} Missing</span>` : ''}
+                                    ${requiredCats.length > 0 && !isLacking ? '<span class="badge badge-success">Complete</span>' : ''}
                                     <span class="badge ${totalAssignments > 0 ? 'badge-success' : 'badge-gray'}">${activeAssignments.length} Active</span>
                                     ${returnedAssignments.length > 0 ? `<span class="badge badge-gray">${returnedAssignments.length} Returned</span>` : ''}
                                     <svg id="chevron-${emp.id}" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -778,7 +1285,8 @@
                                 </div>
                             </button>
                             <div id="employee-${emp.id}" class="hidden px-4 pb-4">
-                                ${totalAssignments === 0 ? `
+                                ${reqCatsHtml}
+                                ${totalAssignments === 0 && requiredCats.length === 0 ? `
                                     <p class="text-slate-400 text-center py-4">No active assignments</p>
                                 ` : `
                                     <div class="space-y-2 mt-2">
@@ -829,6 +1337,17 @@
                 }).join('');
 
                 container.innerHTML = html || '<div class="text-center py-8 text-slate-400">No employees found</div>';
+
+                // Restore expanded employees & scroll position
+                expandedIds.forEach(id => {
+                    const content = document.getElementById(`employee-${id}`);
+                    const chevron = document.getElementById(`chevron-${id}`);
+                    if (content) {
+                        content.classList.remove('hidden');
+                        if (chevron) chevron.classList.add('rotate-180');
+                    }
+                });
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
             } catch (error) {
                 console.error('Error loading grouped view:', error);
                 container.innerHTML = '<div class="text-center py-8 text-red-400">Failed to load employees</div>';
@@ -858,7 +1377,11 @@
             const url = new URL(window.location);
             url.searchParams.delete('employee');
             window.history.replaceState({}, '', url);
-            loadAssignments();
+            if (activeView === 'requirements') {
+                loadRequirementsView();
+            } else {
+                loadGroupedView();
+            }
         };
 
         // ===========================================
@@ -1085,7 +1608,11 @@
 
                 // Refresh page data
                 await loadStats();
-                await loadAssignments();
+                if (activeView === 'requirements') {
+                    await loadRequirementsView();
+                } else {
+                    await loadGroupedView();
+                }
                 await loadAssetOptions();
                 await loadEmployeeOptions();
             } catch (error) {

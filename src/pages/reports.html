@@ -353,14 +353,7 @@
         window.handleReportRegionChange = function() {
             reportRegionId = document.getElementById('report-region').value || null;
         };
-        window.handleLogout = async () => { 
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) await Audit.logLogout(session.user.email);
-            } catch (e) { console.error(e); }
-            await supabase.auth.signOut(); 
-            window.location.href = '/index.html'; 
-        };
+        window.handleLogout = () => Utils.confirmLogout(supabase);
 
         window.generateReport = async (type, format) => {
             showToast('Generating report...', 'info');
