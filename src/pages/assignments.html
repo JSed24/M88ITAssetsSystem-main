@@ -17,13 +17,13 @@
     <!-- Application Modules -->
     <script type="module" src="../scripts/utils.js"></script>
     <script type="module" src="../scripts/components.js"></script>
-    <script src="../scripts/audit.js"></script>
-    <script src="../scripts/auth.js"></script>
+    <script type="module" src="../scripts/audit.js"></script>
+    <script type="module" src="../scripts/auth.js"></script>
     <script type="module" src="../scripts/assets.js"></script>
-    <script src="../scripts/employees.js"></script>
-    <script src="../scripts/assignments.js"></script>
-    <script src="../scripts/licenses.js"></script>
-    <script src="../scripts/import.js"></script>
+    <script type="module" src="../scripts/employees.js"></script>
+    <script type="module" src="../scripts/assignments.js"></script>
+    <script type="module" src="../scripts/licenses.js"></script>
+    <script type="module" src="../scripts/import.js"></script>
 </head>
 <body>
     <div id="loading-screen">
@@ -104,6 +104,7 @@
                             Import Assignments
                         </button>
                         <input type="file" id="import-assignments-file" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleImportAssignments(event)">
+                        <input type="file" id="import-assignments-file-basic" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleBasicImportAssignments(event)">
                     </div>
                     <button class="btn btn-primary" onclick="openAssignModal()">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -1611,13 +1612,35 @@
         // ===========================================
 
         window.showAssignmentImportInfo = async function() {
-            if (window.Import && typeof window.Import.showImportInfo === 'function') {
-                const proceed = await window.Import.showImportInfo('assignments');
-                if (proceed) {
-                    document.getElementById('import-assignments-file').click();
+            if (window.Import && typeof window.Import.showImportChoice === 'function') {
+                const choice = await window.Import.showImportChoice('assignments');
+                if (choice === 'basic') {
+                    const proceed = await window.Import.showImportInfo('assignments');
+                    if (proceed) {
+                        document.getElementById('import-assignments-file-basic').click();
+                    }
+                } else if (choice === 'detailed') {
+                    const proceed = await window.Import.showImportInfo('assignments');
+                    if (proceed) {
+                        document.getElementById('import-assignments-file').click();
+                    }
                 }
             } else {
                 document.getElementById('import-assignments-file').click();
+            }
+        };
+
+        window.handleBasicImportAssignments = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+
+            const result = await window.Import.runBasicImport(file, 'assignments', supabase, currentUser);
+            if (result && (result.imported > 0 || result.updated > 0)) {
+                await loadStats();
+                await loadRequirementsView();
+                await loadAssetOptions();
+                await loadEmployeeOptions();
             }
         };
 

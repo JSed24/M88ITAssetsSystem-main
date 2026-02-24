@@ -38,7 +38,7 @@ const App = {
             const currentPage = this.getCurrentPage();
             
             // Handle public vs protected pages
-            const publicPages = ['index.html', 'reset-password.html'];
+            const publicPages = ['index.html', 'reset-password.html', 'set-password.html'];
             
             if (publicPages.includes(currentPage)) {
                 // Public page - redirect if already authenticated

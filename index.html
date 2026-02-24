@@ -18,7 +18,7 @@
     
     <!-- Application Modules -->
     <script type="module" src="/src/scripts/utils.js"></script>
-    <script src="/src/scripts/audit.js"></script>
+    <script type="module" src="/src/scripts/audit.js"></script>
 </head>
 <body>
     <!-- =============================================
@@ -273,6 +273,18 @@
          * Initialize the page
          */
         async function init() {
+            // Check if this is a password recovery/invite link (has hash with type=recovery/invite/signup)
+            const hash = window.location.hash;
+            if (hash) {
+                const hashParams = new URLSearchParams(hash.substring(1));
+                const type = hashParams.get('type');
+                if (type === 'recovery' || type === 'invite' || type === 'signup') {
+                    // Redirect to the set-password page, preserving the hash
+                    window.location.href = '/src/pages/set-password.html' + hash;
+                    return;
+                }
+            }
+
             // Check if already logged in
             const { data: { session } } = await supabase.auth.getSession();
             

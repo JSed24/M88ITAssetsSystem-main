@@ -21,8 +21,8 @@
     
     <!-- Application Modules -->
     <script type="module" src="../scripts/utils.js"></script>
-    <script src="../scripts/audit.js"></script>
-    <script src="../scripts/notifications.js"></script>
+    <script type="module" src="../scripts/audit.js"></script>
+    <script type="module" src="../scripts/notifications.js"></script>
 </head>
 <body>
     <!-- =============================================
@@ -452,6 +452,17 @@
          */
         async function init() {
             try {
+                // If this page was hit with a recovery/invite hash, redirect to set-password
+                const hash = window.location.hash;
+                if (hash) {
+                    const hashParams = new URLSearchParams(hash.substring(1));
+                    const type = hashParams.get('type');
+                    if (type === 'recovery' || type === 'invite' || type === 'signup') {
+                        window.location.href = '/src/pages/set-password.html' + hash;
+                        return;
+                    }
+                }
+
                 // console.log('🚀 Starting dashboard init...');
                 
                 // Check authentication

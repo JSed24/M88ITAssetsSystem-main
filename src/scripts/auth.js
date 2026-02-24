@@ -117,7 +117,7 @@ const Auth = {
     async resetPassword(email) {
         try {
             const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password.html`
+                redirectTo: `${window.location.origin}/src/pages/set-password.html`
             });
             
             if (error) throw error;
@@ -440,7 +440,7 @@ const Auth = {
      */
     handleUnauthenticatedUser() {
         // If not on login page, redirect to login
-        const publicPages = ['index.html', 'reset-password.html'];
+        const publicPages = ['index.html', 'reset-password.html', 'set-password.html'];
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         
         if (!publicPages.includes(currentPage)) {

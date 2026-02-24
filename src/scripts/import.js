@@ -1234,6 +1234,603 @@ const Import = {
         });
     },
 
+    // ===========================================
+    // IMPORT TYPE CHOICE MODAL
+    // ===========================================
+
+    /**
+     * Show a modal letting the user choose between Basic Import and Detailed Import.
+     * @param {string} type - 'assets' | 'employees' | 'assignments'
+     * @returns {Promise<string|null>} 'basic' | 'detailed' | null (cancelled)
+     */
+    showImportChoice(type) {
+        const titleLabel = type === 'assignments' ? 'Assignments' : type === 'assets' ? 'IT Equipments' : 'Employees';
+        return new Promise((resolve) => {
+            const html = `
+                <div class="import-choice-overlay" id="import-choice-overlay">
+                    <div class="import-choice-modal">
+                        <div class="import-choice-header">
+                            <h3 class="text-lg font-semibold text-white">Import ${titleLabel}</h3>
+                            <button class="import-preview-close" id="import-choice-close">&times;</button>
+                        </div>
+                        <div class="import-choice-body">
+                            <p class="text-sm text-slate-400 mb-5">Choose an import method:</p>
+                            <div class="import-choice-cards">
+                                <button class="import-choice-card" id="import-choice-basic">
+                                    <div class="import-choice-icon import-choice-icon-basic">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </div>
+                                    <div class="import-choice-label">Basic Import</div>
+                                    <div class="import-choice-desc">Quick &amp; automatic. Scans your file, validates columns, and imports all valid records instantly. Duplicates are updated automatically.</div>
+                                </button>
+                                <button class="import-choice-card" id="import-choice-detailed">
+                                    <div class="import-choice-icon import-choice-icon-detailed">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                    </div>
+                                    <div class="import-choice-label">Detailed Import</div>
+                                    <div class="import-choice-desc">Full control. Preview every row, select which records to import or skip, review duplicates and errors individually.</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            const overlay = wrapper.firstElementChild;
+            document.body.appendChild(overlay);
+
+            requestAnimationFrame(() => overlay.classList.add('open'));
+
+            const close = (choice) => {
+                overlay.classList.remove('open');
+                setTimeout(() => overlay.remove(), 250);
+                resolve(choice);
+            };
+
+            overlay.querySelector('#import-choice-close').addEventListener('click', () => close(null));
+            overlay.querySelector('#import-choice-basic').addEventListener('click', () => close('basic'));
+            overlay.querySelector('#import-choice-detailed').addEventListener('click', () => close('detailed'));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) close(null);
+            });
+        });
+    },
+
+    // ===========================================
+    // BASIC IMPORT — COLUMN SCAN + AUTO-IMPORT
+    // ===========================================
+
+    /**
+     * Show the Basic Import scanning overlay.
+     * Scans the file columns, shows animated checklist, then auto-imports.
+     *
+     * @param {File} file - Uploaded file
+     * @param {string} type - 'assets' | 'employees' | 'assignments'
+     * @param {object} supabase - Supabase client instance
+     * @param {object} currentUser - Current authenticated user
+     * @returns {Promise<{success: boolean, imported: number, updated: number, skipped: number, errors: object[], skippedDetails: object[]}|null>}
+     */
+    async runBasicImport(file, type, supabase, currentUser) {
+        // Determine required and optional columns for this type
+        const columnDefs = this._getBasicImportColumns(type);
+        const columnMap = type === 'assets' ? this._assetColumnMap
+            : type === 'employees' ? this._employeeColumnMap
+            : this._assignmentColumnMap;
+
+        // Create the scanning overlay
+        const overlay = this._createScanOverlay(type, columnDefs);
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('open'));
+
+        const scanItems = overlay.querySelectorAll('.basic-import-scan-item');
+        const statusArea = overlay.querySelector('#basic-import-status');
+        const actionArea = overlay.querySelector('#basic-import-actions');
+
+        // Helper to update a scan item
+        const updateItem = (index, state, detail) => {
+            const item = scanItems[index];
+            if (!item) return;
+            const icon = item.querySelector('.basic-import-scan-icon');
+            const detailEl = item.querySelector('.basic-import-scan-detail');
+            if (state === 'scanning') {
+                icon.innerHTML = '<div class="basic-import-spinner"></div>';
+                item.classList.add('scanning');
+                item.classList.remove('success', 'error');
+            } else if (state === 'success') {
+                icon.innerHTML = '<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                item.classList.remove('scanning');
+                item.classList.add('success');
+            } else if (state === 'error') {
+                icon.innerHTML = '<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+                item.classList.remove('scanning');
+                item.classList.add('error');
+            } else if (state === 'skipped') {
+                icon.innerHTML = '<svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>';
+                item.classList.remove('scanning');
+                item.classList.add('skipped');
+            }
+            if (detail) detailEl.textContent = detail;
+        };
+
+        const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+        try {
+            // Step 1: Parse file
+            statusArea.textContent = 'Reading file...';
+            const jsonData = await this.parseFile(file);
+            if (!jsonData || !jsonData.length) {
+                statusArea.innerHTML = '<span class="text-red-400">No data found in the file.</span>';
+                actionArea.innerHTML = '<button class="btn btn-secondary" id="basic-import-close">Close</button>';
+                actionArea.querySelector('#basic-import-close').addEventListener('click', () => {
+                    overlay.classList.remove('open');
+                    setTimeout(() => overlay.remove(), 250);
+                });
+                return null;
+            }
+
+            statusArea.textContent = 'Found ' + jsonData.length + ' rows. Scanning columns...';
+            await delay(300);
+
+            // Step 2: Check each column
+            const fileHeaders = Object.keys(jsonData[0]).map(k => k.toLowerCase().trim());
+            let requiredMissing = false;
+            const foundColumns = {};
+
+            for (let i = 0; i < columnDefs.length; i++) {
+                const col = columnDefs[i];
+                updateItem(i, 'scanning', 'Checking...');
+                await delay(400);
+
+                // Find this column in the file using aliases from the column map
+                const aliases = columnMap[col.field] || [col.field.toLowerCase()];
+                let foundAlias = null;
+                let matchedHeader = null;
+
+                for (const alias of aliases) {
+                    const match = fileHeaders.find(h => h === alias);
+                    if (match) {
+                        foundAlias = alias;
+                        matchedHeader = Object.keys(jsonData[0]).find(k => k.toLowerCase().trim() === match);
+                        break;
+                    }
+                }
+
+                if (foundAlias && matchedHeader) {
+                    // Column found — check values
+                    if (col.required) {
+                        // Verify no empty values for required columns
+                        const emptyCount = jsonData.filter(row => {
+                            const val = row[matchedHeader];
+                            return val === undefined || val === null || String(val).trim() === '';
+                        }).length;
+
+                        if (emptyCount > 0) {
+                            updateItem(i, 'success', 'Found in column "' + matchedHeader + '" — ' + emptyCount + ' empty value(s) will be flagged');
+                        } else {
+                            updateItem(i, 'success', 'Found in column "' + matchedHeader + '" — all values valid');
+                        }
+                    } else {
+                        updateItem(i, 'success', 'Found in column "' + matchedHeader + '"');
+                    }
+                    foundColumns[col.field] = matchedHeader;
+                } else {
+                    // Column not found
+                    if (col.required) {
+                        updateItem(i, 'error', 'NOT FOUND — this column is required');
+                        requiredMissing = true;
+                    } else {
+                        updateItem(i, 'skipped', 'Not found — will be skipped');
+                    }
+                }
+            }
+
+            await delay(300);
+
+            // Step 3: Handle result
+            if (requiredMissing) {
+                statusArea.innerHTML = '<span class="text-red-400 font-semibold">Required columns are missing.</span><br><span class="text-slate-400 text-sm">Please use <strong>Detailed Import</strong> to manually map your columns, or update your file to include the required columns.</span>';
+                actionArea.innerHTML = '<button class="btn btn-secondary" id="basic-import-close">Close</button>';
+                actionArea.querySelector('#basic-import-close').addEventListener('click', () => {
+                    overlay.classList.remove('open');
+                    setTimeout(() => overlay.remove(), 250);
+                });
+                return null;
+            }
+
+            // All required columns found — proceed with validation and import
+            statusArea.textContent = 'All columns verified! Validating data...';
+            await delay(500);
+
+            let validation;
+            if (type === 'assets') {
+                validation = await this.validateAssetImport(jsonData, supabase);
+            } else if (type === 'employees') {
+                validation = await this.validateEmployeeImport(jsonData, supabase);
+            } else {
+                validation = await this.validateAssignmentImport(jsonData, supabase);
+            }
+
+            if (validation.error) {
+                statusArea.innerHTML = '<span class="text-red-400">' + this._escHtml(validation.error) + '</span>';
+                actionArea.innerHTML = '<button class="btn btn-secondary" id="basic-import-close">Close</button>';
+                actionArea.querySelector('#basic-import-close').addEventListener('click', () => {
+                    overlay.classList.remove('open');
+                    setTimeout(() => overlay.remove(), 250);
+                });
+                return null;
+            }
+
+            const { rows } = validation;
+
+            // For basic import: auto-select all importable rows (new + duplicates for overwrite)
+            const importableRows = rows.filter(r =>
+                r.status !== 'error' && r.status !== 'file_duplicate'
+            );
+
+            // Mark all importable rows as selected (including duplicates for overwrite)
+            importableRows.forEach(r => r.selected = true);
+
+            const errorRows = rows.filter(r => r.status === 'error' || r.status === 'file_duplicate');
+
+            statusArea.textContent = 'Importing ' + importableRows.length + ' records...';
+
+            // Step 4: Perform the import
+            const result = await this._executeBasicImport(importableRows, type, supabase, currentUser, (progress) => {
+                statusArea.textContent = 'Importing... ' + progress.current + ' of ' + progress.total;
+            });
+
+            // Step 5: Show summary
+            const summaryHtml = this._buildBasicImportSummary(result, errorRows, type);
+            statusArea.innerHTML = summaryHtml;
+
+            actionArea.innerHTML = '<button class="btn btn-primary" id="basic-import-done">Done</button>';
+
+            return new Promise((resolve2) => {
+                actionArea.querySelector('#basic-import-done').addEventListener('click', () => {
+                    overlay.classList.remove('open');
+                    setTimeout(() => overlay.remove(), 250);
+                    resolve2(result);
+                });
+            });
+
+        } catch (err) {
+            statusArea.innerHTML = '<span class="text-red-400">Import failed: ' + this._escHtml(err.message) + '</span>';
+            actionArea.innerHTML = '<button class="btn btn-secondary" id="basic-import-close">Close</button>';
+            actionArea.querySelector('#basic-import-close').addEventListener('click', () => {
+                overlay.classList.remove('open');
+                setTimeout(() => overlay.remove(), 250);
+            });
+            return null;
+        }
+    },
+
+    /**
+     * Get column definitions for Basic Import scanning checklist
+     */
+    _getBasicImportColumns(type) {
+        if (type === 'assets') {
+            return [
+                { field: 'serial_number', label: 'Serial Number', required: true },
+                { field: 'category', label: 'Category', required: true },
+                { field: 'name', label: 'Name', required: false },
+                { field: 'brand', label: 'Brand', required: false },
+                { field: 'model', label: 'Model', required: false },
+                { field: 'purchase_date', label: 'Purchase Date', required: false },
+                { field: 'purchase_cost', label: 'Purchase Cost', required: false },
+                { field: 'vendor', label: 'Vendor', required: false },
+                { field: 'warranty_end_date', label: 'Warranty End Date', required: false },
+                { field: 'department', label: 'Department', required: false },
+                { field: 'specifications', label: 'Specifications', required: false },
+                { field: 'notes', label: 'Notes', required: false }
+            ];
+        } else if (type === 'employees') {
+            return [
+                { field: 'employee_id', label: 'Employee ID', required: true },
+                { field: 'full_name', label: 'Full Name', required: true },
+                { field: 'email', label: 'Email', required: false },
+                { field: 'department', label: 'Department', required: false },
+                { field: 'location', label: 'Location', required: false },
+                { field: 'position', label: 'Position', required: false },
+                { field: 'status', label: 'Status', required: false }
+            ];
+        } else {
+            // assignments
+            return [
+                { field: 'serial_number', label: 'Serial Number', required: true },
+                { field: 'employee_id', label: 'Employee ID', required: true },
+                { field: 'category', label: 'Category', required: true },
+                { field: 'full_name', label: 'Full Name', required: true },
+                { field: 'asset_name', label: 'Asset Name', required: false },
+                { field: 'asset_tag', label: 'Asset Tag', required: false },
+                { field: 'brand', label: 'Brand', required: false },
+                { field: 'model', label: 'Model', required: false },
+                { field: 'email', label: 'Email', required: false },
+                { field: 'position', label: 'Position', required: false },
+                { field: 'department', label: 'Department', required: false },
+                { field: 'location', label: 'Location', required: false },
+                { field: 'assigned_date', label: 'Assigned Date', required: false },
+                { field: 'notes', label: 'Notes', required: false }
+            ];
+        }
+    },
+
+    /**
+     * Create the scanning overlay DOM
+     */
+    _createScanOverlay(type, columnDefs) {
+        const titleLabel = type === 'assignments' ? 'Assignments' : type === 'assets' ? 'IT Equipments' : 'Employees';
+
+        const itemsHtml = columnDefs.map((col, i) => `
+            <div class="basic-import-scan-item" data-index="${i}">
+                <div class="basic-import-scan-icon">
+                    <div class="basic-import-scan-pending">
+                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                    </div>
+                </div>
+                <div class="basic-import-scan-content">
+                    <div class="basic-import-scan-label">
+                        ${col.label}
+                        ${col.required ? '<span class="text-red-400 text-xs ml-1">REQUIRED</span>' : '<span class="text-slate-500 text-xs ml-1">optional</span>'}
+                    </div>
+                    <div class="basic-import-scan-detail text-xs text-slate-500">Waiting...</div>
+                </div>
+            </div>
+        `).join('');
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <div class="import-choice-overlay" id="basic-import-overlay">
+                <div class="basic-import-scan-modal">
+                    <div class="import-choice-header">
+                        <h3 class="text-lg font-semibold text-white">Basic Import — ${titleLabel}</h3>
+                    </div>
+                    <div class="basic-import-scan-body">
+                        <div class="basic-import-scan-list">
+                            ${itemsHtml}
+                        </div>
+                        <div class="basic-import-scan-status" id="basic-import-status">
+                            Preparing...
+                        </div>
+                    </div>
+                    <div class="basic-import-scan-footer" id="basic-import-actions"></div>
+                </div>
+            </div>`;
+        return wrapper.firstElementChild;
+    },
+
+    /**
+     * Execute the actual import for Basic Import mode
+     */
+    async _executeBasicImport(importableRows, type, supabase, currentUser, onProgress) {
+        const result = { success: true, imported: 0, updated: 0, skipped: 0, errors: [], skippedDetails: [] };
+        const total = importableRows.length;
+
+        if (type === 'assets') {
+            const Assets = window.Assets;
+            for (let i = 0; i < importableRows.length; i++) {
+                const r = importableRows[i];
+                onProgress({ current: i + 1, total });
+                try {
+                    if (r.status === 'duplicate' && r.existingRecord?.id) {
+                        // Overwrite existing
+                        const updateData = { ...r.dbRecord };
+                        delete updateData._existingId;
+                        const { error } = await supabase.from('assets').update(updateData).eq('id', r.existingRecord.id);
+                        if (error) throw new Error(error.message);
+                        result.updated++;
+                    } else if (r.status === 'new') {
+                        const regionId = currentUser.region_id || null;
+                        const createResult = await Assets.create({
+                            ...r.dbRecord,
+                            region_id: regionId,
+                            created_by: currentUser.id || null,
+                            logged_by: currentUser.id || null
+                        });
+                        if (!createResult.success) throw new Error(createResult.error);
+                        result.imported++;
+                    } else {
+                        result.skipped++;
+                        result.skippedDetails.push({ row: r.row, reason: 'Status: ' + r.status });
+                    }
+                } catch (err) {
+                    result.errors.push({ row: r.row, serial: r.mapped?.serial_number || 'N/A', error: err.message });
+                }
+            }
+        } else if (type === 'employees') {
+            const Employees = window.Employees;
+            for (let i = 0; i < importableRows.length; i++) {
+                const r = importableRows[i];
+                onProgress({ current: i + 1, total });
+                try {
+                    if (r.status === 'duplicate' && r.existingRecord?.id) {
+                        const updateData = { ...r.dbRecord };
+                        const { error } = await supabase.from('employees').update(updateData).eq('id', r.existingRecord.id);
+                        if (error) throw new Error(error.message);
+                        result.updated++;
+                    } else if (r.status === 'new') {
+                        const regionId = currentUser.region_id || null;
+                        const createResult = await Employees.create({
+                            ...r.dbRecord,
+                            region_id: regionId,
+                            created_by: currentUser.id || null
+                        });
+                        if (!createResult.success) throw new Error(createResult.error);
+                        result.imported++;
+                    } else {
+                        result.skipped++;
+                        result.skippedDetails.push({ row: r.row, reason: 'Status: ' + r.status });
+                    }
+                } catch (err) {
+                    result.errors.push({ row: r.row, employee_id: r.mapped?.employee_id || 'N/A', error: err.message });
+                }
+            }
+        } else {
+            // Assignments
+            const Assets = window.Assets;
+            const Employees = window.Employees;
+            const Assignments = window.Assignments;
+            const createdAssetCache = {};
+            const createdEmployeeCache = {};
+
+            for (let i = 0; i < importableRows.length; i++) {
+                const r = importableRows[i];
+                onProgress({ current: i + 1, total });
+                try {
+                    let assetId = r.existingAsset?.id || null;
+                    let employeeId = r.existingEmployee?.id || null;
+
+                    // Auto-create asset if needed
+                    if (!assetId && r.assetDbRecord) {
+                        const serialKey = (r.assetDbRecord.serial_number || '').toLowerCase();
+                        if (createdAssetCache[serialKey]) {
+                            assetId = createdAssetCache[serialKey];
+                        } else {
+                            const createResult = await Assets.create({
+                                ...r.assetDbRecord,
+                                region_id: currentUser.region_id || null,
+                                created_by: currentUser.id || null,
+                                logged_by: currentUser.id || null
+                            });
+                            if (!createResult.success) throw new Error('Failed to create asset: ' + createResult.error);
+                            assetId = createResult.data.id;
+                            createdAssetCache[serialKey] = assetId;
+                        }
+                    }
+
+                    // Auto-create employee if needed
+                    if (!employeeId && r.employeeDbRecord) {
+                        const empKey = (r.employeeDbRecord.employee_id || '').toLowerCase();
+                        if (createdEmployeeCache[empKey]) {
+                            employeeId = createdEmployeeCache[empKey];
+                        } else {
+                            const createResult = await Employees.create({
+                                ...r.employeeDbRecord,
+                                region_id: currentUser.region_id || null,
+                                created_by: currentUser.id || null
+                            });
+                            if (!createResult.success) throw new Error('Failed to create employee: ' + createResult.error);
+                            employeeId = createResult.data.id;
+                            createdEmployeeCache[empKey] = employeeId;
+                        }
+                    }
+
+                    // Handle reassignment
+                    if (r.status === 'reassign' && r.currentAssignment?.id) {
+                        await Assignments.unassign(r.currentAssignment.id, 'Reassigned via basic import');
+                        result.updated++;
+                    }
+
+                    // Handle already assigned (update)
+                    if (r.status === 'already_assigned' && r.currentAssignment?.id) {
+                        if (r.mapped?.notes && r.existingAsset?.id) {
+                            await supabase.from('assets').update({ notes: r.mapped.notes }).eq('id', r.existingAsset.id);
+                        }
+                        if (r.assignmentData?.assigned_date) {
+                            await supabase.from('asset_assignments').update({ assigned_date: r.assignmentData.assigned_date }).eq('id', r.currentAssignment.id);
+                        }
+                        result.updated++;
+                        continue;
+                    }
+
+                    // For new assignments, ensure asset is available
+                    if (r.status !== 'reassign') {
+                        const { data: assetCheck } = await supabase.from('assets').select('status').eq('id', assetId).single();
+                        if (assetCheck && assetCheck.status !== 'available') {
+                            await supabase.from('assets').update({ status: 'available' }).eq('id', assetId);
+                        }
+                    }
+
+                    // Create assignment
+                    const assignResult = await Assignments.assign({
+                        assetId,
+                        employeeId,
+                        notes: 'Imported via basic import',
+                        assignedBy: currentUser.id,
+                        assignedDate: r.assignmentData?.assigned_date || null
+                    });
+                    if (!assignResult.success) throw new Error(assignResult.error);
+                    result.imported++;
+
+                } catch (err) {
+                    result.errors.push({
+                        row: r.row,
+                        serial: r.mapped?.serial_number || 'N/A',
+                        employee: r.mapped?.employee_id || 'N/A',
+                        error: err.message
+                    });
+                }
+            }
+        }
+
+        return result;
+    },
+
+    /**
+     * Build the summary HTML for Basic Import results
+     */
+    _buildBasicImportSummary(result, errorRows, type) {
+        let html = '<div class="basic-import-summary">';
+
+        // Success stats
+        if (result.imported > 0) {
+            html += '<div class="basic-import-summary-stat"><span class="text-green-400 font-bold text-xl">' + result.imported + '</span><span class="text-slate-400 text-sm">New records imported</span></div>';
+        }
+        if (result.updated > 0) {
+            html += '<div class="basic-import-summary-stat"><span class="text-blue-400 font-bold text-xl">' + result.updated + '</span><span class="text-slate-400 text-sm">Existing records updated</span></div>';
+        }
+        if (result.skipped > 0) {
+            html += '<div class="basic-import-summary-stat"><span class="text-yellow-400 font-bold text-xl">' + result.skipped + '</span><span class="text-slate-400 text-sm">Rows skipped</span></div>';
+        }
+        if (result.errors.length > 0) {
+            html += '<div class="basic-import-summary-stat"><span class="text-red-400 font-bold text-xl">' + result.errors.length + '</span><span class="text-slate-400 text-sm">Failed</span></div>';
+        }
+
+        // If nothing happened
+        if (result.imported === 0 && result.updated === 0 && result.errors.length === 0) {
+            html += '<div class="text-center py-2"><span class="text-slate-400">No records were imported.</span></div>';
+        }
+
+        html += '</div>';
+
+        // Errors detail
+        if (result.errors.length > 0) {
+            html += '<div class="mt-3 p-3 bg-red-900/20 rounded-lg border border-red-700/30">';
+            html += '<p class="text-sm font-semibold text-red-400 mb-2">Errors:</p>';
+            html += '<ul class="space-y-1">';
+            const showErrors = result.errors.slice(0, 8);
+            showErrors.forEach(e => {
+                html += '<li class="text-xs text-red-300">Row ' + e.row + ': ' + this._escHtml(e.error) + '</li>';
+            });
+            if (result.errors.length > 8) {
+                html += '<li class="text-xs text-slate-500">...and ' + (result.errors.length - 8) + ' more errors</li>';
+            }
+            html += '</ul></div>';
+        }
+
+        // Rows that were in the file but had errors (not attempted)
+        if (errorRows && errorRows.length > 0) {
+            html += '<div class="mt-3 p-3 bg-yellow-900/20 rounded-lg border border-yellow-700/30">';
+            html += '<p class="text-sm font-semibold text-yellow-400 mb-2">Not imported (' + errorRows.length + ' rows with issues):</p>';
+            html += '<ul class="space-y-1">';
+            const showSkipped = errorRows.slice(0, 8);
+            showSkipped.forEach(r => {
+                const reason = r.errors.join(', ') || r.status;
+                html += '<li class="text-xs text-yellow-300">Row ' + r.row + ': ' + this._escHtml(reason) + '</li>';
+            });
+            if (errorRows.length > 8) {
+                html += '<li class="text-xs text-slate-500">...and ' + (errorRows.length - 8) + ' more</li>';
+            }
+            html += '</ul></div>';
+        }
+
+        return html;
+    },
+
+    // ===========================================
+    // EXISTING IMPORT RESULTS
+    // ===========================================
+
     /**
      * Show import results modal
      */

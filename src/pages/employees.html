@@ -16,13 +16,13 @@
     <!-- Application Modules -->
     <script type="module" src="../scripts/utils.js"></script>
     <script type="module" src="../scripts/components.js"></script>
-    <script src="../scripts/audit.js"></script>
-    <script src="../scripts/auth.js"></script>
+    <script type="module" src="../scripts/audit.js"></script>
+    <script type="module" src="../scripts/auth.js"></script>
     <script type="module" src="../scripts/assets.js"></script>
-    <script src="../scripts/employees.js"></script>
-    <script src="../scripts/assignments.js"></script>
-    <script src="../scripts/licenses.js"></script>
-    <script src="../scripts/import.js"></script>
+    <script type="module" src="../scripts/employees.js"></script>
+    <script type="module" src="../scripts/assignments.js"></script>
+    <script type="module" src="../scripts/licenses.js"></script>
+    <script type="module" src="../scripts/import.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -184,6 +184,7 @@
                                 Import
                             </button>
                             <input type="file" id="import-employees-file" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleImportEmployees(event)">
+                            <input type="file" id="import-employees-file-basic" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleBasicImportEmployees(event)">
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -1203,14 +1204,33 @@
         };
 
         window.showEmployeeImportInfo = async function() {
-            if (window.Import && typeof window.Import.showImportInfo === 'function') {
-                const proceed = await window.Import.showImportInfo('employees');
-                if (proceed) {
-                    document.getElementById('import-employees-file').click();
+            if (window.Import && typeof window.Import.showImportChoice === 'function') {
+                const choice = await window.Import.showImportChoice('employees');
+                if (choice === 'basic') {
+                    const proceed = await window.Import.showImportInfo('employees');
+                    if (proceed) {
+                        document.getElementById('import-employees-file-basic').click();
+                    }
+                } else if (choice === 'detailed') {
+                    const proceed = await window.Import.showImportInfo('employees');
+                    if (proceed) {
+                        document.getElementById('import-employees-file').click();
+                    }
                 }
             } else {
                 // Fallback if Import module is not loaded
                 document.getElementById('import-employees-file').click();
+            }
+        };
+
+        window.handleBasicImportEmployees = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+
+            const result = await window.Import.runBasicImport(file, 'employees', supabase, currentUser);
+            if (result && (result.imported > 0 || result.updated > 0)) {
+                loadEmployees();
             }
         };
 

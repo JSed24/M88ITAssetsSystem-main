@@ -51,6 +51,8 @@ export default defineConfig({
         'audit-logs': resolve(__dirname, 'src/pages/audit-logs.html'),
         reports: resolve(__dirname, 'src/pages/reports.html'),
         settings: resolve(__dirname, 'src/pages/settings.html'),
+        'user-maintenance': resolve(__dirname, 'src/pages/user-maintenance.html'),
+        'set-password': resolve(__dirname, 'src/pages/set-password.html'),
       },
     },
   },
