@@ -248,6 +248,57 @@ const Licenses = {
     },
     
     /**
+     * Assign license directly to employee (no hardware link required)
+     * @param {string} licenseId - License ID
+     * @param {string} employeeId - Employee ID
+     * @param {string} notes - Optional notes
+     * @returns {Promise<object>} Assignment result
+     */
+    async assignToEmployee(licenseId, employeeId, notes = '') {
+        try {
+            // Validate license
+            const license = await this.getById(licenseId);
+            if (!license.success) throw new Error('License not found');
+            
+            // Check available seats
+            const usedSeats = await this.getUsedSeats(licenseId);
+            if (usedSeats >= license.data.seats) {
+                throw new Error('No available license seats');
+            }
+            
+            // Check if already assigned to this employee
+            const { data: existing } = await window.supabase
+                .from('license_assignments')
+                .select('id')
+                .eq('license_id', licenseId)
+                .eq('employee_id', employeeId)
+                .maybeSingle();
+            
+            if (existing) {
+                throw new Error('License is already assigned to this employee');
+            }
+            
+            const { data, error } = await window.supabase
+                .from('license_assignments')
+                .insert({
+                    license_id: licenseId,
+                    employee_id: employeeId,
+                    assigned_date: new Date().toISOString().split('T')[0],
+                    notes
+                })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            return { success: true, data };
+        } catch (error) {
+            console.error('Assign license to employee error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+    
+    /**
      * Remove license from asset
      * @param {string} assignmentId - Assignment ID
      * @returns {Promise<object>} Result

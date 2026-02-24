@@ -73,7 +73,7 @@
                     </a>
                 </div>
                 <div class="nav-section" id="tracking-nav">
-                    <p class="nav-section-title">Tracking</p>
+                    <p class="nav-section-title">Asset Tracking</p>
                     <a href="maintenance.html" class="nav-link">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Asset Maintenance
@@ -89,7 +89,7 @@
                     <p class="nav-section-title">Reports</p>
                     <a href="reports.html" class="nav-link">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Reports
+                        Export Reports
                     </a>
                     <a href="audit-logs.html" class="nav-link" id="audit-logs-link">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -627,6 +627,29 @@
 
             // Get employee's existing SW assignments (if editing)
             if (employeeId) {
+                // Get direct employee license assignments
+                const { data: directLicAssignments } = await supabase
+                    .from('license_assignments')
+                    .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id)')
+                    .eq('employee_id', employeeId);
+
+                (directLicAssignments || []).forEach(la => {
+                    if (la.license?.category_id) {
+                        if (!swAssignmentMap[la.license.category_id]) {
+                            swAssignmentMap[la.license.category_id] = [];
+                        }
+                        swAssignmentMap[la.license.category_id].push({
+                            license_assignment_id: la.id,
+                            license_name: la.license.name,
+                            license_id: la.license_id,
+                            asset_id: la.asset_id,
+                            employee_id: la.employee_id
+                        });
+                        initialSWChecked.add(la.license.category_id);
+                    }
+                });
+
+                // Also check legacy asset-linked assignments (without employee_id set)
                 const { data: empAssignments } = await supabase
                     .from('asset_assignments')
                     .select('asset_id')
@@ -636,13 +659,17 @@
                 const assetIds = (empAssignments || []).map(a => a.asset_id);
 
                 if (assetIds.length > 0) {
-                    const { data: licAssignments } = await supabase
+                    const { data: legacyLicAssignments } = await supabase
                         .from('license_assignments')
-                        .select('id, license_id, asset_id, license:software_licenses(id, name, category_id)')
-                        .in('asset_id', assetIds);
+                        .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id)')
+                        .in('asset_id', assetIds)
+                        .is('employee_id', null);
 
-                    (licAssignments || []).forEach(la => {
+                    (legacyLicAssignments || []).forEach(la => {
                         if (la.license?.category_id) {
+                            // Skip if already found via direct assignment
+                            const existing = swAssignmentMap[la.license.category_id] || [];
+                            if (existing.some(e => e.license_id === la.license_id)) return;
                             if (!swAssignmentMap[la.license.category_id]) {
                                 swAssignmentMap[la.license.category_id] = [];
                             }
@@ -650,7 +677,8 @@
                                 license_assignment_id: la.id,
                                 license_name: la.license.name,
                                 license_id: la.license_id,
-                                asset_id: la.asset_id
+                                asset_id: la.asset_id,
+                                employee_id: la.employee_id
                             });
                             initialSWChecked.add(la.license.category_id);
                         }
@@ -757,26 +785,12 @@
                 Array.from(document.querySelectorAll('.sw-cat-cb:checked')).map(cb => cb.value)
             );
 
-            // Get employee's assigned assets (for linking licenses)
-            const { data: empAssignments } = await supabase
-                .from('asset_assignments')
-                .select('asset_id')
-                .eq('employee_id', employeeId)
-                .is('returned_date', null);
-
-            const assetIds = (empAssignments || []).map(a => a.asset_id);
-
-            // Newly checked SW categories -> assign license
+            // Newly checked SW categories -> assign license directly to employee
             for (const swCatId of currentChecked) {
                 if (initialSWChecked.has(swCatId)) continue;
 
                 const cb = document.querySelector(`.sw-cat-cb[value="${swCatId}"]`);
                 const catName = cb?.dataset.name || 'Unknown';
-
-                if (assetIds.length === 0) {
-                    results.errors.push(`${catName}: No hardware assets assigned to link license to`);
-                    continue;
-                }
 
                 // Find available license in this category (region-scoped)
                 const procRegionId = Auth.getRegionId();
@@ -791,7 +805,7 @@
                 for (const lic of (licenses || [])) {
                     const usedSeats = await Licenses.getUsedSeats(lic.id);
                     if (usedSeats < lic.seats) {
-                        const assignResult = await Licenses.assignToAsset(lic.id, assetIds[0], 'Auto-assigned from employee form');
+                        const assignResult = await Licenses.assignToEmployee(lic.id, employeeId, 'Auto-assigned from employee form');
                         if (assignResult.success) {
                             assignedLicense = lic;
                             results.assigned.push(`${catName} (${lic.name})`);
