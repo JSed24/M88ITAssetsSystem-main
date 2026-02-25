@@ -105,10 +105,10 @@ const USER_ROLES = {
 // ===========================================
 
 const REGIONS = {
-    PH: { label: 'Madison88 IT Assets in the Philippines', country: 'Philippines' },
-    ID: { label: 'Madison88 IT Assets in Indonesia', country: 'Indonesia' },
-    CN: { label: 'Madison88 IT Assets in China', country: 'China' },
-    US: { label: 'Madison88 IT Assets in United States', country: 'United States' }
+    PH: { label: 'Madison88 IT Assets in the Philippines', country: 'Philippines', currency: 'PHP', currencyLabel: 'PHP', locale: 'en-PH' },
+    ID: { label: 'Madison88 IT Assets in Indonesia', country: 'Indonesia', currency: 'IDR', currencyLabel: 'IDR', locale: 'id-ID' },
+    CN: { label: 'Madison88 IT Assets in China', country: 'China', currency: 'CNY', currencyLabel: 'CNY', locale: 'zh-CN' },
+    US: { label: 'Madison88 IT Assets in United States', country: 'United States', currency: 'USD', currencyLabel: 'USD', locale: 'en-US' }
 };
 
 // ===========================================

@@ -666,22 +666,6 @@
 
                 newUserId = signUpData.user.id;
 
-                // Try to send a password reset email (non-blocking — user can always
-                // use "Forgot Password" on the login page later if this fails)
-                let resetEmailSent = false;
-                try {
-                    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                        redirectTo: window.location.origin + '/src/pages/set-password.html'
-                    });
-                    if (resetError) {
-                        console.warn('Password reset email could not be sent:', resetError.message);
-                    } else {
-                        resetEmailSent = true;
-                    }
-                } catch (resetErr) {
-                    console.warn('Password reset email skipped:', resetErr.message);
-                }
-
                 // Create user profile (try direct insert, fall back to RPC function)
                 const profilePayload = {
                     id: newUserId,
@@ -742,11 +726,7 @@
                     newValues: { email, full_name: fullName, roles: selectedRoles, regions: selectedRegions }
                 });
 
-                if (resetEmailSent) {
-                    showToast(`User created! A password reset email has been sent to ${email}`, 'success');
-                } else {
-                    showToast(`User created! The user can use "Forgot Password" on the login page to set their password.`, 'success');
-                }
+                showToast(`User created! A confirmation email has been sent to ${email}. They will set their password when they confirm.`, 'success');
                 closeInviteModal();
                 await loadUsers();
 

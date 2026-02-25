@@ -271,8 +271,9 @@
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { window.location.href = '/index.html'; return; }
 
-            const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            const { data: profile } = await supabase.from('user_profiles').select('*, region:regions(id, name, code, country)').eq('id', session.user.id).single();
             currentUser = { ...session.user, ...profile };
+            // Auth.profile = profile;
             
             document.getElementById('user-name').textContent = currentUser.full_name || 'User';
             document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
@@ -485,8 +486,8 @@
                             'Last Known Location': la.last_known_location || '',
                             'Status': la.status ? la.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
                             'Date Found': la.date_found ? new Date(la.date_found).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : '',
-                            'Estimated Value': la.estimated_value ? `$${parseFloat(la.estimated_value).toFixed(2)}` : '',
-                            'Liability Amount': la.liability_amount ? `$${parseFloat(la.liability_amount).toFixed(2)}` : '',
+                            'Estimated Value': la.estimated_value ? Utils.formatCurrency(parseFloat(la.estimated_value)) : '',
+                            'Liability Amount': la.liability_amount ? Utils.formatCurrency(parseFloat(la.liability_amount)) : '',
                             'Liability Action': la.liability_action ? la.liability_action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
                             'Payment Status': la.payment_status ? la.payment_status.replace(/\b\w/g, l => l.toUpperCase()) : '',
                             'Circumstances': la.circumstances || '',

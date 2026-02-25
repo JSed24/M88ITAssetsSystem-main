@@ -144,17 +144,50 @@ const Utils = {
     },
     
     /**
-     * Format currency
+     * Get the currency config for the current user's region.
+     * Returns { code, label, locale } based on the user's region mapped to CONFIG.REGIONS.
+     * Falls back to USD if region is unknown.
+     */
+    getRegionCurrency() {
+        try {
+            // Try Auth.getRegion() first (profile loaded with join)
+            let code = Auth.getRegion()?.code;
+            // Fallback: check Auth.userRegions (loaded from junction tables)
+            if (!code && Auth.userRegions && Auth.userRegions.length > 0) {
+                code = Auth.userRegions[0]?.code;
+            }
+            if (code && window.CONFIG?.REGIONS?.[code]) {
+                const r = window.CONFIG.REGIONS[code];
+                return { code: r.currency, label: r.currencyLabel, locale: r.locale };
+            }
+        } catch (e) { /* Auth may not be loaded yet */ }
+        return { code: 'USD', label: 'USD', locale: 'en-US' };
+    },
+
+    /**
+     * Format currency using the current user's region currency automatically.
      * @param {number} amount - Amount to format
-     * @param {string} currency - Currency code
+     * @param {string} [currency] - Optional override currency code (e.g. 'PHP')
      * @returns {string} Formatted currency
      */
-    formatCurrency(amount, currency = 'USD') {
+    formatCurrency(amount, currency) {
         if (amount === null || amount === undefined) return '-';
-        return new Intl.NumberFormat('en-US', {
+        const rc = this.getRegionCurrency();
+        const cur = currency || rc.code;
+        const locale = currency ? 'en-US' : rc.locale;
+        return new Intl.NumberFormat(locale, {
             style: 'currency',
-            currency: currency
+            currency: cur
         }).format(amount);
+    },
+
+    /**
+     * Get the currency label for the current user's region (e.g. 'PHP', 'USD', 'IDR', 'CNY').
+     * Useful for form labels like "Cost (PHP)".
+     * @returns {string} Currency label
+     */
+    getCurrencyLabel() {
+        return this.getRegionCurrency().label;
     },
     
     // ===========================================

@@ -355,7 +355,7 @@
                         <!-- Last Known Location -->
                         <div class="form-group">
                             <label class="form-label" for="last-location">Last Known Location</label>
-                            <input type="text" id="last-location" class="form-input" maxlength="25" placeholder="e.g., T1 (Table 1)">
+                            <input type="text" id="last-location" class="form-input" maxlength="25" placeholder="e.g., Above Table 1">
                             <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
                         </div>
                         
@@ -377,13 +377,13 @@
                         
                         <!-- Estimated Value -->
                         <div class="form-group">
-                            <label class="form-label" for="estimated-value">Estimated Value (USD)</label>
+                            <label class="form-label" for="estimated-value" id="estimated-value-label">Estimated Value</label>
                             <input type="number" id="estimated-value" class="form-input" placeholder="0.00" step="0.01" min="0">
                         </div>
                         
                         <!-- Liability Amount -->
                         <div class="form-group">
-                            <label class="form-label" for="liability-amount">Liability Amount (USD)</label>
+                            <label class="form-label" for="liability-amount" id="liability-amount-label">Liability Amount</label>
                             <input type="number" id="liability-amount" class="form-input" placeholder="0.00" step="0.01" min="0">
                         </div>
                         
@@ -484,15 +484,23 @@
                     return;
                 }
 
-                const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+                const { data: profile } = await supabase.from('user_profiles').select('*, region:regions(id, name, code, country)').eq('id', session.user.id).single();
                 currentUser = { ...session.user, ...profile };
-                
+                Auth.profile = profile;
+
                 document.getElementById('user-name').textContent = currentUser.full_name || 'User';
                 document.getElementById('user-role').textContent = currentUser.role?.toUpperCase() || 'USER';
                 document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
                 
                 // Setup navigation visibility based on role and permissions
                 await Utils.setupNavigation(currentUser, supabase);
+
+                // Update currency labels based on user's region
+                const currLabel = Utils.getCurrencyLabel();
+                const estLabel = document.getElementById('estimated-value-label');
+                if (estLabel) estLabel.textContent = `Estimated Value (${currLabel})`;
+                const liaLabel = document.getElementById('liability-amount-label');
+                if (liaLabel) liaLabel.textContent = `Liability Amount (${currLabel})`;
                 
                 // Redirect viewers and pure executives to dashboard (exec+admin can access)
                 if (currentUser.role === 'viewer' || (currentUser.role === 'executive' && !currentUser.isExecAdmin)) {
@@ -619,7 +627,7 @@
                             </td>
                             <td>${r.last_known_location || '-'}</td>
                             <td><span class="badge ${statusClasses[r.status]}">${statusLabels[r.status]}</span></td>
-                            <td>${r.estimated_value ? '$' + parseFloat(r.estimated_value).toLocaleString() : '-'}</td>
+                            <td>${r.estimated_value ? Utils.formatCurrency(parseFloat(r.estimated_value)) : '-'}</td>
                             <td class="text-right">
                                 <div class="flex justify-end gap-2">
                                     ${isReadOnly ? `
@@ -697,11 +705,19 @@
                 .eq('status', 'in_progress');
             const maintAssetIds = new Set((activeMaint || []).map(r => r.asset_id));
 
+            // Fetch asset IDs that are already under investigation in Lost Assets
+            // so the same asset cannot be reported lost twice.
+            const { data: activeLost } = await supabase
+                .from('lost_assets')
+                .select('asset_id')
+                .eq('status', 'under_investigation');
+            const lostAssetIds = new Set((activeLost || []).map(r => r.asset_id));
+
             let assetQ = supabase.from('assets').select('id, asset_tag, name');
             const regionId = currentUser.region_id || null;
             if (regionId) assetQ = assetQ.eq('region_id', regionId);
             const { data } = await assetQ.order('asset_tag');
-            assets = (data || []).filter(a => !maintAssetIds.has(a.id));
+            assets = (data || []).filter(a => !maintAssetIds.has(a.id) && !lostAssetIds.has(a.id));
 
             const select = document.getElementById('asset-select');
             select.innerHTML = '<option value="">Select Asset</option>' +
@@ -757,14 +773,20 @@
             }
         };
 
-        window.openLostAssetModal = function() {
+        window.openLostAssetModal = async function() {
             document.getElementById('lost-asset-form').reset();
             document.getElementById('record-id').value = '';
             document.getElementById('modal-title').textContent = 'Report Lost Asset';
             document.getElementById('date-reported').valueAsDate = new Date();
             document.getElementById('status-select').value = 'under_investigation';
             document.getElementById('employee-select').value = 'unassigned';
+            // Re-enable all fields (may have been disabled by a previous edit)
+            document.querySelectorAll('#lost-asset-form input, #lost-asset-form select, #lost-asset-form textarea').forEach(el => {
+                el.disabled = false;
+            });
             handleStatusChange();
+            // Refresh asset dropdown to exclude newly logged assets
+            await loadAssets();
             document.getElementById('lost-asset-modal').classList.remove('hidden');
         };
 
@@ -776,6 +798,20 @@
             try {
                 const { data: record, error } = await supabase.from('lost_assets').select('*').eq('id', id).single();
                 if (error) throw error;
+                
+                // Ensure the record's asset appears in the dropdown (it may be filtered out)
+                if (record.asset_id) {
+                    const select = document.getElementById('asset-select');
+                    if (!select.querySelector(`option[value="${record.asset_id}"]`)) {
+                        const { data: asset } = await supabase.from('assets').select('id, asset_tag, name').eq('id', record.asset_id).single();
+                        if (asset) {
+                            const opt = document.createElement('option');
+                            opt.value = asset.id;
+                            opt.textContent = `${asset.asset_tag} - ${asset.name}`;
+                            select.appendChild(opt);
+                        }
+                    }
+                }
                 
                 document.getElementById('record-id').value = record.id;
                 document.getElementById('asset-select').value = record.asset_id || '';
@@ -793,6 +829,11 @@
                 document.getElementById('resolution-notes').value = record.resolution_notes || '';
                 
                 handleStatusChange();
+
+                // Lock fields that should not be edited
+                document.getElementById('asset-select').disabled = true;
+                document.getElementById('employee-select').disabled = true;
+                document.getElementById('date-reported').disabled = true;
                 
                 document.getElementById('modal-title').textContent = 'Edit Lost Asset Record';
                 document.getElementById('lost-asset-modal').classList.remove('hidden');
@@ -821,8 +862,8 @@
                         <div><span class="text-slate-400">Last Location:</span><br><span class="text-white">${record.last_known_location || '-'}</span></div>
                         <div><span class="text-slate-400">Status:</span><br><span class="text-white">${statusLabels[record.status]}</span></div>
                         ${record.date_found ? `<div><span class="text-slate-400">Date Found:</span><br><span class="text-white">${new Date(record.date_found).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}</span></div>` : ''}
-                        <div><span class="text-slate-400">Estimated Value:</span><br><span class="text-white">${record.estimated_value ? '$' + parseFloat(record.estimated_value).toLocaleString() : '-'}</span></div>
-                        ${record.liability_amount ? `<div><span class="text-slate-400">Liability Amount:</span><br><span class="text-white">$${parseFloat(record.liability_amount).toLocaleString()}</span></div>` : ''}
+                        <div><span class="text-slate-400">Estimated Value:</span><br><span class="text-white">${record.estimated_value ? Utils.formatCurrency(parseFloat(record.estimated_value)) : '-'}</span></div>
+                        ${record.liability_amount ? `<div><span class="text-slate-400">Liability Amount:</span><br><span class="text-white">${Utils.formatCurrency(parseFloat(record.liability_amount))}</span></div>` : ''}
                         ${record.liability_action ? `<div><span class="text-slate-400">Liability Action:</span><br><span class="text-white">${record.liability_action.replace('_', ' ').toUpperCase()}</span></div>` : ''}
                         ${record.payment_status ? `<div><span class="text-slate-400">Payment Status:</span><br><span class="text-white">${record.payment_status}</span></div>` : ''}
                         <div class="col-span-2"><span class="text-slate-400">Circumstances:</span><br><span class="text-white">${record.circumstances || '-'}</span></div>
@@ -927,7 +968,7 @@
                 }
                 
                 closeLostAssetModal();
-                await Promise.all([loadStats(), loadRecords()]);
+                await Promise.all([loadStats(), loadRecords(), loadAssets()]);
             }, recordId ? 'Updating...' : 'Saving...');
         };
 
