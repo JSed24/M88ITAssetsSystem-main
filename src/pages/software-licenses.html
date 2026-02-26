@@ -91,10 +91,6 @@
                     <span id="exec-region-label" class="hidden ml-3 text-sm text-slate-400 font-normal"></span>
                 </div>
                 <div class="topbar-right" id="admin-actions-topbar">
-                    <button class="btn btn-primary" onclick="openLicenseModal()">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Add License
-                    </button>
                 </div>
             </header>
 
@@ -105,12 +101,11 @@
                 </div>
 
                 <!-- Stats -->
-                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
-                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-blue-400" id="stat-total">--</p><p class="text-slate-400 text-sm">Total Licenses</p></div></div>
-                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-green-400" id="stat-active">--</p><p class="text-slate-400 text-sm">Active</p></div></div>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-blue-400" id="stat-total">--</p><p class="text-slate-400 text-sm">Total Products</p></div></div>
+                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-green-400" id="stat-assigned">--</p><p class="text-slate-400 text-sm">Assigned</p></div></div>
                     <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-yellow-400" id="stat-expiring">--</p><p class="text-slate-400 text-sm">Expiring Soon</p></div></div>
                     <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-red-400" id="stat-expired">--</p><p class="text-slate-400 text-sm">Expired</p></div></div>
-                    <div class="card"><div class="card-body text-center"><p class="text-3xl font-bold text-purple-400" id="stat-seats">--</p><p class="text-slate-400 text-sm">Seats In Use</p></div></div>
                 </div>
 
                 <!-- Licenses Table -->
@@ -136,18 +131,15 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Software</th>
-                                    <th>Product</th>
-                                    <th>License Key</th>
-                                    <th>Type</th>
-                                    <th>Seats (Used/Total)</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
                                     <th>Expiry Date</th>
                                     <th>Status</th>
                                     <th style="text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="licenses-table-body">
-                                <tr><td colspan="7" class="text-center py-8 text-slate-400">Loading...</td></tr>
+                                <tr><td colspan="5" class="text-center py-8 text-slate-400">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -168,66 +160,36 @@
         </main>
     </div>
 
-    <!-- License Modal -->
+    <!-- Edit License Modal -->
     <div id="license-modal" class="modal-overlay hidden">
         <div class="modal max-w-lg">
             <div class="modal-header">
-                <h3 class="modal-title" id="modal-title">Add License</h3>
+                <h3 class="modal-title" id="modal-title">Edit License</h3>
                 <button onclick="closeLicenseModal()" class="text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
             <form id="license-form" onsubmit="handleSubmit(event)">
                 <input type="hidden" id="license-id">
                 <div class="modal-body space-y-4">
                     <div class="form-group">
-                        <label class="form-label" for="license-name">Software Name *</label>
-                        <input type="text" id="license-name" class="form-input" maxlength="25" required placeholder="e.g., Microsoft Office 365">
-                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        <label class="form-label">Product Name</label>
+                        <input type="text" id="license-name" class="form-input bg-slate-700/50" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="license-category">Product</label>
-                        <select id="license-category" class="form-select">
-                            <option value="">-- Select Product --</option>
-                        </select>
+                        <label class="form-label">Credential Type</label>
+                        <div class="flex bg-slate-700 rounded-lg overflow-hidden border border-slate-600 w-fit">
+                            <button type="button" class="edit-key-toggle px-3 py-1.5 text-sm bg-purple-600 text-white" data-type="license_key" onclick="toggleEditKeyType(this)">License Key</button>
+                            <button type="button" class="edit-key-toggle px-3 py-1.5 text-sm text-slate-400 hover:text-white" data-type="email" onclick="toggleEditKeyType(this)">Email</button>
+                        </div>
+                        <input type="hidden" id="license-key-type" value="license_key">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="license-vendor">Vendor</label>
-                        <input type="text" id="license-vendor" class="form-input" maxlength="25" placeholder="e.g., Microsoft">
-                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters</p>
+                        <label class="form-label" for="license-key" id="license-key-label">License Key</label>
+                        <input type="text" id="license-key" class="form-input" placeholder="XXXXX-XXXXX-XXXXX" maxlength="25" data-key-type="license_key" oninput="handleSwKeyInput(this)">
+                        <p id="edit-key-warning" class="sw-key-warning text-xs text-yellow-400 hidden"></p>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="license-key">License Key</label>
-                        <input type="text" id="license-key" class="form-input" maxlength="25" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" style="text-transform: uppercase" oninput="onLicenseKeyChange()">
-                        <p class="text-xs text-slate-400 mt-1">Maximum 25 characters (uppercase letters only)</p>
-                        <p id="license-key-error" class="text-xs text-red-400 mt-1 hidden">⚠️ This license key already exists</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <label class="form-label" for="license-type">License Type</label>
-                            <select id="license-type" class="form-select">
-                                <option value="perpetual">Perpetual</option>
-                                <option value="subscription">Subscription</option>
-                                <option value="volume">Volume</option>
-                                <option value="oem">OEM</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="license-seats">Total Seats</label>
-                            <input type="number" id="license-seats" class="form-input" min="1" value="1">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <label class="form-label" for="license-purchase">Purchase Date</label>
-                            <input type="date" id="license-purchase" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="license-expiry">Expiry Date</label>
-                            <input type="date" id="license-expiry" class="form-input">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="license-cost" id="license-cost-label">Cost</label>
-                        <input type="number" id="license-cost" class="form-input" step="0.01" min="0">
+                        <label class="form-label" for="license-expiry">Expiry Date</label>
+                        <input type="date" id="license-expiry" class="form-input">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="license-notes">Notes</label>
@@ -236,7 +198,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -253,27 +215,19 @@
             </div>
             <div class="modal-body">
                 <!-- License Summary -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div class="grid grid-cols-3 gap-3 mb-4">
                     <div class="bg-slate-700/50 rounded-lg p-3">
-                        <p class="text-xs text-slate-400">Vendor</p>
-                        <p class="text-sm font-medium text-white" id="detail-vendor">--</p>
+                        <p class="text-xs text-slate-400">Total Assigned</p>
+                        <p class="text-sm font-medium text-white" id="detail-total-assigned">--</p>
                     </div>
                     <div class="bg-slate-700/50 rounded-lg p-3">
-                        <p class="text-xs text-slate-400">Type</p>
-                        <p class="text-sm font-medium text-white capitalize" id="detail-type">--</p>
-                    </div>
-                    <div class="bg-slate-700/50 rounded-lg p-3">
-                        <p class="text-xs text-slate-400">Seats</p>
-                        <p class="text-sm font-medium" id="detail-seats">--</p>
+                        <p class="text-xs text-slate-400">Nearest Expiry</p>
+                        <p class="text-sm font-medium text-white" id="detail-expiry">--</p>
                     </div>
                     <div class="bg-slate-700/50 rounded-lg p-3">
                         <p class="text-xs text-slate-400">Status</p>
                         <p class="text-sm" id="detail-status">--</p>
                     </div>
-                </div>
-                <div class="bg-slate-700/50 rounded-lg p-3 mb-4" id="detail-notes-section" style="display:none">
-                    <p class="text-xs text-slate-400 mb-1">Notes</p>
-                    <p class="text-sm text-slate-300" id="detail-notes"></p>
                 </div>
 
                 <!-- Assigned Employees -->
@@ -338,7 +292,8 @@
         let totalPages = 1;
         const pageSize = 10;
         let seatUsageMap = {}; // licenseId -> usedSeats
-        let detailLicenseId = null;
+        let detailCategoryId = null;
+        let detailCategoryName = '';
         let toggleLicenseData = null;
 
         async function init() {
@@ -355,11 +310,6 @@
             document.getElementById('user-initials').textContent = (currentUser.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2);
             
             await Utils.setupNavigation(currentUser, supabase);
-
-            // Update currency labels based on user's region
-            const currLabel = Utils.getCurrencyLabel();
-            const licenseCostLabel = document.getElementById('license-cost-label');
-            if (licenseCostLabel) licenseCostLabel.textContent = `Cost (${currLabel})`;
             
             if (currentUser.role === 'viewer' || (currentUser.role === 'executive' && !currentUser.isExecAdmin)) {
                 window.location.href = 'dashboard.html';
@@ -392,11 +342,6 @@
             const { data } = await supabase.from('software_categories').select('*').eq('is_active', true).order('name');
             softwareCategories = data || [];
             
-            // Populate modal category select
-            const select = document.getElementById('license-category');
-            select.innerHTML = '<option value="">-- Select Product --</option>' +
-                softwareCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            
             // Populate filter category select
             const filterSelect = document.getElementById('filter-category');
             filterSelect.innerHTML = '<option value="">All Products</option>' +
@@ -414,154 +359,149 @@
             const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const regionId = Auth.getRegionId();
 
-            let totalQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true });
+            let totalQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).eq('is_active', true);
             if (regionId) totalQ = totalQ.eq('region_id', regionId);
             const { count: total } = await totalQ;
 
-            let activeQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).or(`expiry_date.is.null,expiry_date.gt.${today}`);
-            if (regionId) activeQ = activeQ.eq('region_id', regionId);
-            const { count: active } = await activeQ;
+            // Count total assignments (quantity assigned)
+            let licIdsQ = supabase.from('software_licenses').select('id').eq('is_active', true);
+            if (regionId) licIdsQ = licIdsQ.eq('region_id', regionId);
+            const { data: licIds } = await licIdsQ;
+            let assigned = 0;
+            if (licIds?.length > 0) {
+                const { count } = await supabase.from('license_assignments').select('*', { count: 'exact', head: true }).in('license_id', licIds.map(l => l.id));
+                assigned = count || 0;
+            }
 
-            let expiringQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).gte('expiry_date', today).lte('expiry_date', thirtyDays);
+            let expiringQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).eq('is_active', true).gte('expiry_date', today).lte('expiry_date', thirtyDays);
             if (regionId) expiringQ = expiringQ.eq('region_id', regionId);
             const { count: expiring } = await expiringQ;
 
-            let expiredQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).lt('expiry_date', today);
+            let expiredQ = supabase.from('software_licenses').select('*', { count: 'exact', head: true }).eq('is_active', true).lt('expiry_date', today);
             if (regionId) expiredQ = expiredQ.eq('region_id', regionId);
             const { count: expired } = await expiredQ;
 
-            // Get total seat usage (region-scoped)
-            let totalSeatsQ = supabase.from('software_licenses').select('id, seats');
-            if (regionId) totalSeatsQ = totalSeatsQ.eq('region_id', regionId);
-            const { data: seatsData } = await totalSeatsQ;
-            const totalSeats = seatsData?.reduce((sum, l) => sum + (l.seats || 0), 0) || 0;
-            const regionLicenseIds = (seatsData || []).map(l => l.id);
-            let usedSeats = 0;
-            if (regionLicenseIds.length > 0) {
-                const { count } = await supabase.from('license_assignments').select('*', { count: 'exact', head: true }).in('license_id', regionLicenseIds);
-                usedSeats = count || 0;
-            }
-
             document.getElementById('stat-total').textContent = total || 0;
-            document.getElementById('stat-active').textContent = active || 0;
+            document.getElementById('stat-assigned').textContent = assigned;
             document.getElementById('stat-expiring').textContent = expiring || 0;
             document.getElementById('stat-expired').textContent = expired || 0;
-            document.getElementById('stat-seats').textContent = `${usedSeats || 0}/${totalSeats}`;
         }
 
         async function loadLicenses() {
             const tbody = document.getElementById('licenses-table-body');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">Loading...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">Loading...</td></tr>';
 
-            let query = supabase.from('software_licenses').select('*, category:software_categories(id, name)', { count: 'exact' });
             const regionId = Auth.getRegionId();
-            if (regionId) query = query.eq('region_id', regionId);
-            if (searchTerm) query = query.or(`name.ilike.%${searchTerm}%,vendor.ilike.%${searchTerm}%`);
-            if (filterCategory) query = query.eq('category_id', filterCategory);
-            
-            // Status filter
-            const today = new Date().toISOString().split('T')[0];
-            const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            if (filterStatus === 'inactive') {
-                query = query.eq('is_active', false);
-            } else {
-                query = query.eq('is_active', true);
-                if (filterStatus === 'active') {
-                    query = query.or(`expiry_date.is.null,expiry_date.gt.${thirtyDays}`);
-                } else if (filterStatus === 'expiring') {
-                    query = query.gte('expiry_date', today).lte('expiry_date', thirtyDays);
-                } else if (filterStatus === 'expired') {
-                    query = query.lt('expiry_date', today);
-                } else if (filterStatus === 'perpetual') {
-                    query = query.is('expiry_date', null);
-                }
-            }
+            const todayDate = new Date();
 
-            const from = (currentPage - 1) * pageSize;
-            const to = from + pageSize - 1;
+            // Step 1: Get all matching software categories
+            let catQuery = supabase.from('software_categories').select('id, name').eq('is_active', true).order('name');
+            if (filterCategory) catQuery = catQuery.eq('id', filterCategory);
+            if (searchTerm) catQuery = catQuery.ilike('name', `%${searchTerm}%`);
+            const { data: categories } = await catQuery;
 
-            const { data: licenses, count, error } = await query.order('expiry_date', { ascending: true, nullsFirst: false }).range(from, to);
-            if (error) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load</td></tr>'; return; }
-
-            document.getElementById('licenses-count').textContent = `(${count || 0})`;
-            
-            totalPages = Math.ceil((count || 0) / pageSize) || 1;
-            const startRecord = count > 0 ? from + 1 : 0;
-            const endRecord = Math.min(from + pageSize, count || 0);
-            document.getElementById('pagination-info').textContent = 
-                `Showing ${startRecord}-${endRecord} of ${count || 0} licenses`;
-
-            if (!licenses?.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+            if (!categories?.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+                document.getElementById('licenses-count').textContent = '(0)';
+                document.getElementById('pagination-info').textContent = 'Showing 0-0 of 0 licenses';
+                totalPages = 1;
                 updatePagination();
                 return;
             }
 
-            // Fetch seat usage for visible licenses
-            const licenseIds = licenses.map(l => l.id);
-            const { data: assignments } = await supabase
-                .from('license_assignments')
-                .select('license_id')
-                .in('license_id', licenseIds);
-            
-            seatUsageMap = {};
-            (assignments || []).forEach(a => {
-                seatUsageMap[a.license_id] = (seatUsageMap[a.license_id] || 0) + 1;
+            const categoryIds = categories.map(c => c.id);
+
+            // Step 2: Get all license records for these categories in this region
+            let licQuery = supabase.from('software_licenses').select('id, category_id, expiry_date, is_active').in('category_id', categoryIds);
+            if (regionId) licQuery = licQuery.eq('region_id', regionId);
+            const { data: allLicenses } = await licQuery;
+
+            // Step 3: Get assignment counts for all those licenses
+            const allLicenseIds = (allLicenses || []).map(l => l.id);
+            let assignCountMap = {};
+            if (allLicenseIds.length > 0) {
+                const { data: assignments } = await supabase.from('license_assignments').select('license_id').in('license_id', allLicenseIds);
+                (assignments || []).forEach(a => {
+                    assignCountMap[a.license_id] = (assignCountMap[a.license_id] || 0) + 1;
+                });
+            }
+
+            // Step 4: Build per-category aggregates
+            const categoryGroups = {};
+            (allLicenses || []).forEach(l => {
+                if (!categoryGroups[l.category_id]) {
+                    categoryGroups[l.category_id] = { totalAssigned: 0, nearestExpiry: null, anyActive: false };
+                }
+                const g = categoryGroups[l.category_id];
+                g.totalAssigned += assignCountMap[l.id] || 0;
+                if (l.is_active) g.anyActive = true;
+                if (l.is_active && l.expiry_date) {
+                    if (!g.nearestExpiry || l.expiry_date < g.nearestExpiry) g.nearestExpiry = l.expiry_date;
+                }
             });
 
-            const todayDate = new Date();
-            const getStatus = (l) => {
-                if (!l.is_active) return { label: 'Inactive', class: 'badge-secondary' };
-                const expiry = l.expiry_date;
-                if (!expiry) return { label: 'Perpetual', class: 'badge-info' };
+            const getGroupStatus = (g) => {
+                if (!g || !g.anyActive) return { label: 'Inactive', class: 'badge-secondary' };
+                const expiry = g.nearestExpiry;
+                if (!expiry) return { label: 'Active', class: 'badge-success' };
                 const exp = new Date(expiry);
                 if (exp < todayDate) return { label: 'Expired', class: 'badge-danger' };
                 if (exp < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) return { label: 'Expiring', class: 'badge-warning' };
                 return { label: 'Active', class: 'badge-success' };
             };
 
-            tbody.innerHTML = licenses.map(l => {
-                const status = getStatus(l);
-                const used = seatUsageMap[l.id] || 0;
-                const total = l.seats || 1;
-                const seatClass = used >= total ? 'text-red-400' : used > 0 ? 'text-yellow-400' : 'text-slate-400';
-                const rowClass = !l.is_active ? 'opacity-50' : '';
+            // Step 5: Filter — only categories with at least one license record in this region
+            let filteredCategories = categories.filter(c => {
+                const g = categoryGroups[c.id];
+                if (!g) return false;
+                if (!filterStatus) return true;
+                const s = getGroupStatus(g);
+                if (filterStatus === 'inactive') return s.label === 'Inactive';
+                if (filterStatus === 'active') return s.label === 'Active';
+                if (filterStatus === 'expiring') return s.label === 'Expiring';
+                if (filterStatus === 'expired') return s.label === 'Expired';
+                if (filterStatus === 'perpetual') return !g.nearestExpiry && g.anyActive;
+                return true;
+            });
+
+            // Step 6: Paginate on filtered categories
+            const totalCount = filteredCategories.length;
+            document.getElementById('licenses-count').textContent = `(${totalCount})`;
+            totalPages = Math.ceil(totalCount / pageSize) || 1;
+            const from = (currentPage - 1) * pageSize;
+            const to = Math.min(from + pageSize, totalCount);
+            const startRecord = totalCount > 0 ? from + 1 : 0;
+            document.getElementById('pagination-info').textContent = `Showing ${startRecord}-${to} of ${totalCount} licenses`;
+
+            const pageCategories = filteredCategories.slice(from, to);
+            if (!pageCategories.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">No licenses found</td></tr>';
+                updatePagination();
+                return;
+            }
+
+            tbody.innerHTML = pageCategories.map(c => {
+                const g = categoryGroups[c.id] || { totalAssigned: 0, nearestExpiry: null, anyActive: true };
+                const status = getGroupStatus(g);
+                const quantity = g.totalAssigned;
+                const rowClass = !g.anyActive ? 'opacity-50' : '';
                 return `
                     <tr class="${rowClass}">
-                        <td>
-                            <p class="font-medium text-white">${l.name}</p>
-                            <p class="text-xs text-slate-400">${l.vendor || ''}</p>
-                        </td>
-                        <td class="text-sm">${l.category?.name || '<span class="text-slate-500">Unassigned</span>'}</td>
-                        <td class="font-mono text-sm">${l.license_key ? '••••' + l.license_key.slice(-8) : '-'}</td>
-                        <td class="capitalize">${l.license_type || '-'}</td>
-                        <td><span class="${seatClass} font-medium">${used}</span><span class="text-slate-500">/${total}</span></td>
-                        <td>${l.expiry_date ? new Date(l.expiry_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : 'Never'}</td>
+                        <td><p class="font-medium text-white">${c.name}</p></td>
+                        <td><span class="font-medium ${quantity > 0 ? 'text-green-400' : 'text-slate-400'}">${quantity}</span></td>
+                        <td>${g.nearestExpiry ? new Date(g.nearestExpiry).toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'}) : '<span class="text-slate-500">No expiry</span>'}</td>
                         <td><span class="badge ${status.class}">${status.label}</span></td>
                         <td class="text-right">
                             <div class="flex gap-1 justify-end">
-                                <button class="btn btn-sm btn-secondary" onclick="viewLicenseDetail('${l.id}')" title="View Assignments">
+                                <button class="btn btn-sm btn-secondary" onclick="viewLicenseDetail('${c.id}', '${c.name.replace(/'/g, "\\'")}')" title="View Assignments">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 </button>
-                                ${currentUser.role !== 'viewer' ? `
-                                <button class="btn btn-sm btn-secondary" onclick="editLicense('${l.id}')" title="Edit">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </button>
-                                ${l.is_active
-                                    ? `<button class="btn btn-sm" style="color:#f59e0b;" onclick="promptToggleActive('${l.id}', true)" title="Deactivate">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                       </button>`
-                                    : `<button class="btn btn-sm" style="color:#22c55e;" onclick="promptToggleActive('${l.id}', false)" title="Reactivate">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                       </button>`
-                                }
-                                ` : ''}
                             </div>
                         </td>
                     </tr>
                 `;
             }).join('');
-            
+
             updatePagination();
         }
         
@@ -584,106 +524,111 @@
 
         // === License Detail / Assignment Management ===
 
-        async function viewLicenseDetail(id) {
-            detailLicenseId = id;
-            const { data: license } = await supabase.from('software_licenses').select('*, category:software_categories(name)').eq('id', id).single();
-            if (!license) return;
+        async function viewLicenseDetail(categoryId, categoryName) {
+            detailCategoryId = categoryId;
+            detailCategoryName = categoryName;
 
-            const todayDate = new Date();
-            const getStatus = (l) => {
-                if (!l.is_active) return { label: 'Inactive', class: 'text-slate-400' };
-                const expiry = l.expiry_date;
-                if (!expiry) return { label: 'Perpetual', class: 'text-blue-400' };
-                const exp = new Date(expiry);
-                if (exp < todayDate) return { label: 'Expired', class: 'text-red-400' };
-                if (exp < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) return { label: 'Expiring', class: 'text-yellow-400' };
-                return { label: 'Active', class: 'text-green-400' };
-            };
-
-            const status = getStatus(license);
-            const used = seatUsageMap[id] || 0;
-            const total = license.seats || 1;
-
-            document.getElementById('detail-modal-title').textContent = license.name;
-            document.getElementById('detail-vendor').textContent = license.vendor || '-';
-            document.getElementById('detail-type').textContent = license.license_type || '-';
-            
-            const seatColor = used >= total ? 'text-red-400' : 'text-green-400';
-            document.getElementById('detail-seats').innerHTML = `<span class="${seatColor}">${used} used</span> / ${total} total`;
-            document.getElementById('detail-status').innerHTML = `<span class="${status.class}">${status.label}</span>`;
-
-            if (license.notes) {
-                document.getElementById('detail-notes').textContent = license.notes;
-                document.getElementById('detail-notes-section').style.display = '';
-            } else {
-                document.getElementById('detail-notes-section').style.display = 'none';
-            }
+            document.getElementById('detail-modal-title').textContent = categoryName;
+            document.getElementById('detail-total-assigned').textContent = '–';
+            document.getElementById('detail-expiry').textContent = '–';
+            document.getElementById('detail-status').innerHTML = '–';
+            document.getElementById('assigned-employees-list').innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Loading...</p>';
+            document.getElementById('assign-form').classList.add('hidden');
 
             const assignBtn = document.getElementById('assign-employee-btn');
-            if (currentUser.role === 'viewer' || used >= total) {
+            if (currentUser.role === 'viewer') {
                 assignBtn.style.display = 'none';
             } else {
                 assignBtn.style.display = '';
             }
-            document.getElementById('assign-form').classList.add('hidden');
 
-            await loadAssignedEmployees(id);
             document.getElementById('detail-modal').classList.remove('hidden');
+            await loadCategoryAssignments(categoryId);
         }
 
-        async function loadAssignedEmployees(licenseId) {
+        async function loadCategoryAssignments(categoryId) {
             const container = document.getElementById('assigned-employees-list');
-            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Loading...</p>';
+            const regionId = Auth.getRegionId();
+            const todayDate = new Date();
 
-            // Get license assignments with direct employee and asset info
-            const { data: assignmentRows, error } = await supabase
-                .from('license_assignments')
-                .select('id, assigned_date, notes, employee_id, employee:employees(id, full_name, position, employee_id), asset:assets(id, asset_tag, brand, model)')
-                .eq('license_id', licenseId);
+            // Get all active license records for this category in the region
+            let licQ = supabase.from('software_licenses').select('id, license_key, key_type, expiry_date').eq('category_id', categoryId).eq('is_active', true);
+            if (regionId) licQ = licQ.eq('region_id', regionId);
+            const { data: licenses } = await licQ;
 
-            if (error || !assignmentRows?.length) {
-                container.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">No employees assigned to this license</p>';
+            if (!licenses?.length) {
+                container.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">No employees assigned to this product</p>';
+                document.getElementById('detail-total-assigned').textContent = '0';
+                document.getElementById('detail-expiry').innerHTML = '<span class="text-slate-500">No expiry</span>';
+                document.getElementById('detail-status').innerHTML = '<span class="badge badge-success">Active</span>';
                 return;
             }
 
-            // Get the employees assigned to these assets (for asset-based assignments)
-            const assetIds = assignmentRows.map(a => a.asset?.id).filter(Boolean);
-            let empAssignments = [];
-            if (assetIds.length > 0) {
-                const { data } = await supabase
-                    .from('asset_assignments')
-                    .select('asset_id, employee:employees(id, full_name, position, employee_id)')
-                    .in('asset_id', assetIds)
-                    .is('returned_date', null);
-                empAssignments = data || [];
+            const licenseIds = licenses.map(l => l.id);
+            const licenseMap = {};
+            licenses.forEach(l => { licenseMap[l.id] = l; });
+
+            // Get all assignments for these licenses with employee info
+            const { data: assignmentRows, error } = await supabase
+                .from('license_assignments')
+                .select('id, assigned_date, license_id, employee:employees(id, full_name, position, employee_id)')
+                .in('license_id', licenseIds);
+
+            // Compute nearest expiry for summary
+            const nearestExpiry = licenses.reduce((n, l) => l.expiry_date && (!n || l.expiry_date < n) ? l.expiry_date : n, null);
+            const getStatus = () => {
+                if (!nearestExpiry) return { label: 'Active', class: 'badge-success' };
+                const exp = new Date(nearestExpiry);
+                if (exp < todayDate) return { label: 'Expired', class: 'badge-danger' };
+                if (exp < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) return { label: 'Expiring', class: 'badge-warning' };
+                return { label: 'Active', class: 'badge-success' };
+            };
+            document.getElementById('detail-expiry').textContent = nearestExpiry
+                ? new Date(nearestExpiry).toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'})
+                : 'No expiry';
+            const statusObj = getStatus();
+            document.getElementById('detail-status').innerHTML = `<span class="badge ${statusObj.class}">${statusObj.label}</span>`;
+
+            if (error || !assignmentRows?.length) {
+                container.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">No employees assigned to this product</p>';
+                document.getElementById('detail-total-assigned').textContent = '0';
+                return;
             }
 
-            // Build asset -> employee map
-            const assetEmployeeMap = {};
-            (empAssignments || []).forEach(ea => {
-                if (ea.employee) assetEmployeeMap[ea.asset_id] = ea.employee;
-            });
+            document.getElementById('detail-total-assigned').textContent = assignmentRows.length;
 
             container.innerHTML = `<div class="space-y-2">${assignmentRows.map(a => {
-                const emp = a.employee || (a.asset ? assetEmployeeMap[a.asset.id] : null);
+                const emp = a.employee;
                 const empName = emp ? emp.full_name : 'Unassigned';
                 const empDetail = emp?.position || '';
-                const assetInfo = a.asset ? `${a.asset.asset_tag} — ${a.asset.brand || ''} ${a.asset.model || ''}`.trim() : 'Direct assignment';
                 const initials = emp?.full_name ? emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2) : '?';
+                const lic = licenseMap[a.license_id];
+                const keyLabel = lic?.key_type === 'email' ? 'Email' : 'License Key';
+                const keyVal = lic?.license_key || '';
+                const maskedKey = keyVal ? keyVal.slice(0, 4) + '••••••' : null;
+                const expiryText = lic?.expiry_date
+                    ? new Date(lic.expiry_date).toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'})
+                    : 'No expiry';
                 return `
                 <div class="flex items-center justify-between bg-slate-700/50 rounded-lg p-3">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
                         <div class="avatar avatar-sm ${emp ? 'bg-blue-600' : 'bg-slate-600'}">
                             <span class="text-xs">${initials}</span>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <p class="text-sm font-medium text-white">${empName}${emp?.employee_id ? ' <span class="text-slate-400 text-xs">(' + emp.employee_id + ')</span>' : ''}</p>
                             <p class="text-xs text-slate-400">${empDetail}</p>
-                            <p class="text-xs text-slate-500">via ${assetInfo} • ${a.assigned_date ? new Date(a.assigned_date).toLocaleDateString() : '-'}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <select class="text-xs bg-slate-800 text-slate-300 border border-slate-600 rounded px-2 py-0.5" style="max-width:230px;" onclick="return false;" onchange="this.selectedIndex=0;">
+                                    <option>${keyLabel}: ${maskedKey || '(none)'}</option>
+                                    <option disabled>Expires: ${expiryText}</option>
+                                </select>
+                                ${currentUser.role !== 'viewer' ? `<button class="btn btn-sm btn-secondary text-xs py-0.5 px-2" onclick="editLicense('${a.license_id}')">Edit</button>` : ''}
+                            </div>
                         </div>
                     </div>
                     ${currentUser.role !== 'viewer' ? `
-                    <button class="btn btn-sm" style="color:#ef4444;" onclick="unassignLicense('${a.id}')" title="Remove">
+                    <button class="btn btn-sm ml-2 flex-shrink-0" style="color:#ef4444;" onclick="unassignLicense('${a.id}')" title="Remove">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>` : ''}
                 </div>`;
@@ -711,19 +656,25 @@
                     return;
                 }
 
-                // Get existing direct employee assignments for this license
-                const { data: existing } = await supabase
-                    .from('license_assignments')
-                    .select('employee_id')
-                    .eq('license_id', detailLicenseId)
-                    .not('employee_id', 'is', null);
-                const existingEmpIds = new Set((existing || []).map(e => e.employee_id));
+                // Get all license IDs for this category in the region, then find assigned employee IDs
+                let licIdsQ = supabase.from('software_licenses').select('id').eq('category_id', detailCategoryId);
+                if (regionId) licIdsQ = licIdsQ.eq('region_id', regionId);
+                const { data: licIds } = await licIdsQ;
+                let existingEmpIds = new Set();
+                if (licIds?.length) {
+                    const { data: existing } = await supabase
+                        .from('license_assignments')
+                        .select('employee_id')
+                        .in('license_id', licIds.map(l => l.id))
+                        .not('employee_id', 'is', null);
+                    existingEmpIds = new Set((existing || []).map(e => e.employee_id));
+                }
 
-                // Filter out employees who already have this license
+                // Filter out employees who already have this product
                 const availableEmployees = employees.filter(e => !existingEmpIds.has(e.id));
 
                 if (!availableEmployees.length) {
-                    select.innerHTML = '<option value="">All employees already have this license</option>';
+                    select.innerHTML = '<option value="">All employees already have this product</option>';
                 } else {
                     availableEmployees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
                     select.innerHTML = '<option value="">Select an employee...</option>' +
@@ -738,8 +689,21 @@
             const employeeId = document.getElementById('assign-employee-select').value;
             if (!employeeId) { showToast('Please select an employee', 'error'); return; }
 
-            // Assign directly to employee
-            const result = await Licenses.assignToEmployee(detailLicenseId, employeeId, 'Assigned via Software Licenses page');
+            const regionId = Auth.getRegionId();
+
+            // Create a new license record for this employee's assignment
+            const licResult = await Licenses.findOrCreateForCategory({
+                categoryId: detailCategoryId,
+                categoryName: detailCategoryName,
+                regionId
+            });
+            if (!licResult.success) {
+                showToast(licResult.error || 'Failed to create license', 'error');
+                return;
+            }
+
+            // Assign the new license record to the employee
+            const result = await Licenses.assignToEmployee(licResult.data.id, employeeId, 'Assigned via Software Licenses page');
             if (!result.success) {
                 showToast(result.error || 'Failed to assign', 'error');
                 return;
@@ -747,17 +711,7 @@
 
             showToast('License assigned to employee', 'success');
             document.getElementById('assign-form').classList.add('hidden');
-            seatUsageMap[detailLicenseId] = (seatUsageMap[detailLicenseId] || 0) + 1;
-            await loadAssignedEmployees(detailLicenseId);
-            
-            // Update seat display in detail modal
-            const { data: license } = await supabase.from('software_licenses').select('seats').eq('id', detailLicenseId).single();
-            const used = seatUsageMap[detailLicenseId] || 0;
-            const total = license?.seats || 1;
-            const seatColor = used >= total ? 'text-red-400' : 'text-green-400';
-            document.getElementById('detail-seats').innerHTML = `<span class="${seatColor}">${used} used</span> / ${total} total`;
-            if (used >= total) document.getElementById('assign-employee-btn').style.display = 'none';
-
+            await loadCategoryAssignments(detailCategoryId);
             loadStats();
             loadLicenses();
         }
@@ -772,16 +726,7 @@
             }
 
             showToast('Assignment removed', 'success');
-            seatUsageMap[detailLicenseId] = Math.max(0, (seatUsageMap[detailLicenseId] || 0) - 1);
-            await loadAssignedEmployees(detailLicenseId);
-
-            const { data: license } = await supabase.from('software_licenses').select('seats').eq('id', detailLicenseId).single();
-            const used = seatUsageMap[detailLicenseId] || 0;
-            const total = license?.seats || 1;
-            const seatColor = used >= total ? 'text-red-400' : 'text-green-400';
-            document.getElementById('detail-seats').innerHTML = `<span class="${seatColor}">${used} used</span> / ${total} total`;
-            document.getElementById('assign-employee-btn').style.display = '';
-
+            await loadCategoryAssignments(detailCategoryId);
             loadStats();
             loadLicenses();
         }
@@ -854,6 +799,82 @@
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
         window.handleLogout = () => Utils.confirmLogout(supabase);
+
+        // ===========================================
+        // SHARED: License Key / Email Input Handler
+        // ===========================================
+        let _dupCheckTimer = null;
+        window.handleSwKeyInput = async (input) => {
+            const keyType = input.dataset.keyType || 'license_key';
+            let val = input.value;
+
+            // Enforce uppercase for license keys
+            if (keyType === 'license_key') {
+                val = val.toUpperCase();
+                input.value = val;
+            }
+
+            // Find warning element
+            let warningEl = input.closest('.form-group')?.querySelector('.sw-key-warning')
+                || input.closest('.space-y-2')?.querySelector('.sw-key-warning');
+            if (!warningEl) {
+                warningEl = document.createElement('p');
+                warningEl.className = 'sw-key-warning text-xs text-yellow-400 hidden';
+                input.after(warningEl);
+            }
+
+            // Clear previous warning
+            warningEl.classList.add('hidden');
+            warningEl.textContent = '';
+
+            const trimmed = val.trim();
+            if (!trimmed || trimmed.length < 3) return;
+
+            // Debounce duplicate check
+            clearTimeout(_dupCheckTimer);
+            _dupCheckTimer = setTimeout(async () => {
+                try {
+                    if (keyType === 'email') {
+                        if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                            warningEl.textContent = '⚠️ Please enter a valid email format';
+                            warningEl.classList.remove('hidden');
+                            return;
+                        }
+                        const { data: existing } = await supabase
+                            .from('software_licenses')
+                            .select('id, license_key, license_assignments:license_assignments(employee:employees(full_name))')
+                            .eq('license_key', trimmed)
+                            .eq('key_type', 'email')
+                            .limit(1);
+                        if (existing && existing.length > 0) {
+                            const assignments = existing[0].license_assignments || [];
+                            const empName = assignments.length > 0 ? assignments[0].employee?.full_name : null;
+                            warningEl.textContent = empName
+                                ? `⚠️ This email is already tagged to "${empName}" — you can still save`
+                                : '⚠️ This email is already in use — you can still save';
+                            warningEl.classList.remove('hidden');
+                        }
+                    } else {
+                        const { data: existing } = await supabase
+                            .from('software_licenses')
+                            .select('id, license_key, license_assignments:license_assignments(employee:employees(full_name))')
+                            .eq('license_key', trimmed)
+                            .limit(1);
+                        if (existing && existing.length > 0) {
+                            const assignments = existing[0].license_assignments || [];
+                            const empName = assignments.length > 0 ? assignments[0].employee?.full_name : null;
+                            warningEl.textContent = empName
+                                ? `⚠️ This License Key is already used by "${empName}"`
+                                : '⚠️ This License Key is already used by another user';
+                            warningEl.classList.remove('hidden');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Duplicate check error:', err);
+                }
+            }, 500);
+        };
+
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadLicenses(); };
         window.handleCategoryFilter = (v) => { filterCategory = v; currentPage = 1; loadLicenses(); };
         window.handleStatusFilter = (v) => { filterStatus = v; currentPage = 1; loadLicenses(); };
@@ -864,16 +885,8 @@
             loadLicenses();
         };
 
-        window.openLicenseModal = () => {
-            document.getElementById('license-form').reset();
-            document.getElementById('license-id').value = '';
-            document.getElementById('license-category').value = '';
-            document.getElementById('modal-title').textContent = 'Add License';
-            document.getElementById('license-key-error').classList.add('hidden');
-            document.getElementById('license-modal').classList.remove('hidden');
-        };
         window.closeLicenseModal = () => document.getElementById('license-modal').classList.add('hidden');
-        window.closeDetailModal = () => { document.getElementById('detail-modal').classList.add('hidden'); detailLicenseId = null; };
+        window.closeDetailModal = () => { document.getElementById('detail-modal').classList.add('hidden'); detailCategoryId = null; detailCategoryName = ''; };
         window.closeDeactivateModal = () => { document.getElementById('deactivate-modal').classList.add('hidden'); toggleLicenseData = null; };
 
         window.viewLicenseDetail = viewLicenseDetail;
@@ -883,100 +896,93 @@
         window.promptToggleActive = promptToggleActive;
         window.confirmToggleActive = confirmToggleActive;
 
+        window.toggleEditKeyType = (btn) => {
+            const type = btn.dataset.type;
+            document.querySelectorAll('.edit-key-toggle').forEach(b => {
+                b.classList.toggle('bg-purple-600', b.dataset.type === type);
+                b.classList.toggle('text-white', b.dataset.type === type);
+                b.classList.toggle('text-slate-400', b.dataset.type !== type);
+            });
+            document.getElementById('license-key-type').value = type;
+            const keyInput = document.getElementById('license-key');
+            const keyLabel = document.getElementById('license-key-label');
+            keyInput.value = ''; // Clear on toggle
+            keyInput.dataset.keyType = type;
+            if (type === 'email') {
+                keyInput.placeholder = 'user@example.com';
+                keyLabel.textContent = 'Email';
+            } else {
+                keyInput.placeholder = 'XXXXX-XXXXX-XXXXX';
+                keyLabel.textContent = 'License Key';
+            }
+        };
+
         window.editLicense = async (id) => {
-            const { data: license } = await supabase.from('software_licenses').select('*').eq('id', id).single();
+            const { data: license } = await supabase.from('software_licenses').select('*, category:software_categories(name)').eq('id', id).single();
             if (!license) return;
             
             document.getElementById('license-id').value = license.id;
-            document.getElementById('license-name').value = license.name || '';
-            document.getElementById('license-vendor').value = license.vendor || '';
+            document.getElementById('license-name').value = license.category?.name || license.name || '';
             document.getElementById('license-key').value = license.license_key || '';
-            document.getElementById('license-category').value = license.category_id || '';
-            document.getElementById('license-type').value = license.license_type || 'perpetual';
-            document.getElementById('license-seats').value = license.seats || 1;
-            document.getElementById('license-purchase').value = license.purchase_date || '';
             document.getElementById('license-expiry').value = license.expiry_date || '';
-            document.getElementById('license-cost').value = license.cost || '';
             document.getElementById('license-notes').value = license.notes || '';
             document.getElementById('modal-title').textContent = 'Edit License';
-            document.getElementById('license-key-error').classList.add('hidden');
-            document.getElementById('license-modal').classList.remove('hidden');
-        };
 
-        window.onLicenseKeyChange = async () => {
+            // Set key type toggle
+            const keyType = license.key_type || 'license_key';
+            document.getElementById('license-key-type').value = keyType;
+            document.querySelectorAll('.edit-key-toggle').forEach(b => {
+                b.classList.toggle('bg-purple-600', b.dataset.type === keyType);
+                b.classList.toggle('text-white', b.dataset.type === keyType);
+                b.classList.toggle('text-slate-400', b.dataset.type !== keyType);
+            });
+            const keyLabel = document.getElementById('license-key-label');
             const keyInput = document.getElementById('license-key');
-            const errorElement = document.getElementById('license-key-error');
-            const licenseKey = keyInput.value.trim();
-            const licenseId = document.getElementById('license-id').value;
-            keyInput.value = keyInput.value.toUpperCase();
-
-            if (!licenseKey) { errorElement.classList.add('hidden'); return; }
-
-            try {
-                let query = supabase.from('software_licenses').select('id', { count: 'exact', head: true }).eq('license_key', licenseKey);
-                if (licenseId) query = query.neq('id', licenseId);
-                const { count } = await query;
-                
-                if (count > 0) {
-                    errorElement.classList.remove('hidden');
-                } else {
-                    errorElement.classList.add('hidden');
-                }
-            } catch (error) {
-                console.error('Error checking license key:', error);
-                errorElement.classList.add('hidden');
+            keyInput.dataset.keyType = keyType;
+            if (keyType === 'email') {
+                keyInput.placeholder = 'user@example.com';
+                keyLabel.textContent = 'Email';
+            } else {
+                keyInput.placeholder = 'XXXXX-XXXXX-XXXXX';
+                keyLabel.textContent = 'License Key';
             }
+
+            document.getElementById('license-modal').classList.remove('hidden');
         };
 
         window.handleSubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('license-id').value;
-            const licenseKey = document.getElementById('license-key').value.trim();
-            const errorElement = document.getElementById('license-key-error');
-            
-            if (licenseKey && !errorElement.classList.contains('hidden')) {
-                showToast('License key already exists', 'error');
-                return;
-            }
+            if (!id) return;
             
             const data = {
-                name: document.getElementById('license-name').value,
-                vendor: document.getElementById('license-vendor').value || null,
-                license_key: licenseKey || null,
-                license_type: document.getElementById('license-type').value,
-                category_id: document.getElementById('license-category').value || null,
-                seats: parseInt(document.getElementById('license-seats').value) || 1,
-                purchase_date: document.getElementById('license-purchase').value || null,
+                license_key: document.getElementById('license-key').value.trim() || null,
+                key_type: document.getElementById('license-key-type').value || 'license_key',
                 expiry_date: document.getElementById('license-expiry').value || null,
-                cost: parseFloat(document.getElementById('license-cost').value) || null,
                 notes: document.getElementById('license-notes').value || null
             };
+
+            // Update license_type based on expiry
+            if (data.expiry_date) {
+                data.license_type = 'subscription';
+            }
 
             const submitBtn = e.target.querySelector('button[type="submit"]');
             
             await Utils.handleFormSubmit(submitBtn, async () => {
-                let result;
-                if (id) {
-                    const { data: oldData } = await supabase.from('software_licenses').select('*').eq('id', id).single();
-                    result = await supabase.from('software_licenses').update(data).eq('id', id).select();
-                    if (!result.error && result.data && result.data[0]) {
-                        await Audit.logLicenseUpdated(id, oldData, result.data[0]);
-                    }
-                } else {
-                    data.region_id = Auth.getRegionId();
-                    result = await supabase.from('software_licenses').insert([data]).select();
-                    if (!result.error && result.data && result.data[0]) {
-                        await Audit.logLicenseCreated(result.data[0]);
-                    }
+                const { data: oldData } = await supabase.from('software_licenses').select('*').eq('id', id).single();
+                const result = await supabase.from('software_licenses').update(data).eq('id', id).select();
+                if (!result.error && result.data && result.data[0]) {
+                    await Audit.logLicenseUpdated(id, oldData, result.data[0]);
                 }
                 
                 if (result.error) throw result.error;
                 
-                showToast(id ? 'License updated' : 'License added', 'success');
+                showToast('License updated', 'success');
                 closeLicenseModal();
                 loadStats();
                 loadLicenses();
-            }, id ? 'Updating...' : 'Saving...');
+            }, 'Saving...');
         };
 
         init();

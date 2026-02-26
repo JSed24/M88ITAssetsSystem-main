@@ -5,6 +5,8 @@
  * ============================================
  * 
  * Handles software license management.
+ * Licenses are created automatically when a software product is
+ * assigned to an employee via the Employees or Assignments forms.
  */
 
 const Licenses = {
@@ -114,7 +116,7 @@ const Licenses = {
             
             if (error) throw error;
             
-            await Audit.log('CREATE', 'software_licenses', data.id, null, data);
+            await Audit.logLicenseCreated(data);
             
             return { success: true, data };
         } catch (error) {
@@ -143,7 +145,7 @@ const Licenses = {
             
             if (error) throw error;
             
-            await Audit.log('UPDATE', 'software_licenses', id, current.data, data);
+            await Audit.logLicenseUpdated(id, current.data, data);
             
             return { success: true, data };
         } catch (error) {
@@ -179,11 +181,61 @@ const Licenses = {
             
             if (error) throw error;
             
-            await Audit.log('DELETE', 'software_licenses', id, current.data, null);
+            await Audit.logLicenseDeleted(current.data);
             
             return { success: true };
         } catch (error) {
             console.error('Delete license error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+    
+    // ===========================================
+    // FIND OR CREATE LICENSE (New workflow)
+    // ===========================================
+
+    /**
+     * Find an existing license for a software category + region, or create one.
+     * Used when assigning a product to an employee from the employee/assignment forms.
+     * @param {object} params
+     * @param {string} params.categoryId - Software category ID
+     * @param {string} params.categoryName - Software category name (used as product name)
+     * @param {string} params.regionId - Region ID
+     * @param {string} [params.licenseKey] - License key or email credential (optional)
+     * @param {string} [params.keyType] - 'license_key' or 'email' (default: 'license_key')
+     * @param {string} [params.expiryDate] - Expiry date (optional)
+     * @returns {Promise<object>} License record
+     */
+    async findOrCreateForCategory({ categoryId, categoryName, regionId, licenseKey, keyType, expiryDate }) {
+        try {
+            // Always create a new license record per assignment.
+            // Each employee gets their own license entry so keys/emails are never shared
+            // between employees automatically.
+            const licenseData = {
+                name: categoryName,
+                category_id: categoryId,
+                license_key: licenseKey || null,
+                key_type: keyType || 'license_key',
+                license_type: expiryDate ? 'subscription' : 'perpetual',
+                seats: 9999, // Unlimited seats - quantity tracked via assignments
+                expiry_date: expiryDate || null,
+                region_id: regionId || null,
+                is_active: true,
+                created_by: Auth.user?.id
+            };
+
+            const { data, error } = await window.supabase
+                .from('software_licenses')
+                .insert(licenseData)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            await Audit.logLicenseCreated(data);
+            return { success: true, data };
+        } catch (error) {
+            console.error('Create license error:', error);
             return { success: false, error: error.message };
         }
     },
@@ -248,7 +300,8 @@ const Licenses = {
     },
     
     /**
-     * Assign license directly to employee (no hardware link required)
+     * Assign license directly to employee (no hardware link required).
+     * If licenseId is not provided, finds or creates one for the given category.
      * @param {string} licenseId - License ID
      * @param {string} employeeId - Employee ID
      * @param {string} notes - Optional notes
@@ -259,12 +312,6 @@ const Licenses = {
             // Validate license
             const license = await this.getById(licenseId);
             if (!license.success) throw new Error('License not found');
-            
-            // Check available seats
-            const usedSeats = await this.getUsedSeats(licenseId);
-            if (usedSeats >= license.data.seats) {
-                throw new Error('No available license seats');
-            }
             
             // Check if already assigned to this employee
             const { data: existing } = await window.supabase

@@ -284,7 +284,7 @@
                                 Software Licenses
                             </label>
                             <p class="text-xs text-slate-400 mb-2">Check products to assign available software licenses</p>
-                            <div id="software-categories-container" class="space-y-1 max-h-48 overflow-y-auto p-2 bg-slate-800 rounded-lg border border-slate-700">
+                            <div id="software-categories-container" class="space-y-1 max-h-64 overflow-y-auto p-2 bg-slate-800 rounded-lg border border-slate-700">
                                 <p class="text-slate-400 text-sm text-center py-2">Loading products...</p>
                             </div>
                         </div>
@@ -629,43 +629,17 @@
                 return;
             }
 
-            // Get available license counts per software category (region-scoped)
             const regionId = Auth.getRegionId();
-            let licQ = supabase
-                .from('software_licenses')
-                .select('id, name, seats, category_id, vendor')
-                .not('category_id', 'is', null);
-            if (regionId) licQ = licQ.eq('region_id', regionId);
-            const { data: allLicenses } = await licQ;
-
-            const { data: allLicenseAssignments } = await supabase
-                .from('license_assignments')
-                .select('license_id');
-
-            const usedSeatsMap = {};
-            (allLicenseAssignments || []).forEach(la => {
-                usedSeatsMap[la.license_id] = (usedSeatsMap[la.license_id] || 0) + 1;
-            });
-
-            // Build available licenses per software category (with names)
-            const availableBySWCategory = {};
-            const availableSWByCategory = {};
-            (allLicenses || []).forEach(lic => {
-                const used = usedSeatsMap[lic.id] || 0;
-                const avail = lic.seats - used;
-                if (avail > 0) {
-                    availableBySWCategory[lic.category_id] = (availableBySWCategory[lic.category_id] || 0) + avail;
-                    if (!availableSWByCategory[lic.category_id]) availableSWByCategory[lic.category_id] = [];
-                    availableSWByCategory[lic.category_id].push({ name: lic.name, vendor: lic.vendor, seats: avail });
-                }
-            });
 
             // Get employee's existing SW assignments (if editing)
+            // employeeLicenseByCategory: category_id -> the employee's OWN license data
+            const employeeLicenseByCategory = {};
+
             if (employeeId) {
-                // Get direct employee license assignments
+                // Get direct employee license assignments with full license data
                 const { data: directLicAssignments } = await supabase
                     .from('license_assignments')
-                    .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id)')
+                    .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id, license_key, key_type, expiry_date)')
                     .eq('employee_id', employeeId);
 
                 (directLicAssignments || []).forEach(la => {
@@ -681,6 +655,14 @@
                             employee_id: la.employee_id
                         });
                         initialSWChecked.add(la.license.category_id);
+                        // Store the employee's own license key/type/expiry
+                        if (!employeeLicenseByCategory[la.license.category_id]) {
+                            employeeLicenseByCategory[la.license.category_id] = {
+                                license_key: la.license.license_key || '',
+                                key_type: la.license.key_type || 'license_key',
+                                expiry_date: la.license.expiry_date || ''
+                            };
+                        }
                     }
                 });
 
@@ -696,13 +678,12 @@
                 if (assetIds.length > 0) {
                     const { data: legacyLicAssignments } = await supabase
                         .from('license_assignments')
-                        .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id)')
+                        .select('id, license_id, asset_id, employee_id, license:software_licenses(id, name, category_id, license_key, key_type, expiry_date)')
                         .in('asset_id', assetIds)
                         .is('employee_id', null);
 
                     (legacyLicAssignments || []).forEach(la => {
                         if (la.license?.category_id) {
-                            // Skip if already found via direct assignment
                             const existing = swAssignmentMap[la.license.category_id] || [];
                             if (existing.some(e => e.license_id === la.license_id)) return;
                             if (!swAssignmentMap[la.license.category_id]) {
@@ -716,53 +697,89 @@
                                 employee_id: la.employee_id
                             });
                             initialSWChecked.add(la.license.category_id);
+                            if (!employeeLicenseByCategory[la.license.category_id]) {
+                                employeeLicenseByCategory[la.license.category_id] = {
+                                    license_key: la.license.license_key || '',
+                                    key_type: la.license.key_type || 'license_key',
+                                    expiry_date: la.license.expiry_date || ''
+                                };
+                            }
                         }
                     });
                 }
             }
 
-            // Sort: assigned first, then available (alphabetically), then unavailable (alphabetically)
+            // Count how many OTHER employees (same region) have each category assigned
+            let otherUsersCount = {};
+            try {
+                const { data: otherAssignments } = await supabase
+                    .from('license_assignments')
+                    .select('license:software_licenses(category_id, region_id)')
+                    .not('employee_id', 'is', null)
+                    .neq('employee_id', employeeId || '00000000-0000-0000-0000-000000000000');
+
+                (otherAssignments || []).forEach(la => {
+                    const catId = la.license?.category_id;
+                    // Only count if same region (or no region filter applies)
+                    if (catId && (!regionId || la.license?.region_id === regionId)) {
+                        otherUsersCount[catId] = (otherUsersCount[catId] || 0) + 1;
+                    }
+                });
+            } catch (e) { /* non-critical */ }
+
+            // Sort: assigned first, then rest alphabetically
             const sortedSWCats = [...softwareCategories].sort((a, b) => {
                 const aAssigned = (swAssignmentMap[a.id] || []).length > 0;
                 const bAssigned = (swAssignmentMap[b.id] || []).length > 0;
-                const aAvail = (availableBySWCategory[a.id] || 0) > 0;
-                const bAvail = (availableBySWCategory[b.id] || 0) > 0;
-                const aOrder = aAssigned ? 0 : aAvail ? 1 : 2;
-                const bOrder = bAssigned ? 0 : bAvail ? 1 : 2;
-                if (aOrder !== bOrder) return aOrder - bOrder;
+                if (aAssigned !== bAssigned) return aAssigned ? -1 : 1;
                 return a.name.localeCompare(b.name);
             });
 
             container.innerHTML = sortedSWCats.map(c => {
                 const assignments = swAssignmentMap[c.id] || [];
                 const isAssigned = assignments.length > 0;
-                const availableCount = availableBySWCategory[c.id] || 0;
-                const isUnavailable = !isAssigned && availableCount === 0;
-
-                let statusHtml = '';
-                if (isAssigned) {
-                    const licInfo = assignments.map(a => a.license_name).join(', ');
-                    statusHtml = `<span class="text-xs text-emerald-400 truncate max-w-[200px]" title="${licInfo}">\u2713 ${licInfo}</span>`;
-                } else if (availableCount > 0) {
-                    const swList = availableSWByCategory[c.id] || [];
-                    const swNames = swList.map(l => l.name).join(', ');
-                    statusHtml = `<span class="text-xs text-blue-400 truncate max-w-[200px]" title="${swNames}">${swList[0].name}${swList.length > 1 ? ' +' + (swList.length - 1) + ' more' : ''}</span>`;
-                } else {
-                    statusHtml = `<span class="text-xs text-red-400">\u2717 No licenses available</span>`;
-                }
+                // Only pre-fill with THIS employee's own key/type/expiry
+                const ownLicense = employeeLicenseByCategory[c.id];
+                const currentKey = ownLicense?.license_key || '';
+                const currentKeyType = ownLicense?.key_type || 'license_key';
+                const currentExpiry = ownLicense?.expiry_date || '';
+                const othersCount = otherUsersCount[c.id] || 0;
+                const othersNote = othersCount > 0
+                    ? `<span class="text-xs text-blue-400 ml-1">· Also used by ${othersCount} other ${othersCount === 1 ? 'employee' : 'employees'}</span>`
+                    : '';
 
                 return `
-                    <div class="flex items-center justify-between p-1.5 rounded ${isUnavailable ? 'opacity-50' : 'hover:bg-slate-700'}">
-                        <label class="flex items-center gap-2 ${isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer'} text-sm flex-shrink-0">
-                            <input type="checkbox" class="sw-cat-cb rounded border-slate-600 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
-                                value="${c.id}"
-                                data-name="${c.name}"
-                                data-available="${availableCount}"
-                                ${isAssigned ? 'checked' : ''}
-                                ${isUnavailable ? 'disabled' : ''}>
-                            <span class="text-slate-300">${c.name}</span>
-                        </label>
-                        ${statusHtml}
+                    <div class="rounded ${isAssigned ? 'bg-slate-700/30' : 'hover:bg-slate-700/20'} transition-colors">
+                        <div class="flex items-center justify-between p-1.5">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm flex-shrink-0">
+                                <input type="checkbox" class="sw-cat-cb rounded border-slate-600 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                    value="${c.id}"
+                                    data-name="${c.name}"
+                                    ${isAssigned ? 'checked' : ''}
+                                    onchange="toggleSwDetailFields(this)">
+                                <span class="text-slate-300">${c.name}</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                ${othersNote}
+                                ${isAssigned ? '<span class="text-xs text-emerald-400">\u2713 Assigned</span>' : ''}
+                            </div>
+                        </div>
+                        <div id="sw-detail-${c.id}" class="px-3 pb-2 space-y-2 ${isAssigned ? '' : 'hidden'}">
+                            <div class="flex items-center gap-2">
+                                <div class="flex bg-slate-700 rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
+                                    <button type="button" class="sw-key-toggle px-2 py-1 text-xs ${currentKeyType === 'license_key' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}" data-cat="${c.id}" data-type="license_key" onclick="toggleSwKeyType(this)">License Key</button>
+                                    <button type="button" class="sw-key-toggle px-2 py-1 text-xs ${currentKeyType === 'email' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}" data-cat="${c.id}" data-type="email" onclick="toggleSwKeyType(this)">Email</button>
+                                </div>
+                                <input type="text" class="form-input text-xs py-1 flex-1" id="sw-key-${c.id}" 
+                                    placeholder="${currentKeyType === 'email' ? 'user@example.com' : 'XXXXX-XXXXX-XXXXX'}"
+                                    value="${currentKey}" data-key-type="${currentKeyType}" maxlength="25" oninput="handleSwKeyInput(this)">
+                            </div>
+                            <p class="sw-key-warning text-xs text-yellow-400 hidden"></p>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-slate-400 flex-shrink-0">Expiry:</label>
+                                <input type="date" class="form-input text-xs py-1 flex-1" id="sw-expiry-${c.id}" value="${currentExpiry}">
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -836,37 +853,75 @@
                 Array.from(document.querySelectorAll('.sw-cat-cb:checked')).map(cb => cb.value)
             );
 
-            // Newly checked SW categories -> assign license directly to employee
+            const regionId = Auth.getRegionId();
+
+            // Newly checked SW categories -> find or create license, then assign to employee
             for (const swCatId of currentChecked) {
                 if (initialSWChecked.has(swCatId)) continue;
 
                 const cb = document.querySelector(`.sw-cat-cb[value="${swCatId}"]`);
                 const catName = cb?.dataset.name || 'Unknown';
 
-                // Find available license in this category (region-scoped)
-                const procRegionId = Auth.getRegionId();
-                let licQuery = supabase
-                    .from('software_licenses')
-                    .select('id, name, seats')
-                    .eq('category_id', swCatId);
-                if (procRegionId) licQuery = licQuery.eq('region_id', procRegionId);
-                const { data: licenses } = await licQuery;
+                // Get inline field values
+                const keyInput = document.getElementById(`sw-key-${swCatId}`);
+                const expiryInput = document.getElementById(`sw-expiry-${swCatId}`);
+                const licenseKey = keyInput?.value?.trim() || '';
+                const keyType = keyInput?.dataset?.keyType || 'license_key';
+                const expiryDate = expiryInput?.value || '';
 
-                let assignedLicense = null;
-                for (const lic of (licenses || [])) {
-                    const usedSeats = await Licenses.getUsedSeats(lic.id);
-                    if (usedSeats < lic.seats) {
-                        const assignResult = await Licenses.assignToEmployee(lic.id, employeeId, 'Auto-assigned from employee form');
-                        if (assignResult.success) {
-                            assignedLicense = lic;
-                            results.assigned.push(`${catName} (${lic.name})`);
-                            break;
+                try {
+                    // Find or create the license record for this product
+                    const licResult = await Licenses.findOrCreateForCategory({
+                        categoryId: swCatId,
+                        categoryName: catName,
+                        regionId: regionId,
+                        licenseKey: licenseKey || null,
+                        keyType: keyType,
+                        expiryDate: expiryDate || null
+                    });
+
+                    if (!licResult.success) {
+                        results.errors.push(`${catName}: ${licResult.error}`);
+                        continue;
+                    }
+
+                    // Assign the license to the employee
+                    const assignResult = await Licenses.assignToEmployee(licResult.data.id, employeeId, 'Auto-assigned from employee form');
+                    if (assignResult.success) {
+                        results.assigned.push(catName);
+                    } else {
+                        results.errors.push(`${catName}: ${assignResult.error}`);
+                    }
+                } catch (err) {
+                    results.errors.push(`${catName}: ${err.message}`);
+                }
+            }
+
+            // For already-checked categories, update license key/expiry if changed
+            for (const swCatId of currentChecked) {
+                if (!initialSWChecked.has(swCatId)) continue;
+                
+                const keyInput = document.getElementById(`sw-key-${swCatId}`);
+                const expiryInput = document.getElementById(`sw-expiry-${swCatId}`);
+                if (!keyInput && !expiryInput) continue;
+
+                const licenseKey = keyInput?.value?.trim() || '';
+                const keyType = keyInput?.dataset?.keyType || 'license_key';
+                const expiryDate = expiryInput?.value || '';
+
+                // Find the existing license for this category
+                const assignments = swAssignmentMap[swCatId] || [];
+                if (assignments.length > 0 && assignments[0].license_id) {
+                    const updates = {};
+                    if (licenseKey) { updates.license_key = licenseKey; updates.key_type = keyType; }
+                    if (expiryDate) { updates.expiry_date = expiryDate; }
+                    if (Object.keys(updates).length > 0) {
+                        try {
+                            await Licenses.update(assignments[0].license_id, updates);
+                        } catch (err) {
+                            console.error('Error updating license details:', err);
                         }
                     }
-                }
-
-                if (!assignedLicense) {
-                    results.noStock.push(catName);
                 }
             }
 
@@ -879,7 +934,7 @@
                 for (const assignment of assignments) {
                     const result = await Licenses.removeFromAsset(assignment.license_assignment_id);
                     if (result.success) {
-                        results.removed.push(`${catName} (${assignment.license_name})`);
+                        results.removed.push(catName);
                     } else {
                         results.errors.push(`Remove ${catName}: ${result.error}`);
                     }
@@ -988,6 +1043,81 @@
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); };
         window.handleLogout = () => Utils.confirmLogout(supabase);
+
+        // ===========================================
+        // SHARED: License Key / Email Input Handler
+        // ===========================================
+        let _dupCheckTimer = null;
+        window.handleSwKeyInput = async (input) => {
+            const keyType = input.dataset.keyType || 'license_key';
+            let val = input.value;
+
+            // Enforce uppercase for license keys
+            if (keyType === 'license_key') {
+                val = val.toUpperCase();
+                input.value = val;
+            }
+
+            // Find warning element
+            let warningEl = input.closest('.space-y-2, .space-y-3')?.querySelector('.sw-key-warning');
+            if (!warningEl) {
+                warningEl = document.createElement('p');
+                warningEl.className = 'sw-key-warning text-xs text-yellow-400 hidden';
+                input.parentElement.after(warningEl);
+            }
+
+            // Clear previous warning
+            warningEl.classList.add('hidden');
+            warningEl.textContent = '';
+
+            const trimmed = val.trim();
+            if (!trimmed || trimmed.length < 3) return;
+
+            // Debounce duplicate check
+            clearTimeout(_dupCheckTimer);
+            _dupCheckTimer = setTimeout(async () => {
+                try {
+                    if (keyType === 'email') {
+                        if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                            warningEl.textContent = '⚠️ Please enter a valid email format';
+                            warningEl.classList.remove('hidden');
+                            return;
+                        }
+                        const { data: existing } = await supabase
+                            .from('software_licenses')
+                            .select('id, license_key, license_assignments:license_assignments(employee:employees(full_name))')
+                            .eq('license_key', trimmed)
+                            .eq('key_type', 'email')
+                            .limit(1);
+                        if (existing && existing.length > 0) {
+                            const assignments = existing[0].license_assignments || [];
+                            const empName = assignments.length > 0 ? assignments[0].employee?.full_name : null;
+                            warningEl.textContent = empName
+                                ? `⚠️ This email is already tagged to "${empName}" — you can still save`
+                                : '⚠️ This email is already in use — you can still save';
+                            warningEl.classList.remove('hidden');
+                        }
+                    } else {
+                        const { data: existing } = await supabase
+                            .from('software_licenses')
+                            .select('id, license_key, license_assignments:license_assignments(employee:employees(full_name))')
+                            .eq('license_key', trimmed)
+                            .limit(1);
+                        if (existing && existing.length > 0) {
+                            const assignments = existing[0].license_assignments || [];
+                            const empName = assignments.length > 0 ? assignments[0].employee?.full_name : null;
+                            warningEl.textContent = empName
+                                ? `⚠️ This License Key is already used by "${empName}"`
+                                : '⚠️ This License Key is already used by another user';
+                            warningEl.classList.remove('hidden');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Duplicate check error:', err);
+                }
+            }, 500);
+        };
+
         window.handleSearch = (v) => { searchTerm = v; currentPage = 1; loadEmployees(); };
         window.handleFilter = () => { 
             filters.department = document.getElementById('department-filter').value; 
@@ -1048,6 +1178,42 @@
             document.getElementById('employee-modal').classList.remove('hidden');
         };
         window.closeEmployeeModal = () => document.getElementById('employee-modal').classList.add('hidden');
+
+        // Toggle visibility of software license detail fields when checkbox is checked/unchecked
+        window.toggleSwDetailFields = (checkbox) => {
+            const catId = checkbox.value;
+            const detailDiv = document.getElementById(`sw-detail-${catId}`);
+            if (detailDiv) {
+                if (checkbox.checked) {
+                    detailDiv.classList.remove('hidden');
+                } else {
+                    detailDiv.classList.add('hidden');
+                }
+            }
+        };
+
+        // Toggle between License Key and Email input types
+        window.toggleSwKeyType = (btn) => {
+            const catId = btn.dataset.cat;
+            const newType = btn.dataset.type;
+            const keyInput = document.getElementById(`sw-key-${catId}`);
+            if (keyInput) {
+                keyInput.dataset.keyType = newType;
+                keyInput.placeholder = newType === 'email' ? 'user@example.com' : 'XXXXX-XXXXX-XXXXX';
+                keyInput.value = ''; // Clear on toggle
+            }
+            // Update toggle button styles
+            const toggleBtns = btn.parentElement.querySelectorAll('.sw-key-toggle');
+            toggleBtns.forEach(b => {
+                if (b.dataset.type === newType) {
+                    b.classList.add('bg-purple-600', 'text-white');
+                    b.classList.remove('text-slate-400', 'hover:text-white');
+                } else {
+                    b.classList.remove('bg-purple-600', 'text-white');
+                    b.classList.add('text-slate-400', 'hover:text-white');
+                }
+            });
+        };
 
         window.editEmployee = async (id) => {
             const { data: emp } = await supabase.from('employees').select('*').eq('id', id).single();
