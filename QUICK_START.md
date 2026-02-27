@@ -1,293 +1,214 @@
-# 🚀 Quick Start Guide - Restructured Codebase
+# 🚀 Quick Start Guide
 
-**For:** Madison 88 IT Equipment Inventory Management System  
-**Date:** February 9, 2026  
-**Status:** ✅ Ready for Development & Documentation
-
----
-
-## 📋 What Just Happened?
-
-Your codebase has been **professionally restructured** from a cluttered single-directory mess to a clean, organized, industry-standard structure. 
-
-**Before:** 26+ files scattered in root directory  
-**After:** 4 config files in root + organized folders
+**For:** Madison 88 IT Equipment Inventory Management System (M88 ITEIMS)
+**Updated:** February 2026
+**Status:** ✅ Ready for Deployment
 
 ---
 
-## 🎯 Getting Started Immediately
+## 🎯 Getting Started
 
-### 1. **Start the Development Server**
+### 1. Install Dependencies
 
 ```bash
-# Navigate to project root
-cd c:\Users\johns\OneDrive\Github\M88ITAssetsSystem
+npm install
+```
 
-# Start server
+### 2. Configure Environment
+
+Create a `.env` file in the project root (copy from `.env.example`):
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+> Get these from **Supabase Dashboard → Settings → API**
+
+### 3. Start Development Server
+
+```bash
 npm run dev
-
-# Or alternatively:
-npx serve .
 ```
 
-### 2. **Open in Browser**
+Open **http://localhost:3000** in your browser.
 
-```
-http://localhost:3000/public/
-```
+### 4. Login & Test
 
-### 3. **Login & Test**
-
-- All functionality is **preserved**
-- All pages work exactly as before
-- Only the **file organization changed**
+Use your Supabase auth credentials to log in. All functionality is ready.
 
 ---
 
 ## 📂 Where Is Everything?
 
-### Quick Reference
-
 | Looking for... | Find it here... |
 |---------------|----------------|
-| **Login page** | `public/index.html` |
+| **Login page** | `index.html` (root) |
 | **Dashboard** | `src/pages/dashboard.html` |
-| **Any page** | `src/pages/*.html` (10 pages) |
-| **JavaScript** | `src/scripts/*.js` (16 files) |
+| **Application pages** | `src/pages/*.html` (12 pages) |
+| **JavaScript modules** | `src/scripts/*.js` (19 files) |
 | **Styles** | `src/styles/styles.css` |
 | **Images/Logo** | `public/images/` |
-| **Database SQL** | `database/migrations/` |
+| **Database SQL** | `database/migrations/` (33 migrations) |
 | **Documentation** | `docs/` |
-| **Config** | `src/scripts/config.js` |
+| **App configuration** | `src/scripts/config.js` |
+| **Environment variables** | `.env` |
+| **Build config** | `vite.config.js` |
 
 ---
 
-## 🎨 Creating Your User Manual
+## 📋 Application Pages
 
-Now that the code is organized, creating documentation is **much easier**:
+Each HTML file in `src/pages/` represents a feature module:
 
-### Step 1: Understand the Structure
-📖 Read: `docs/FILE_STRUCTURE.md` - Complete file organization guide
-
-### Step 2: Identify All Features
-📍 Look at: `src/pages/` folder - Each HTML file is one feature/module:
-- `dashboard.html` → Dashboard feature
-- `assets.html` → Asset management
-- `employees.html` → Employee management
-- `assignments.html` → Assignment tracking
-- `maintenance.html` → Maintenance logs
-- `software-licenses.html` → License management
-- `lost-assets.html` → Lost asset tracking
-- `audit-logs.html` → Audit logs
-- `reports.html` → Reports & exports
-- `settings.html` → System settings
-
-### Step 3: Document Each Module
-For each page in `src/pages/`:
-1. Take screenshots
-2. Document features
-3. Write step-by-step instructions
-4. Note user roles/permissions
-
-### Step 4: Use Existing Documentation
-📚 Reference these files in `docs/`:
-- `ASSIGNMENT_VIEWS.md`
-- `AUDIT_LOGS_FIX.md`
-- `MAINTENANCE_WORKFLOW.md`
-- `REPORTS_PERMISSION.md`
+| Page | Purpose |
+|------|---------|
+| `dashboard.html` | Dashboard with stats & charts |
+| `assets.html` | Asset management (CRUD) |
+| `employees.html` | Employee management |
+| `assignments.html` | Asset assignment tracking |
+| `maintenance.html` | Maintenance & repair logs |
+| `software-licenses.html` | Software license management |
+| `lost-assets.html` | Lost asset tracking |
+| `audit-logs.html` | System audit logs |
+| `reports.html` | Reports & data export |
+| `settings.html` | System settings & configuration |
+| `user-maintenance.html` | User account management |
+| `set-password.html` | Password set/reset flow |
 
 ---
 
-## ✅ Verification Checklist
+## 👥 User Roles
 
-Before creating the user manual, verify everything works:
+| Role | Access |
+|------|--------|
+| **Executive** | Dashboard (all regions), Reports, Audit Logs, Settings |
+| **Admin** | Full access within their assigned region |
+| **IT Staff** | Day-to-day management within their region (some features controlled by Admin) |
+| **Viewer** | Dashboard read-only for their region |
 
-- [ ] **Login page loads** - `public/index.html`
-- [ ] **Can login successfully**
-- [ ] **Dashboard displays** with charts
-- [ ] **All navigation links work**
-- [ ] **Logo displays** (in sidebar)
-- [ ] **Styles apply correctly** (dark theme)
-- [ ] **Can navigate between pages**
-- [ ] **Can logout** (redirects to login)
-- [ ] **Assets page works** (CRUD operations)
-- [ ] **Reports can be generated**
+### 🌍 Regions
+
+- Philippines (PH)
+- Indonesia (ID)
+- China (CN)
+- United States (US)
 
 ---
 
-## 🔧 Configuration
+## 🛠️ Development Commands
 
-### Important: Update Supabase Credentials
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start dev server with hot reload (http://localhost:3000) |
+| `npm run build` | Build optimized files for production in `dist/` |
+| `npm run preview` | Preview production build locally |
 
-Edit: `src/scripts/config.js`
+---
 
-```javascript
-const SUPABASE_URL = 'your-actual-supabase-url';
-const SUPABASE_ANON_KEY = 'your-actual-anon-key';
+## 🚀 Deploy to Netlify
+
+### Option 1: Git-based Deploy
+
+1. Push code to GitHub
+2. In Netlify → **Add new site** → **Import an existing project**
+3. Connect your repository
+4. Build settings:
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist`
+5. Add environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+6. Deploy
+
+### Option 2: Manual Deploy
+
+```bash
+npm run build
 ```
 
-### Optional: Use Environment Variables
+Then drag and drop the `dist/` folder to Netlify.
 
-1. Copy `.env.example` to `.env`
-2. Fill in your credentials
-3. Update `config.js` to read from environment
+> **Important:** Always set the environment variables in Netlify's dashboard under **Site settings → Environment variables** before deploying.
 
 ---
 
-## 📖 Available Documentation
+## ✅ Pre-Deployment Checklist
 
-Your project now has comprehensive documentation:
-
-| Document | Purpose |
-|----------|---------|
-| `README.md` | Main project overview & setup |
-| `RESTRUCTURING_COMPLETE.md` | Full restructuring report |
-| `docs/RESTRUCTURING_GUIDE.md` | Migration & path details |
-| `docs/FILE_STRUCTURE.md` | File organization reference |
-
----
-
-## 🎯 Next Actions
-
-### Immediate (Now)
-1. ✅ Test all pages to ensure they work
-2. ✅ Update Supabase config with real credentials
-3. ✅ Take screenshots of each page for manual
-
-### Short Term (This Week)
-1. 📝 Create user manual outline
-2. 📸 Capture all screenshots
-3. 📋 Document each feature/module
-4. 👥 Define user roles clearly
-
-### Long Term (This Month)
-1. 📚 Complete user manual
-2. 🚀 Prepare for deployment
-3. 🧪 User acceptance testing
-4. 🎓 User training materials
+- [ ] `.env` has correct Supabase credentials
+- [ ] `npm run build` completes without errors
+- [ ] All 33 database migrations have been run in Supabase
+- [ ] First admin user created in Supabase Auth + `user_profiles` table
+- [ ] Login flow works
+- [ ] Dashboard loads with charts
+- [ ] All navigation links work
+- [ ] Images display correctly (logo, favicon)
+- [ ] Styles apply correctly (dark theme)
+- [ ] Asset CRUD operations work
+- [ ] Reports generate successfully (PDF & Excel)
+- [ ] Audit logs are recording
+- [ ] Role-based access works for all 4 roles
+- [ ] Region filtering works correctly
+- [ ] Import/Export functionality works
+- [ ] Logout redirects to login page
 
 ---
 
-## 💡 Tips for User Manual
+## 🔧 Configuration Reference
 
-### Good Structure
-```
-User Manual/
-├── 1. Introduction
-│   ├── System Overview
-│   ├── Purpose
-│   └── User Roles
-├── 2. Getting Started
-│   ├── Login
-│   ├── Dashboard
-│   └── Navigation
-├── 3. Features
-│   ├── Asset Management
-│   ├── Employee Management
-│   ├── Assignments
-│   ├── Maintenance
-│   ├── Licenses
-│   ├── Lost Assets
-│   ├── Audit Logs
-│   ├── Reports
-│   └── Settings
-├── 4. User Workflows
-│   ├── Register New Asset
-│   ├── Assign Asset to Employee
-│   ├── Log Maintenance
-│   ├── Generate Report
-│   └── etc.
-└── 5. Appendix
-    ├── Glossary
-    ├── FAQ
-    └── Troubleshooting
+### Environment Variables (`.env`)
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### Screenshot Tips
-- Use consistent browser/zoom level
-- Highlight important buttons/fields
-- Show before/after states
-- Include success messages
-- Demonstrate error states
-
-### Writing Style
-- Use simple, clear language
-- Include numbered steps
-- Add notes/warnings where needed
-- Provide examples
-- Think from user perspective
+### App Settings (`src/scripts/config.js`)
+- Application name, version, pagination defaults
+- Asset status definitions
+- Maintenance status definitions
+- User role hierarchy (Executive > Admin > IT Staff > Viewer)
+- Region configuration (PH, ID, CN, US)
+- Notification types
 
 ---
 
 ## 🆘 Troubleshooting
 
-### "Nothing displays when I open index.html directly"
-**Solution:** Use a local server (npm run dev or npx serve)  
-**Reason:** ES6 modules require HTTP protocol
+### "Missing Supabase credentials" error
+Create a `.env` file with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Restart the dev server.
 
-### "Images not loading"
-**Check:** Paths should be relative:
-- From pages: `../../public/images/`
-- From index: `images/`
-
-### "Scripts not working"
-**Check:** Browser console for errors  
-**Verify:** Supabase config is updated
-
-### "Can't find a file"
-**Use:** `docs/FILE_STRUCTURE.md` as reference  
-**Search:** Use VS Code search (Ctrl+P)
-
----
-
-## 📞 Support
-
-### Documentation
-- 📖 `README.md` - Setup instructions
-- 📖 `docs/FILE_STRUCTURE.md` - File locations
-- 📖 `docs/RESTRUCTURING_GUIDE.md` - Migration details
-
-### Commands
+### Build fails
 ```bash
-# Find any file
-Get-ChildItem -Recurse -Filter "filename.*"
-
-# Search in files
-Get-ChildItem -Recurse | Select-String "search term"
-
-# List all pages
-ls src/pages/
-
-# List all scripts
-ls src/scripts/
+Remove-Item -Recurse -Force node_modules, package-lock.json
+npm install
+npm run build
 ```
 
----
+### Images not loading
+Images are served from `public/images/` at the `/images/` path. Check that files exist in `public/images/`.
 
-## ✨ Benefits You Now Have
+### Scripts not working
+Check browser console (F12) for errors. Ensure `.env` variables are set correctly.
 
-✅ **Clean organization** - Easy to navigate  
-✅ **Professional structure** - Industry standard  
-✅ **Clear documentation** - Quick reference guides  
-✅ **Version control ready** - .gitignore included  
-✅ **Scalable** - Easy to add features  
-✅ **Maintainable** - Clear file purposes  
-✅ **Ready for manual** - Organized features  
-
----
-
-## 🎉 You're Ready!
-
-Your codebase is now **professionally organized** and ready for:
-- ✅ Creating user manual
-- ✅ Further development
-- ✅ Team collaboration
-- ✅ Production deployment
-
-**Happy documenting! 📚**
+### Login issues
+1. Verify user exists in Supabase Authentication
+2. Check that a `user_profiles` record exists for the user
+3. Ensure RLS policies are configured
+4. Clear browser cache
 
 ---
 
-**Questions?** Refer to the documentation in `docs/` folder.  
-**Problems?** Check the troubleshooting section above.  
-**Success?** Start writing that user manual! 🚀
+## 📚 Additional Documentation
+
+| Document | Purpose |
+|----------|---------|
+| `README.md` | Full project overview & setup |
+| `docs/FILE_STRUCTURE.md` | Complete file organization reference |
+| `docs/ASSIGNMENT_VIEWS.md` | Assignment views documentation |
+| `docs/AUDIT_LOGS_FIX.md` | Audit system setup |
+| `docs/MAINTENANCE_WORKFLOW.md` | Maintenance process guide |
+| `docs/REPORTS_PERMISSION.md` | Report access controls |
+
+---
+
+**Built with ❤️ by the M88 IT Team**

@@ -8,21 +8,24 @@ Audit logs were not being written to the `audit_logs` table, causing the Audit L
 ### 1. Missing Script References
 **Issue**: The `audit.js` module was never loaded in any HTML files, even though the code was calling `Audit.log()`.
 
-**Fix Applied**: Added `<script src="js/audit.js"></script>` and `<script src="js/utils.js"></script>` to all HTML pages:
-- assets.html
-- employees.html
-- maintenance.html
-- assignments.html
-- software-licenses.html
-- settings.html
-- dashboard.html
-- index.html
-- reports.html
+**Fix Applied**: Added module script references for `audit.js` and `utils.js` to all HTML pages in `src/pages/` and the root `index.html`:
+- `src/pages/assets.html`
+- `src/pages/employees.html`
+- `src/pages/maintenance.html`
+- `src/pages/assignments.html`
+- `src/pages/software-licenses.html`
+- `src/pages/settings.html`
+- `src/pages/dashboard.html`
+- `src/pages/reports.html`
+- `src/pages/audit-logs.html`
+- `src/pages/lost-assets.html`
+- `src/pages/user-maintenance.html`
+- `index.html`
 
 ### 2. Auth Dependency Issue
 **Issue**: The `audit.js` module referenced `Auth.user` which might not be available in all contexts.
 
-**Fix Applied**: Modified `audit.js` to handle cases where Auth object is not available by falling back to getting the session directly from Supabase:
+**Fix Applied**: Modified `src/scripts/audit.js` to handle cases where Auth object is not available by falling back to getting the session directly from Supabase:
 
 ```javascript
 // Get current user - try Auth object first, then Supabase session
@@ -38,7 +41,7 @@ if (typeof Auth !== 'undefined' && Auth.user) {
 ### 3. Missing Report Export Logging
 **Issue**: Report exports weren't logging to the audit trail.
 
-**Fix Applied**: Added audit logging to the report generation function in `reports.html`:
+**Fix Applied**: Added audit logging to the report generation function in `src/pages/reports.html`:
 
 ```javascript
 await Audit.log('EXPORT', 'report', null, null, {
@@ -52,7 +55,7 @@ await Audit.log('EXPORT', 'report', null, null, {
 ### 4. Potential RLS (Row Level Security) Issues
 **Issue**: If RLS policies weren't properly configured, authenticated users might not have permission to insert audit logs.
 
-**Fix Provided**: Created `fix_audit_logs.sql` script with proper RLS policies:
+**Fix Provided**: Created `database/migrations/011_fix_audit_logs.sql` script with proper RLS policies:
 - Authenticated users can INSERT audit logs
 - Users can SELECT their own audit logs
 - Admins can SELECT all audit logs
@@ -61,7 +64,7 @@ await Audit.log('EXPORT', 'report', null, null, {
 ## How to Apply the Fix
 
 ### Step 1: Apply SQL Changes (if needed)
-Run the `fix_audit_logs.sql` script in your Supabase SQL editor:
+Run the `database/migrations/011_fix_audit_logs.sql` script in your Supabase SQL editor:
 
 1. Go to Supabase Dashboard → SQL Editor
 2. Copy the contents of `fix_audit_logs.sql`
@@ -116,7 +119,7 @@ WHERE table_name = 'audit_logs';
 ### Issue: Still no data in audit logs
 **Solution**: 
 1. Check browser console for errors
-2. Verify Supabase connection in `js/config.js`
+2. Verify Supabase connection in `src/scripts/config.js` and `.env` variables
 3. Run the SQL verification queries above
 4. Check if RLS policies allow INSERT for authenticated users
 
@@ -138,16 +141,17 @@ WHERE table_name = 'audit_logs';
 
 ## Files Modified
 
-1. `js/audit.js` - Fixed Auth dependency
-2. `reports.html` - Added script tags and audit logging for exports
-3. `assets.html` - Added script tags
-4. `employees.html` - Added script tags
-5. `maintenance.html` - Added script tags
-6. `assignments.html` - Added script tags
-7. `software-licenses.html` - Added script tags
-8. `settings.html` - Added script tags
-9. `dashboard.html` - Added script tags
+1. `src/scripts/audit.js` - Fixed Auth dependency
+2. `src/pages/reports.html` - Added script tags and audit logging for exports
+3. `src/pages/assets.html` - Added script tags
+4. `src/pages/employees.html` - Added script tags
+5. `src/pages/maintenance.html` - Added script tags
+6. `src/pages/assignments.html` - Added script tags
+7. `src/pages/software-licenses.html` - Added script tags
+8. `src/pages/settings.html` - Added script tags
+9. `src/pages/dashboard.html` - Added script tags
 10. `index.html` - Added script tags
+11. `database/migrations/011_fix_audit_logs.sql` - RLS policies
 11. `fix_audit_logs.sql` - Created (RLS policies)
 
 ## Date Applied

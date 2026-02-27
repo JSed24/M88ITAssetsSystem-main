@@ -148,9 +148,9 @@ All maintenance actions are logged:
 ## Technical Details
 
 ### Files Modified
-- `js/maintenance.js`: Create and complete methods
-- `js/assignments.js`: Assignment validation
-- `add_original_status_column.sql`: Database migration
+- `src/scripts/maintenance.js`: Create and complete methods
+- `src/scripts/assignments.js`: Assignment validation
+- `database/migrations/007_add_original_status_column.sql`: Database migration
 
 ### Database Schema
 ```sql

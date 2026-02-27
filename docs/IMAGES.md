@@ -1,6 +1,6 @@
 # Assets Folder
 
-This folder contains static assets for the Madison 88 IT Asset Management System.
+This folder (`public/images/`) contains static assets for the Madison 88 IT Asset Management System.
 
 ## Required Files
 
@@ -21,8 +21,13 @@ Replace these placeholder files with your actual brand assets:
 - **Format:** PNG
 - **Purpose:** Login page background decoration
 
+### Scenic.png (optional)
+- **Format:** PNG
+- **Purpose:** Scenic background image
+
 ## Notes
 
 - The application includes fallback SVG icons if images fail to load
 - For best results, use PNG format with transparent backgrounds
 - Optimize images for web (compress without losing quality)
+- Images are served from `public/images/` and accessible at `/images/` in the app

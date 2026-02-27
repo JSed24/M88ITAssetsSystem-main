@@ -1835,30 +1835,48 @@ body {
         color: #ffffff !important;
     }
 
-    /* ── Heatmap card: keep dark background ── */
-    .card:has(#heatmap-container) {
+    /* ── Heatmap cards: keep dark background ── */
+    .card:has(#heatmap-container),
+    .card:has(#sw-heatmap-container) {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
-    .card:has(#heatmap-container) .card-title {
+    .card:has(#heatmap-container) .card-title,
+    .card:has(#sw-heatmap-container) .card-title,
+    .card:has(#sw-heatmap-container) .card-subtitle,
+    .card:has(#sw-heatmap-container) .text-slate-400 {
+        color: #94a3b8 !important;
+    }
+
+    .card:has(#heatmap-container) .card-title,
+    .card:has(#sw-heatmap-container) .card-title {
         color: #ffffff !important;
     }
 
+    /* ── Alerts & Reminders and Software Alerts: hide on print ── */
+    .card:has(#alerts-list),
+    .card:has(#sw-alerts-list) {
+        display: none !important;
+    }
+
     /* Heatmap table & cells – keep the colored cell backgrounds */
-    #heatmap-container table {
+    #heatmap-container table,
+    #sw-heatmap-container table {
         width: 100%;
         border-collapse: collapse;
     }
 
-    #heatmap-container th {
+    #heatmap-container th,
+    #sw-heatmap-container th {
         color: #94a3b8 !important;
         font-size: 9pt;
     }
 
-    #heatmap-container td {
+    #heatmap-container td,
+    #sw-heatmap-container td {
         font-size: 9pt;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -1876,11 +1894,6 @@ body {
     #exec-summary-panel .card-title,
     #exec-summary-panel * {
         color: inherit !important;
-    }
-
-    /* ── Alerts & Reminders card: keep readable ── */
-    #alerts-list .p-4 {
-        border-bottom: 1px solid #e2e8f0 !important;
     }
 
     /* ── Tables: make sure they are readable on white ── */

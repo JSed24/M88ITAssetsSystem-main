@@ -4,16 +4,29 @@ Quick reference guide for navigating the Madison 88 IT Assets System codebase.
 
 ## 🗂️ Directory Structure
 
-### `/public/` - Public Assets & Entry Point
+### Root - Configuration & Entry Point
+```
+M88ITAssetsSystem/
+├── index.html          # Login page (application entry point)
+├── .env                # Environment variables (not committed)
+├── .env.example        # Environment variable template
+├── .gitignore          # Git ignore rules
+├── package.json        # Dependencies & npm scripts
+└── vite.config.js      # Vite build configuration
+```
+
+---
+
+### `/public/` - Static Assets
 ```
 public/
-├── index.html          # Login page (application entry point)
-└── images/             # Static images
-    ├── logo.png        # Company logo
-    ├── favicon.png     # Site favicon
-    └── bg-pattern.png  # Background pattern
+└── images/
+    ├── logo.png        # Company logo (sidebar)
+    ├── favicon.png     # Browser tab icon
+    ├── bg-pattern.png  # Login page background pattern
+    └── Scenic.png      # Scenic background image
 ```
-**Purpose:** Contains publicly accessible assets and the main entry point.
+**Purpose:** Served at `/` by Vite. Static files that don't need processing.
 
 ---
 
@@ -25,7 +38,7 @@ src/
 └── scripts/            # JavaScript modules
 ```
 
-#### `/src/pages/` - Application Pages
+#### `/src/pages/` - Application Pages (12 pages)
 ```
 pages/
 ├── dashboard.html              # Main dashboard with stats & charts
@@ -37,34 +50,25 @@ pages/
 ├── lost-assets.html            # Lost asset tracking
 ├── audit-logs.html             # System audit logs
 ├── reports.html                # Reports & data export
-└── settings.html               # Admin settings & configuration
+├── settings.html               # Admin/Executive settings & configuration
+├── user-maintenance.html       # User account management
+└── set-password.html           # Password set/reset page
 ```
-**Navigation Pattern:** All pages use relative paths:
-- Images: `../../public/images/`
-- Styles: `../styles/`
-- Scripts: `../scripts/`
-- Logout: `../../public/index.html`
 
 #### `/src/styles/` - Stylesheets
 ```
 styles/
-└── styles.css          # Main application styles (includes dark mode)
+└── styles.css          # Main application styles (Tailwind CSS + custom)
 ```
-**Contains:**
-- Layout styles
-- Component styles
-- Dark mode theme
-- Responsive design
-- Custom utility classes
 
-#### `/src/scripts/` - JavaScript Modules
+#### `/src/scripts/` - JavaScript Modules (19 files)
 ```
 scripts/
-├── config.js           # Supabase configuration (⚠️ update with your credentials)
+├── config.js           # Supabase client & app configuration (uses .env)
+├── auth.js             # Authentication, session, roles & regions
+├── audit.js            # Audit trail logging
 ├── utils.js            # Utility functions & helpers
 ├── components.js       # Reusable UI components (modals, toasts, tables)
-├── auth.js             # Authentication & session management
-├── audit.js            # Audit logging functionality
 ├── notifications.js    # Dashboard alerts & notifications
 ├── app.js              # Main application initialization
 ├── dashboard.js        # Dashboard logic, charts, & statistics
@@ -75,19 +79,24 @@ scripts/
 ├── licenses.js         # Software license operations
 ├── reports.js          # Report generation logic
 ├── export.js           # Excel/PDF export utilities
-└── import.js           # CSV/Excel import utilities
+├── import.js           # CSV/Excel import utilities
+├── vendor-chart.js     # Chart.js vendor bundle
+├── vendor-pdf.js       # jsPDF + jsPDF-AutoTable vendor bundle
+└── vendor-xlsx.js      # SheetJS (XLSX) vendor bundle
 ```
 **Module Dependencies:**
-- `config.js` → Must be configured first
-- `utils.js` → Used by multiple modules
+- `config.js` → Initializes Supabase client from `.env` variables
+- `auth.js` → Handles authentication, loads user roles and regions
+- `utils.js` → Used by most other modules
 - `components.js` → Depends on utils.js
+- `vendor-*.js` → Bundle third-party libraries for use in modules
 
 ---
 
-### `/database/` - Database Files
+### `/database/` - Database Migrations
 ```
 database/
-└── migrations/         # SQL migration scripts (run in order)
+└── migrations/                                    # 33 SQL scripts (run in order)
     ├── 002_add_audit_columns.sql
     ├── 003_add_created_by_to_employees.sql
     ├── 004_add_import_permission.sql
@@ -100,9 +109,30 @@ database/
     ├── 011_fix_audit_logs.sql
     ├── 012_fix_maintenance_columns.sql
     ├── 013_fix_maintenance_status_constraint.sql
-    └── 014_update_assignments_view.sql
+    ├── 014_update_assignments_view.sql
+    ├── 015_add_regions_and_executive_role.sql
+    ├── 016_add_region_to_data_tables.sql
+    ├── 017_add_audit_logs_permission.sql
+    ├── 018_fix_executive_audit_logs_access.sql
+    ├── 019_make_lost_assets_employee_nullable.sql
+    ├── 020_fix_lost_assets_view_add_region.sql
+    ├── 021_fix_warranty_view_add_region.sql
+    ├── 022_create_notifications_table.sql
+    ├── 023_create_refresh_due_view.sql
+    ├── 024_add_suggested_refresh_date_to_view.sql
+    ├── 025_create_user_roles_and_regions_tables.sql
+    ├── 026_create_software_categories.sql
+    ├── 027_create_employee_required_categories.sql
+    ├── 028_add_category_id_to_assignments_view.sql
+    ├── 029_add_employee_to_license_assignments.sql
+    ├── 030_fix_user_profiles_insert_policy.sql
+    ├── 031_fix_user_delete_constraints.sql
+    ├── 032_add_is_active_to_software_licenses.sql
+    ├── 032_add_password_link_tracking.sql
+    ├── 033_restructure_software_licenses.sql
+    └── 034_add_temporary_replacements.sql
 ```
-**Purpose:** Version-controlled database schema changes.  
+**Purpose:** Version-controlled database schema changes.
 **Usage:** Run migrations in numerical order in Supabase SQL Editor.
 
 ---
@@ -110,23 +140,25 @@ database/
 ### `/docs/` - Documentation
 ```
 docs/
-├── RESTRUCTURING_GUIDE.md      # Migration guide for new structure
-├── ASSIGNMENT_VIEWS.md         # Assignment views documentation
-├── AUDIT_LOGS_FIX.md          # Audit logs fix documentation
-├── MAINTENANCE_WORKFLOW.md     # Maintenance workflow guide
-└── REPORTS_PERMISSION.md       # Reports permission documentation
+├── ASSIGNMENT_VIEWS.md         # Assignment table & grouped view documentation
+├── AUDIT_LOGS_FIX.md           # Audit logs setup & troubleshooting
+├── FILE_STRUCTURE.md           # This file - project structure reference
+├── IMAGES.md                   # Image asset specifications
+├── MAINTENANCE_WORKFLOW.md     # Maintenance workflow & status management
+├── REPORTS_PERMISSION.md       # Reports permission system documentation
+└── RESTRUCTURING_GUIDE.md      # Codebase restructuring history
 ```
-**Purpose:** Technical documentation and implementation guides.
 
 ---
 
 ### `/sample-data/` - Sample Data
 ```
 sample-data/
+├── M88_ITEquipment2025.csv     # IT equipment inventory data
 ├── sample_assets.csv           # Sample asset data for import
+├── sample_assignments.csv      # Sample assignment data
 └── sample_employees.csv        # Sample employee data for import
 ```
-**Purpose:** Example CSV files for testing import functionality.
 
 ---
 
@@ -135,38 +167,26 @@ sample-data/
 tests/
 └── test-audit.html             # Audit functionality test page
 ```
-**Purpose:** Testing and QA files (not deployed to production).
 
 ---
 
-## 📝 Configuration Files
+## 🔗 Path Reference
 
-### Root Level Files
-```
-.
-├── .gitignore                  # Git ignore rules
-├── .env.example                # Environment variable template
-├── package.json                # Project metadata & npm scripts
-└── README.md                   # Main project documentation
-```
-
-## 🔗 Path Reference Cheat Sheet
-
-### From `public/index.html` to:
+### From `index.html` (root) to:
 | Target | Path |
 |--------|------|
-| Images | `images/` |
-| Styles | `../src/styles/` |
-| Scripts | `../src/scripts/` |
-| Dashboard | `../src/pages/dashboard.html` |
+| Images | `/images/` (served from public/) |
+| Styles | `/src/styles/styles.css` |
+| Scripts | `/src/scripts/*.js` |
+| Dashboard | `/src/pages/dashboard.html` |
 
 ### From `src/pages/*.html` to:
 | Target | Path |
 |--------|------|
-| Images | `../../public/images/` |
-| Styles | `../styles/` |
-| Scripts | `../scripts/` |
-| Index (logout) | `../../public/index.html` |
+| Images | `/images/` (absolute, served from public/) |
+| Styles | `../styles/styles.css` or `/src/styles/styles.css` |
+| Scripts | `../scripts/*.js` or `/src/scripts/*.js` |
+| Login (logout) | `/index.html` |
 | Other pages | `./page-name.html` |
 
 ### From `src/scripts/*.js` to:
@@ -174,26 +194,31 @@ tests/
 |--------|------|
 | Other scripts | `./script-name.js` |
 
+---
+
 ## 🚀 Quick Navigation
 
 ### Want to modify...
-- **Login page?** → `public/index.html`
+- **Login page?** → `index.html`
 - **Dashboard?** → `src/pages/dashboard.html` + `src/scripts/dashboard.js`
 - **Styles?** → `src/styles/styles.css`
-- **Configuration?** → `src/scripts/config.js`
+- **Configuration?** → `.env` (credentials) or `src/scripts/config.js` (app settings)
 - **Database schema?** → `database/migrations/`
 - **Documentation?** → `docs/`
+- **User roles/regions?** → `src/scripts/config.js` (USER_ROLES, REGIONS)
 
 ### Want to add...
-- **New page?** → Create in `src/pages/`, use existing pages as template
+- **New page?** → Create in `src/pages/`, add entry to `vite.config.js` rollupOptions.input
 - **New feature?** → Add script to `src/scripts/`
-- **Database change?** → Create new migration in `database/migrations/`
+- **Database change?** → Create new migration in `database/migrations/` (next number: 035)
 - **Documentation?** → Add `.md` file to `docs/`
+
+---
 
 ## 🎨 File Naming Conventions
 
 - **HTML pages:** `kebab-case.html` (e.g., `lost-assets.html`)
-- **JavaScript:** `camelCase.js` (e.g., `dashboard.js`)
+- **JavaScript:** `camelCase.js` or `kebab-case.js` (e.g., `dashboard.js`, `vendor-chart.js`)
 - **CSS:** `kebab-case.css` (e.g., `styles.css`)
 - **SQL migrations:** `NNN_snake_case.sql` (e.g., `002_add_audit_columns.sql`)
 - **Documentation:** `SCREAMING_SNAKE_CASE.md` (e.g., `AUDIT_LOGS_FIX.md`)

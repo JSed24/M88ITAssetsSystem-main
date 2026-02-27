@@ -7,7 +7,7 @@ This system allows administrators to control whether IT Staff can access the Rep
 
 **Run this SQL script first:**
 ```sql
--- See: create_system_settings.sql
+-- See: database/migrations/009_create_system_settings.sql
 ```
 
 This creates:
@@ -45,6 +45,7 @@ The toggle switch shows current state:
 
 | Role | Reports Access | Can Change Permission |
 |------|---------------|----------------------|
+| **Executive** | Always YES | YES (via Settings) |
 | **Admin** | Always YES | YES (via Settings) |
 | **IT Staff** | Depends on setting | NO |
 | **Viewer** | Always NO | NO |
@@ -53,26 +54,26 @@ The toggle switch shows current state:
 
 ### Files Modified
 
-1. **create_system_settings.sql**
+1. **database/migrations/009_create_system_settings.sql**
    - Creates system_settings table
    - Inserts default permission
    - Sets up RLS policies
 
-2. **settings.html**
+2. **src/pages/settings.html**
    - Added "Permissions" tab
    - Toggle UI for IT staff reports access
    - Function: `toggleReportsPermission()`
    - Function: `loadPermissions()`
 
-3. **reports.html**
+3. **src/pages/reports.html**
    - Permission check in `init()` function
    - Redirects IT staff to dashboard if permission denied
 
-4. **js/utils.js**
+4. **src/scripts/utils.js**
    - `checkReportsPermission()` - Queries system_settings
    - `handleReportsNavVisibility()` - Shows/hides nav link
 
-5. **dashboard.html**
+5. **src/pages/dashboard.html**
    - Uses Utils.handleReportsNavVisibility()
    - Hides reports nav for IT staff when disabled
 

@@ -1,38 +1,74 @@
-We need to restructure the user roles of the M88 ITEIMS:
+# User Roles & Permissions - M88 ITEIMS
 
-- Executive (CEO, CFO, Any person that is of very high position in the company) - This can access Dashboard, Reports, Audit Logs, and Settings.
-   - The Dashboard has a dropdown function to see all Madison88 IT Assets, Madison88 IT Assets in the Philippines, Madison88 IT Assets in Indonesia, Madison88 IT Assets in China, and Madison88 IT Assets in United States.
-   - This user can generate Reports either PDF or Excel. They can export overall Asset Master List of every location they want to, overall Assignment Report of every location they want to, overall Warranty Report of every location they want to, overall Maintenance History of every location they want to, overall Employee Directory of every location they want to, and overall Lost Assets Report of every location they want to
-   - All the Audit Logs of every user type are logged for this user. To view and ensure that everything is aligned and secured.
-   - They have all the System Setting that includes Users, Permissions, Assignment Rules, and Categories.
-       - Users: They can modify all users and their roles and indicate what location they must be assigned.
-       - Permissions: They can modify user permissions of every role that is depending on what is important (you can include necessary permissions needed for this).
-       - Assignment Rules: They can configure whether each asset category allows single or multiple assignments to employees (Same as we have right now for the Admin).
-       - Categories: They can add, deactivate, or edit categories (Same as we have right now for the Admin).
+This document describes the four user roles implemented in the Madison 88 IT Equipment Inventory Management System and their access levels across all modules. Users are assigned to specific regions, and data access is scoped accordingly.
 
-- Admin (Assigned Manager to every region depending on the location) - This is the current admin that we have in the system and they can access Dashboard, Assets, Employees, Assignments, Maintenance, Lost Assets, Software Licenses, Reports, Audit Logs, and Settings.
-   - The Dashboard only shows the Dashboard of their current region. Might be Madison88 IT Assets in the Philippines, Madison88 IT Assets in Indonesia, Madison88 IT Assets in China, and Madison88 IT Assets in United States depending on where admin they are assigned.
-   - The Assets tab is still the same with the current system, but they can only add, edit, and import assets that is within their specified region.
-   - The Employees tab is still the same with the current system, but they can only add, edit, and import employees that is within their specified region
-   - The Assignments tab is still the same with the current system, but they can only add, edit, filter, and assign assets to an employee that is within their specified region
-   - The Maintenance tab is still the same with the current system, but they can only log, filter, and edit assets that are within their specific region.
-   - The Lost Assets tab is still the same with the current system, but they can only report lost asset, filter, and edit assets that are within their specific region.
-   - Software Licenses tab is still the same with the current system, but they can only add, filter, and edit licenses that are within their specific region (If the admin who added that software license, it will automatically be tracked by that admin of that specific region only. For example, if that software was added by Admin that is specified in the Philippines, automatically the software license can only be managed by admins and it staff that is within the Philippines, the logic applies to other regions as well).
-   - This user can generate Reports either PDF or Excel. They can export Asset Master List of their specific region only, Assignment Report of their specific region only, Warranty Report of their specific region only, Maintenance History of their specific region only, Employee Directory of their specific region only, and Lost Assets Report their specific region only.
-   - All the Audit Logs of every user type even other Admins from other regions aside from Executive role are logged for this user. To view and ensure that everything is aligned and secured.
-   - They have all the System Setting that includes Users and Permissions.
-       - Users: They can modify user roles below them which are IT Staff and Viewer. These roles can be edited and can be modified if still active or no. (Only for their assigned region)
-       - Permissions: They can modify user permissions of IT Staff role (Same as what we have right now).
+## Supported Regions
 
-- IT Staff (IT staff, IT employee, or IT personnel that is tasked to manage this system for the specific region) - This is the current IT Staff that we have in the system, and they can access Dashboard, Assets, Employees, Assignments, Maintenance, Lost Assets, and Software Licenses. (Reports and Audit Logs still depends on if the Admin allows).
-   - The Dashboard only shows the Dashboard of their current region. Might be Madison88 IT Assets in the Philippines, Madison88 IT Assets in Indonesia, Madison88 IT Assets in China, and Madison88 IT Assets in United States depending on where admin they are assigned.
-   - The Assets tab is still the same with the current system, but they can only add, edit, and import (depending on if their region administrator allows) assets that is within their specified region.
-   - The Employees tab is still the same with the current system, but they can only add, edit, and import (depending on if their region administrator allows) employees that is within their specified region
-   - The Assignments tab is still the same with the current system, but they can only add, edit, filter, and assign assets to an employee that is within their specified region
-   - The Maintenance tab is still the same with the current system, but they can only log, filter, and edit assets that are within their specific region.
-   - The Lost Assets tab is still the same with the current system, but they can only report lost asset, filter, and edit assets that are within their specific region.
-   - Software Licenses tab is still the same with the current system, but they can only add, filter, and edit licenses that are within their specific region (If the IT Staff who added that software license, it will automatically be tracked by that admin of that specific region only. For example, if that software was added by IT Staff that is specified in the Philippines, automatically the software license can only be managed by admins and it staff that is within the Philippines, the logic applies to other regions as well).
-   - This user can generate Reports either PDF or Excel if they are allowed by their admin. They can export Asset Master List of their specific region only, Assignment Report of their specific region only, Warranty Report of their specific region only, Maintenance History of their specific region only, Employee Directory of their specific region only, and Lost Assets Report their specific region only.
-   - The audit log of IT Staff is the same the current system now.
+| Code | Label |
+|------|-------|
+| PH | Madison88 IT Assets in the Philippines |
+| ID | Madison88 IT Assets in Indonesia |
+| CN | Madison88 IT Assets in China |
+| US | Madison88 IT Assets in United States |
 
-- Viewer (All employees or stakeholders that are concerned) - This is the current Viewer that we have in the system, and they can only see the dashboard 
+---
+
+## Executive
+**For:** CEO, CFO, or any person in a high-level position in the company.
+
+**Accessible Modules:** Dashboard, Reports, Audit Logs, Settings
+
+- **Dashboard:** Has a dropdown to view IT assets across all regions (Philippines, Indonesia, China, United States) or the combined global view.
+- **Reports:** Can generate PDF or Excel reports for any region. Available reports: Asset Master List, Assignment Report, Warranty Report, Maintenance History, Employee Directory, Lost Assets Report.
+- **Audit Logs:** All audit logs from every user type are visible, ensuring alignment and security.
+- **Settings:**
+  - **Users:** Can modify all users, their roles, and their assigned region.
+  - **Permissions:** Can modify user permissions for every role.
+  - **Assignment Rules:** Can configure whether each asset category allows single or multiple assignments to employees.
+  - **Categories:** Can add, deactivate, or edit asset categories.
+
+---
+
+## Admin
+**For:** Assigned regional manager for a specific location.
+
+**Accessible Modules:** Dashboard, Assets, Employees, Assignments, Maintenance, Lost Assets, Software Licenses, Reports, Audit Logs, Settings
+
+- **Dashboard:** Shows data for their assigned region only.
+- **Assets:** Full CRUD and import within their region only.
+- **Employees:** Full CRUD and import within their region only.
+- **Assignments:** Full management (add, edit, filter, assign) within their region only.
+- **Maintenance:** Log, filter, and edit maintenance records within their region only.
+- **Lost Assets:** Report, filter, and edit lost assets within their region only.
+- **Software Licenses:** Add, filter, and edit licenses within their region. Licenses are automatically scoped to the adding user's region — only admins and IT staff in the same region can manage them.
+- **Reports:** Generate PDF or Excel reports for their region only. Same report types as Executive but limited to own region.
+- **Audit Logs:** All audit logs from users in all regions (except Executive) are visible.
+- **Settings:**
+  - **Users:** Can modify IT Staff and Viewer roles within their assigned region (activate/deactivate, edit roles).
+  - **Permissions:** Can modify IT Staff permissions for their region.
+
+---
+
+## IT Staff
+**For:** IT personnel tasked with managing the system for a specific region.
+
+**Accessible Modules:** Dashboard, Assets, Employees, Assignments, Maintenance, Lost Assets, Software Licenses. Reports and Audit Logs access depends on Admin permission settings.
+
+- **Dashboard:** Shows data for their assigned region only.
+- **Assets:** Add, edit, and import (if permitted by Admin) within their region only.
+- **Employees:** Add, edit, and import (if permitted by Admin) within their region only.
+- **Assignments:** Add, edit, filter, and assign within their region only.
+- **Maintenance:** Log, filter, and edit within their region only.
+- **Lost Assets:** Report, filter, and edit within their region only.
+- **Software Licenses:** Add, filter, and edit within their region. Licenses are automatically scoped to the adding user's region.
+- **Reports:** If permitted by Admin, can generate PDF or Excel reports for their region only.
+- **Audit Logs:** If permitted by Admin, same access level as current implementation.
+
+---
+
+## Viewer
+**For:** All employees or stakeholders who need visibility into the system.
+
+**Accessible Modules:** Dashboard only
+
+- **Dashboard:** Read-only view of IT asset data for their assigned region.
