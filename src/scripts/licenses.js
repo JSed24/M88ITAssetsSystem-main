@@ -231,6 +231,7 @@ const Licenses = {
                 .single();
 
             if (error) throw error;
+            if (!data) throw new Error('License record could not be created (no data returned — check RLS policies)');
 
             await Audit.logLicenseCreated(data);
             return { success: true, data };

@@ -88,7 +88,7 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        IT Equipments Inventory
+                        IT Equipment Inventory
                     </a>
                     <a href="software-licenses.html" class="nav-link">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,7 +483,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <p class="text-green-200 text-xs mt-2">Currently active licenses</p>
+                        <p class="text-green-200 text-xs mt-2">Active employee assignments</p>
                     </div>
 
                     <!-- Expiring Soon -->
@@ -2056,10 +2056,10 @@
                 const today = new Date().toISOString().split('T')[0];
                 const monthRange = getMonthDateRange();
 
-                // Base query — filter by created_at when month selected
+                // Fetch all license records (one row per employee-product assignment)
                 let query = supabase
                     .from('software_licenses')
-                    .select('id, name, expiry_date, is_active, created_at');
+                    .select('id, category_id, expiry_date, is_active, created_at');
                 query = applyRegionFilter(query);
                 if (monthRange) query = query.gte('created_at', monthRange.startDate).lte('created_at', monthRange.endDate);
                 const { data: allLicenses, error } = await query;
@@ -2071,14 +2071,31 @@
 
                 const list = allLicenses || [];
 
+                // "Total Products" = distinct software categories that have at least one license record
+                const distinctCategories = new Set(list.map(l => l.category_id).filter(Boolean));
+                const total = distinctCategories.size;
+
+                // "Active" = number of employee assignments (license_assignments rows) for active licenses
+                const activeLicenseIds = list
+                    .filter(l => l.is_active !== false && (!l.expiry_date || l.expiry_date >= today))
+                    .map(l => l.id);
+
+                let activeAssignmentCount = 0;
+                if (activeLicenseIds.length > 0) {
+                    let assignQ = supabase
+                        .from('license_assignments')
+                        .select('id', { count: 'exact', head: true })
+                        .in('license_id', activeLicenseIds);
+                    const { count } = await assignQ;
+                    activeAssignmentCount = count || 0;
+                }
+
                 // "Expiring" and "Expired" use expiry_date range when month is selected
                 let expiringCount, expiredCount;
                 if (monthRange) {
-                    // When month selected: expiring = expiration falls IN that month
                     expiringCount = list.filter(l => l.expiry_date && l.expiry_date >= monthRange.startDate && l.expiry_date <= monthRange.endDate).length;
                     expiredCount = list.filter(l => l.expiry_date && l.expiry_date < today && l.expiry_date <= monthRange.endDate).length;
                 } else {
-                    // Default: expiring within 90 days, expired = past today
                     const futureDate = new Date();
                     futureDate.setDate(futureDate.getDate() + 90);
                     const future90 = futureDate.toISOString().split('T')[0];
@@ -2086,19 +2103,15 @@
                     expiredCount = list.filter(l => l.expiry_date && l.expiry_date < today).length;
                 }
 
-                const total = list.length;
-                const active = list.filter(l => {
-                    if (l.is_active === false) return false;
-                    if (!l.expiry_date) return true; // perpetual
-                    return l.expiry_date >= today;
-                }).length;
-
                 document.getElementById('sw-stat-total').textContent = total;
-                document.getElementById('sw-stat-active').textContent = active;
+                document.getElementById('sw-stat-active').textContent = activeAssignmentCount;
                 document.getElementById('sw-stat-expiring').textContent = expiringCount;
                 document.getElementById('sw-stat-expired').textContent = expiredCount;
 
-                // Update stat card labels when month filter is active
+                // Update stat card subtitle labels
+                const activeLabel = document.querySelector('#sw-stat-active')?.closest('.stat-card')?.querySelector('.text-green-200.text-xs');
+                if (activeLabel) activeLabel.textContent = 'Active employee assignments';
+
                 const expiringLabel = document.querySelector('#sw-stat-expiring')?.closest('.stat-card')?.querySelector('.text-yellow-200.text-xs');
                 const expiredLabel = document.querySelector('#sw-stat-expired')?.closest('.stat-card')?.querySelector('.text-red-200.text-xs');
                 if (expiringLabel) expiringLabel.textContent = monthRange ? 'Expiring in this month' : 'Expiring within 90 days';
