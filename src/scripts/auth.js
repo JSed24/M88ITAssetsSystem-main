@@ -563,3 +563,166 @@ const Auth = {
 
 // Export for use in other modules
 window.Auth = Auth;
+
+// =============================================================
+// SESSION MANAGER
+// Handles idle timeout and tab-close auto-logout
+// =============================================================
+
+const SessionManager = {
+    // Idle timeout in milliseconds (2 minutes)
+    IDLE_TIMEOUT: 2 * 60 * 1000,
+    // Warning before logout in milliseconds (1 minute before)
+    WARNING_BEFORE: 60 * 1000,
+    
+    _idleTimer: null,
+    _warningTimer: null,
+    _warningVisible: false,
+    _countdownInterval: null,
+    _started: false,
+
+    /**
+     * Start tracking user activity.
+     * Call after successful authentication on protected pages.
+     */
+    start() {
+        if (this._started) return;
+        this._started = true;
+
+        // Track user activity events
+        const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+        activityEvents.forEach(evt => {
+            document.addEventListener(evt, () => this._onActivity(), { passive: true });
+        });
+
+        // Sign out when the tab/window is closed (beforeunload)
+        window.addEventListener('beforeunload', () => {
+            // Use sendBeacon to reliably sign out even as the page unloads
+            if (Auth.user && window.supabase) {
+                const url = `${CONFIG.SUPABASE_URL}/auth/v1/logout`;
+                const headers = {
+                    type: 'application/json'
+                };
+                const accessToken = window.supabase.auth.session?.()?.access_token;
+                // Fallback: clear local storage to invalidate session on next load
+                Utils.storage.remove('m88_user_profile');
+                try {
+                    // supabase-js stores the session; clearing it prevents auto-resume
+                    const storageKey = `sb-${new URL(CONFIG.SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+                    localStorage.removeItem(storageKey);
+                } catch (_) { /* ignore */ }
+            }
+        });
+
+        // Reset timer on start
+        this._resetTimers();
+    },
+
+    /**
+     * Stop tracking (called on sign-out)
+     */
+    stop() {
+        this._started = false;
+        clearTimeout(this._idleTimer);
+        clearTimeout(this._warningTimer);
+        clearInterval(this._countdownInterval);
+        this._dismissWarning();
+    },
+
+    /**
+     * Called on any user activity
+     */
+    _onActivity() {
+        if (!this._started) return;
+        // If warning is visible, dismiss it and reset
+        if (this._warningVisible) {
+            this._dismissWarning();
+        }
+        this._resetTimers();
+    },
+
+    /**
+     * Reset the idle and warning timers
+     */
+    _resetTimers() {
+        clearTimeout(this._idleTimer);
+        clearTimeout(this._warningTimer);
+
+        // Show warning 1 minute before logout
+        this._warningTimer = setTimeout(() => {
+            this._showWarning();
+        }, this.IDLE_TIMEOUT - this.WARNING_BEFORE);
+
+        // Auto-logout after full timeout
+        this._idleTimer = setTimeout(() => {
+            this._autoLogout();
+        }, this.IDLE_TIMEOUT);
+    },
+
+    /**
+     * Show idle warning modal with countdown
+     */
+    _showWarning() {
+        if (this._warningVisible) return;
+        this._warningVisible = true;
+
+        let secondsLeft = Math.ceil(this.WARNING_BEFORE / 1000);
+
+        // Create warning overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'idle-warning-overlay';
+        overlay.className = 'fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4';
+        overlay.innerHTML = `
+            <div class="bg-slate-800 rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+                <div class="w-14 h-14 mx-auto bg-yellow-600/20 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-7 h-7 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-white mb-2">Session Timeout Warning</h3>
+                <p class="text-slate-400 mb-1">You have been inactive for a while.</p>
+                <p class="text-slate-400 mb-4">You will be logged out in <span id="idle-countdown" class="text-yellow-400 font-bold">${secondsLeft}</span> seconds.</p>
+                <button id="idle-stay-btn" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors">Stay Logged In</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Countdown
+        this._countdownInterval = setInterval(() => {
+            secondsLeft--;
+            const el = document.getElementById('idle-countdown');
+            if (el) el.textContent = secondsLeft;
+            if (secondsLeft <= 0) {
+                clearInterval(this._countdownInterval);
+            }
+        }, 1000);
+
+        // "Stay Logged In" button
+        document.getElementById('idle-stay-btn')?.addEventListener('click', () => {
+            this._dismissWarning();
+            this._resetTimers();
+        });
+    },
+
+    /**
+     * Dismiss the warning modal
+     */
+    _dismissWarning() {
+        this._warningVisible = false;
+        clearInterval(this._countdownInterval);
+        const overlay = document.getElementById('idle-warning-overlay');
+        if (overlay) overlay.remove();
+    },
+
+    /**
+     * Perform automatic logout due to inactivity
+     */
+    async _autoLogout() {
+        this.stop();
+        await Auth.signOut();
+        // Redirect to login with a message
+        window.location.href = 'index.html?reason=idle';
+    }
+};
+
+window.SessionManager = SessionManager;

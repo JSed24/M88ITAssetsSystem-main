@@ -67,6 +67,9 @@ const App = {
                 
                 // Setup theme
                 this.initTheme();
+                
+                // Start session manager (idle timeout & tab-close logout)
+                SessionManager.start();
             }
             
             // console.log('✅ Application initialized successfully');
@@ -287,6 +290,7 @@ const App = {
             btn.addEventListener('click', async () => {
                 const confirmed = await Components.confirm('Are you sure you want to log out?');
                 if (confirmed) {
+                    SessionManager.stop();
                     await Auth.signOut();
                     window.location.href = 'index.html';
                 }
