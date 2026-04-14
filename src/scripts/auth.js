@@ -212,24 +212,45 @@ const Auth = {
                     region:regions(id, name, code, country)
                 `)
                 .eq('id', this.user.id)
-                .single();
+                .maybeSingle();
             
             if (error) {
-                // Profile doesn't exist, might be first login
-                console.warn('Profile not found, user may need setup');
-                return null;
+                console.warn('Profile lookup failed, using fallback profile:', error);
             }
-            
-            this.profile = data;
-            Utils.storage.set('m88_user_profile', data);
+
+            const cachedProfile = Utils.storage.get('m88_user_profile', null);
+            const fallbackProfile = {
+                id: this.user.id,
+                email: this.user.email,
+                full_name: this.user.user_metadata?.full_name || this.user.email?.split('@')[0] || 'User',
+                role: 'viewer',
+                region_id: null,
+                region: null
+            };
+
+            this.profile = data || (cachedProfile?.id === this.user.id ? cachedProfile : null) || fallbackProfile;
+            Utils.storage.set('m88_user_profile', this.profile);
             
             // Load junction table data (roles and regions)
             await this.loadJunctionData();
             
-            return data;
+            return this.profile;
         } catch (error) {
             console.error('Load profile error:', error);
-            return null;
+            const fallbackProfile = {
+                id: this.user.id,
+                email: this.user.email,
+                full_name: this.user.user_metadata?.full_name || this.user.email?.split('@')[0] || 'User',
+                role: 'viewer',
+                region_id: null,
+                region: null
+            };
+            this.profile = fallbackProfile;
+            Utils.storage.set('m88_user_profile', fallbackProfile);
+
+            // Best-effort load of junction data even if profile query failed.
+            await this.loadJunctionData();
+            return fallbackProfile;
         }
     },
 

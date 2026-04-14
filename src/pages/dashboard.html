@@ -696,8 +696,17 @@
          * Initialize the dashboard
          */
         async function init() {
+            let loadingGuard = null;
             try {
                 // console.log('🚀 Starting dashboard init...');
+                // Prevent indefinite loading screen on slow/blocked networks.
+                loadingGuard = setTimeout(() => {
+                    if (app.classList.contains('hidden')) {
+                        loadingScreen.classList.add('hidden');
+                        app.classList.remove('hidden');
+                        showToast('Dashboard is taking longer than expected. Some widgets may load slowly.', 'warning');
+                    }
+                }, 15000);
                 
                 // Check authentication
                 const { data: { session } } = await supabase.auth.getSession();
@@ -714,26 +723,31 @@
                     .from('user_profiles')
                     .select('*')
                     .eq('id', session.user.id)
-                    .single();
+                    .maybeSingle();
 
                 if (profileError) {
-                    console.warn('No profile found, creating one...');
-                    // Create profile if it doesn't exist
-                    const { data: newProfile } = await supabase
-                        .from('user_profiles')
-                        .insert([{
-                            id: session.user.id,
-                            email: session.user.email,
-                            full_name: session.user.email.split('@')[0],
-                            role: 'admin'
-                        }])
-                        .select()
-                        .single();
-                    
-                    currentUser = { ...session.user, ...newProfile };
-                } else {
-                    currentUser = { ...session.user, ...profile };
+                    console.warn('Profile lookup failed, using fallback profile:', profileError);
                 }
+
+                const cachedProfile = Utils.storage.get('m88_user_profile', null);
+                const fallbackProfile = {
+                    id: session.user.id,
+                    email: session.user.email,
+                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                    role: 'viewer',
+                    region_id: null,
+                    region: null
+                };
+
+                const resolvedProfile = profile || (cachedProfile?.id === session.user.id ? cachedProfile : null) || fallbackProfile;
+                currentUser = { ...session.user, ...resolvedProfile };
+
+                // Keep shared auth state/storage aligned with dashboard bootstrap.
+                if (window.Auth) {
+                    window.Auth.user = session.user;
+                    window.Auth.profile = resolvedProfile;
+                }
+                Utils.storage.set('m88_user_profile', resolvedProfile);
 
                 // Update UI with user info
                 updateUserInfo(currentUser);
@@ -785,6 +799,8 @@
                         <button onclick="location.reload()" class="btn btn-primary">Retry</button>
                     </div>
                 `;
+            } finally {
+                if (loadingGuard) clearTimeout(loadingGuard);
             }
         }
 
