@@ -68,7 +68,7 @@ const App = {
                 // Setup theme
                 this.initTheme();
                 
-                // Start session manager (idle timeout & tab-close logout)
+                // Start session manager (idle timeout)
                 SessionManager.start();
             }
             

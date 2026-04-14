@@ -14,6 +14,7 @@ const Auth = {
     userRoles: [],
     userRegionIds: [],
     userRegions: [],
+    _initialized: false,
     
     // ===========================================
     // INITIALIZATION
@@ -24,31 +25,74 @@ const Auth = {
      * Sets up auth state listener
      */
     async init() {
-        // Listen for auth state changes
-        window.supabase.auth.onAuthStateChange(async (event, session) => {
-            // console.log('Auth state changed:', event);
+        if (this._initialized) {
+            this._syncSessionManager();
+            return !!this.user;
+        }
+
+        if (!window.supabase?.auth) {
+            return false;
+        }
+
+        this._initialized = true;
+
+        try {
+            // Listen for auth state changes
+            window.supabase.auth.onAuthStateChange(async (event, session) => {
+                // console.log('Auth state changed:', event);
+                
+                if (event === 'SIGNED_IN' && session) {
+                    this.user = session.user;
+                    await this.loadUserProfile();
+                    this._syncSessionManager(session);
+                    this.handleAuthenticatedUser();
+                } else if (event === 'SIGNED_OUT') {
+                    this.user = null;
+                    this.profile = null;
+                    this._syncSessionManager(null);
+                    this.handleUnauthenticatedUser();
+                }
+            });
             
-            if (event === 'SIGNED_IN' && session) {
+            // Check current session
+            const { data: { session } } = await window.supabase.auth.getSession();
+            
+            if (session) {
                 this.user = session.user;
                 await this.loadUserProfile();
-                this.handleAuthenticatedUser();
-            } else if (event === 'SIGNED_OUT') {
-                this.user = null;
-                this.profile = null;
-                this.handleUnauthenticatedUser();
+                this._syncSessionManager(session);
+                return true;
             }
-        });
-        
-        // Check current session
-        const { data: { session } } = await window.supabase.auth.getSession();
-        
-        if (session) {
-            this.user = session.user;
-            await this.loadUserProfile();
-            return true;
+
+            this._syncSessionManager(null);
+            
+            return false;
+        } catch (error) {
+            this._initialized = false;
+            console.error('Auth init error:', error);
+            return false;
         }
-        
-        return false;
+    },
+
+    /**
+     * Keep SessionManager state aligned with auth state on protected pages.
+     * @param {object|null} session - Optional Supabase session
+     */
+    _syncSessionManager(session = null) {
+        if (!window.SessionManager) return;
+
+        const publicPages = ['index.html', 'reset-password.html', 'set-password.html'];
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        const isPublicPage = publicPages.includes(currentPage);
+
+        const hasSession = !!(session?.user || this.user);
+
+        if (isPublicPage || !hasSession) {
+            SessionManager.stop();
+            return;
+        }
+
+        SessionManager.start();
     },
     
     // ===========================================
@@ -566,14 +610,14 @@ window.Auth = Auth;
 
 // =============================================================
 // SESSION MANAGER
-// Handles idle timeout and tab-close auto-logout
+// Handles idle timeout
 // =============================================================
 
 const SessionManager = {
-    // Idle timeout in milliseconds (2 minutes)
-    IDLE_TIMEOUT: 2 * 60 * 1000,
-    // Warning before logout in milliseconds (1 minute before)
-    WARNING_BEFORE: 60 * 1000,
+    // Idle timeout in milliseconds (1 minute)
+    IDLE_TIMEOUT: 60 * 1000,
+    // Warning before logout in milliseconds
+    WARNING_BEFORE: 30 * 1000,
     
     _idleTimer: null,
     _warningTimer: null,
@@ -593,25 +637,6 @@ const SessionManager = {
         const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
         activityEvents.forEach(evt => {
             document.addEventListener(evt, () => this._onActivity(), { passive: true });
-        });
-
-        // Sign out when the tab/window is closed (beforeunload)
-        window.addEventListener('beforeunload', () => {
-            // Use sendBeacon to reliably sign out even as the page unloads
-            if (Auth.user && window.supabase) {
-                const url = `${CONFIG.SUPABASE_URL}/auth/v1/logout`;
-                const headers = {
-                    type: 'application/json'
-                };
-                const accessToken = window.supabase.auth.session?.()?.access_token;
-                // Fallback: clear local storage to invalidate session on next load
-                Utils.storage.remove('m88_user_profile');
-                try {
-                    // supabase-js stores the session; clearing it prevents auto-resume
-                    const storageKey = `sb-${new URL(CONFIG.SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
-                    localStorage.removeItem(storageKey);
-                } catch (_) { /* ignore */ }
-            }
         });
 
         // Reset timer on start
@@ -648,10 +673,13 @@ const SessionManager = {
         clearTimeout(this._idleTimer);
         clearTimeout(this._warningTimer);
 
-        // Show warning 1 minute before logout
-        this._warningTimer = setTimeout(() => {
-            this._showWarning();
-        }, this.IDLE_TIMEOUT - this.WARNING_BEFORE);
+        // Show warning before logout (if configured)
+        if (this.WARNING_BEFORE > 0) {
+            const warningDelay = Math.max(this.IDLE_TIMEOUT - this.WARNING_BEFORE, 0);
+            this._warningTimer = setTimeout(() => {
+                this._showWarning();
+            }, warningDelay);
+        }
 
         // Auto-logout after full timeout
         this._idleTimer = setTimeout(() => {
@@ -726,3 +754,35 @@ const SessionManager = {
 };
 
 window.SessionManager = SessionManager;
+
+// Auto-initialize auth/session sync once Supabase is available.
+// Some pages use custom init scripts and never call App.init().
+(function bootstrapAuth() {
+    const maxAttempts = 100;
+    const retryDelayMs = 100;
+    let attempts = 0;
+
+    const tryInit = async () => {
+        if (Auth._initialized) return;
+
+        if (!window.supabase?.auth) {
+            attempts += 1;
+            if (attempts < maxAttempts) {
+                setTimeout(tryInit, retryDelayMs);
+            }
+            return;
+        }
+
+        try {
+            await Auth.init();
+        } catch (error) {
+            console.error('Auth bootstrap error:', error);
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryInit, { once: true });
+    } else {
+        tryInit();
+    }
+})();
